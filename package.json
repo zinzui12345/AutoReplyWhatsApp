@@ -1,0 +1,17 @@
+{
+  "name": "auto-read-story-wa-jauhariel",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.9",
+    "link-preview-js": "^3.0.12",
+    "qrcode-terminal": "^0.12.0"
+  }
+}
