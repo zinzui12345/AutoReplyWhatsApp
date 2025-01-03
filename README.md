@@ -7,6 +7,9 @@ Hal perlu diinstall :
 3. niat
 
 Cara jalanin :
-1. ketik ```npm i``` di terminal
-2. ketik ```npm start``` di terminal
-3. enjoy
+1. Buka Terminal kesayangan kalian
+2. ketik ```git clone https://github.com/jauhariel/AutoReadStoryWhatsapp.git```
+3. Ketik ```cd AutoReadStoryWhatsapp```
+4. ketik ```npm i```
+5. ketik ```npm start```
+6. enjoy
