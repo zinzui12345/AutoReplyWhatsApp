@@ -1,5 +1,5 @@
 # Auto Read Story Whatsapp
-Auto read story/status whatsapp
+Auto Read Story/Status WhatsApp adalah bot sederhana yang memungkinkan kamu melihat status/story teman-teman WhatsAppmu secara otomatis, sehingga kamu menjadi orang pertamax yang melihat storynyaw.
 
 Hal perlu diinstall :
 1. Nodejs : https://nodejs.org/id
