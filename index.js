@@ -81,7 +81,7 @@ async function connectToWhatsApp(){
             console.log('Terhubung ke wangsaf')
             loggedInNumber = sock.user.id.split('@')[0].split(':')[0];
             console.log(`kamu berhasil login dengan nomor: ${loggedInNumber} \n`);
-            console.log("Bot sudah aktif!\n\nSelamat menikmati fitur auto read story whatsapp by Jauhariel\n\nCatatan :\n1. Klik ctrl dan c pada keyboard secara bersamaan untuk memberhentikan bot!\n2. Jangan lupa untuk menghapus folder sessions jika ingin login dengan nomor lain atau terjadi masalah login seperti stuck di 'menghubungkan ke wangsaf'!\n");
+            console.log("Bot sudah aktif!\n\nSelamat menikmati fitur auto read story whatsapp by Jauhariel\n\nCatatan :\n1. Klik ctrl dan c pada keyboard secara bersamaan untuk memberhentikan bot!\n2. Jangan lupa untuk menghapus folder sessions jika ingin login dengan nomor lain atau terjadi masalah login seperti stuck di 'menghubungkan ke wangsaf'!\n3.Kamu bisa menambahkan nomor yang tidak ingin kamu lihat story-nya secara otomatis di file blacklist.txt.\n");
         }
     })
     sock.ev.on('creds.update', saveCreds);
