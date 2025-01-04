@@ -18,3 +18,8 @@ Auto Read Story/Status WhatsApp adalah bot sederhana yang memungkinkan kamu meli
 4. Ketik ```npm i```
 5. Ketik ```npm start```
 6. Enjoy
+
+## Catatan
+1. Kamu bisa menambahkan nomor yang tidak ingin kamu lihat story-nya secara otomatis di file blacklist.txt.
+2. Klik ctrl dan c pada keyboard secara bersamaan untuk memberhentikan bot!
+3. Hapus folder sessions jika ingin login dengan nomor lain atau jika terjadi masalah login, seperti stuck di 'menghubungkan ke wangsaf', lalu jalankan ulang dengan mengetik ```npm start```!
