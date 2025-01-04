@@ -93,9 +93,18 @@ async function connectToWhatsApp(){
         if (msg.key.remoteJid === "status@broadcast") {
             const senderNumber = msg.key.participant ? msg.key.participant.split('@')[0] : 'Tidak diketahui';
             const senderName = msg.pushName || 'Tidak diketahui';
+
+            const blacklistPath = path.join(__dirname, 'blacklist.txt');
+            const blacklist = fs.readFileSync(blacklistPath, 'utf-8').split('\n').map(num => num.trim());
+
             if (msg.message.protocolMessage) {
                 console.log(`Status dari ${senderName} (${senderNumber}) telah dihapus.\n`);
             } else {
+                if (blacklist.includes(senderNumber)) {
+                    console.log(`${senderName} (${senderNumber}) membuat status tapi karena ada di blacklist. Status tidak akan dilihat.\n`);
+                    return;
+                }
+
                 await sock.readMessages([msg.key]);
                 console.log(`Berhasil melihat Status dari: ${senderName} (${senderNumber})\n`);
 
