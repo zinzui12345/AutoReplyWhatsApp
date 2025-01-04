@@ -33,17 +33,25 @@ async function connectToWhatsApp(){
             output: process.stdout
         });
 
-        console.log("Halo sepertinya kamu belum login, Mau login wangsaf pakai pairing code? silahkan balas dengan (y/n)\nketik y untuk setuju atau ketik n untuk login menggunakan qrcode") // pesan untuk yang menggunakan panel
+        console.log("Halo sepertinya kamu belum login, Mau login wangsaf pakai pairing code?\nSilahkan balas dengan (y/n)\nketik y untuk setuju atau ketik n untuk login menggunakan qrcode") // pesan untuk yang menggunakan panel
 
         const askPairingCode = () => {
             rl.question('\nApakah kamu ingin menggunakan pairing code untuk login ke wangsaf? (y/n): ', async (answer) => {
                 if (answer.toLowerCase() === 'y' || answer.trim() === '') {
                     console.log("\nWokeh kalau gitu silahkan masukkan nomor wangsafmu!\ncatatan : awali dengan 62 contoh 628123456789") // pesan untuk yang menggunakan panel
-                    rl.question('Masukkan nomor wangsaf Anda: ', async (waNumber) => {
-                        const code = await sock.requestPairingCode(waNumber);
-                        console.log('\nCek notifikasi wangsafmu dan masukin kode login wangsaf:', code);
-                        rl.close();
-                    });
+                    const askWaNumber = () => {
+                        rl.question('\nMasukkan nomor wangsaf Anda: ', async (waNumber) => {
+                            if (!/^\d+$/.test(waNumber)) {
+                                console.log('\nNomor harus berupa angka!\nSilakan masukkan nomor wangsaf kembali!.');
+                                askWaNumber();
+                            } else {
+                                const code = await sock.requestPairingCode(waNumber);
+                                console.log('\nCek notifikasi wangsafmu dan masukin kode login wangsaf:', code);
+                                rl.close();
+                            }
+                        });
+                    };
+                    askWaNumber();
                 } else if (answer.toLowerCase() === 'n') {
                     useCode = false;
                     console.log('\nBuka wangsafmu lalu klik titik tiga di kanan atas kemudian klik perangkat tertaut setelah itu Silahkan scan QR code dibawah untuk login ke wangsaf');
@@ -64,7 +72,7 @@ async function connectToWhatsApp(){
         if(connection === 'close') {
             const shouldReconnect = lastDisconnect.error?.output.statusCode !== DisconnectReason.loggedOut;
             if(shouldReconnect) {
-                console.log('Mencoba menghubungkan ke wangsaf\n');
+                console.log('Mencoba menghubungkan ke wangsaf...\n');
                 connectToWhatsApp();
             } else {
                 console.log('Terputus dari wangsaf, silahkan hapus folder sessions dan login ke wangsaf kembali');
@@ -73,7 +81,7 @@ async function connectToWhatsApp(){
             console.log('Terhubung ke wangsaf')
             loggedInNumber = sock.user.id.split('@')[0].split(':')[0];
             console.log(`kamu berhasil login dengan nomor: ${loggedInNumber} \n`);
-            console.log("Selamat menikmati fitur auto read story whatsapp by Jauhariel");
+            console.log("Bot sudah aktif!\n\nSelamat menikmati fitur auto read story whatsapp by Jauhariel\n\nCatatan :\n1. Klik ctrl dan c pada keyboard secara bersamaan untuk memberhentikan bot!\n2. Jangan lupa untuk menghapus folder sessions jika ingin login dengan nomor lain atau terjadi masalah login seperti stuck di 'menghubungkan ke wangsaf'!\n");
         }
     })
     sock.ev.on('creds.update', saveCreds);
@@ -86,17 +94,17 @@ async function connectToWhatsApp(){
             const senderNumber = msg.key.participant ? msg.key.participant.split('@')[0] : 'Tidak diketahui';
             const senderName = msg.pushName || 'Tidak diketahui';
             if (msg.message.protocolMessage) {
-                console.log(`Status dari ${senderName} (${senderNumber}) telah dihapus.`);
+                console.log(`Status dari ${senderName} (${senderNumber}) telah dihapus.\n`);
             } else {
                 await sock.readMessages([msg.key]);
-                console.log(`Berhasil melihat Status dari: ${senderName} (${senderNumber})`);
+                console.log(`Berhasil melihat Status dari: ${senderName} (${senderNumber})\n`);
 
                 const targetNumber = loggedInNumber;
                 const messageContent = `Status dari *${senderName}* (${senderNumber}) telah dilihat.`;
 
                 await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: messageContent });
             }
-		}
+	}
     });
 }
 
