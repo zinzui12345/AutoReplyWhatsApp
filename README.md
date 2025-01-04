@@ -45,8 +45,10 @@ Auto Read Story/Status WhatsApp adalah bot sederhana yang memungkinkan kamu meli
    ```
 6. Enjoy
 
+<hr>
+
 ## Catatan
-1. <b>Kamu bisa menambahkan nomor yang tidak ingin kamu lihat story-nya secara otomatis di file blacklist.txt.</b>
+1. Kamu bisa menambahkan nomor yang tidak ingin kamu lihat story-nya secara otomatis di file <strong>blacklist.txt</strong>.
 
 2. Klik <strong>CTRL</strong> dan <strong>C</strong> pada keyboard secara bersamaan untuk memberhentikan bot!
    
