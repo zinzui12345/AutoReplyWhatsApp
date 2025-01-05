@@ -44,6 +44,9 @@ async function connectToWhatsApp(){
                             if (!/^\d+$/.test(waNumber)) {
                                 console.log('\nNomor harus berupa angka!\nSilakan masukkan nomor wangsaf kembali!.');
                                 askWaNumber();
+                            } else if (!waNumber.startsWith('62')) {
+                                console.log('\nNomor harus diawali dengan 62!\nContoh : 628123456789\nSilakan masukkan nomor wangsaf kembali!.');
+                                askWaNumber();
                             } else {
                                 const code = await sock.requestPairingCode(waNumber);
                                 console.log('\nCek notifikasi wangsafmu dan masukin kode login wangsaf:', code);
