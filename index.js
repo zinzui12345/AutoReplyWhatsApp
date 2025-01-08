@@ -1,4 +1,4 @@
-const {makeWASocket, DisconnectReason, useMultiFileAuthState, Browsers} = require('@whiskeysockets/baileys');
+const {makeWASocket, DisconnectReason, useMultiFileAuthState, Browsers, jidNormalizedUser} = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const readline = require('readline');
 const fs = require('fs');
@@ -84,7 +84,7 @@ async function connectToWhatsApp(){
             console.log('Terhubung ke wangsaf')
             loggedInNumber = sock.user.id.split('@')[0].split(':')[0];
             console.log(`kamu berhasil login dengan nomor: ${loggedInNumber} \n`);
-            console.log("Bot sudah aktif!\n\nSelamat menikmati fitur auto read story whatsapp by Jauhariel\n\nCatatan :\n1. Klik ctrl dan c pada keyboard secara bersamaan untuk memberhentikan bot!\n2. Jangan lupa untuk menghapus folder sessions jika ingin login dengan nomor lain atau terjadi masalah login seperti stuck di 'menghubungkan ke wangsaf'!\n3.Kamu bisa menambahkan nomor yang tidak ingin kamu lihat story-nya secara otomatis di file blacklist.txt.\n");
+            console.log("Bot sudah aktif!\n\nSelamat menikmati fitur auto read story whatsapp by Jauhariel\n\nCatatan :\n1. Klik CTRL dan C pada keyboard secara bersamaan untuk memberhentikan bot!\n\n2. Hapus folder sessions jika ingin login dengan nomor lain atau jika terjadi masalah login, seperti stuck di 'menghubungkan ke wangsaf', lalu jalankan ulang bot dengan mengetik 'npm start'!\n\n3. Kamu bisa menambahkan nomor yang tidak ingin kamu lihat story-nya secara otomatis di file blacklist.txt.\n");
         }
     })
     sock.ev.on('creds.update', saveCreds);
@@ -92,7 +92,7 @@ async function connectToWhatsApp(){
     sock.ev.on('messages.upsert', async ({ messages }) => {
         const msg = messages[0];
         if (!msg.message) return;
-        
+
         if (msg.key.remoteJid === "status@broadcast") {
             const senderNumber = msg.key.participant ? msg.key.participant.split('@')[0] : 'Tidak diketahui';
             const senderName = msg.pushName || 'Tidak diketahui';
@@ -108,13 +108,25 @@ async function connectToWhatsApp(){
                     return;
                 }
 
-                await sock.readMessages([msg.key]);
-                console.log(`Berhasil melihat Status dari: ${senderName} (${senderNumber})\n`);
+                const myself = jidNormalizedUser(sock.user.id);
+                const emojiToReact = '💚';
 
-                const targetNumber = loggedInNumber;
-                const messageContent = `Status dari *${senderName}* (${senderNumber}) telah dilihat.`;
+                if (msg.key.remoteJid && msg.key.participant) {
+                    await sock.readMessages([msg.key]);
 
-                await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: messageContent });
+                    await sock.sendMessage(
+                        msg.key.remoteJid,
+                        { react: { key: msg.key, text: emojiToReact } },
+                        { statusJidList: [msg.key.participant, myself] }
+                    );
+
+                    console.log(`Berhasil melihat dan menyukai status dari: ${senderName} (${senderNumber})\n`);
+
+                    const targetNumber = loggedInNumber;
+                    const messageContent = `Status dari *${senderName}* (${senderNumber}) telah dilihat dan disukai.`;
+
+                    await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: messageContent });
+                }
             }
 	}
     });
