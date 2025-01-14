@@ -84,7 +84,7 @@ async function connectToWhatsApp(){
             console.log('Terhubung ke wangsaf')
             loggedInNumber = sock.user.id.split('@')[0].split(':')[0];
             console.log(`kamu berhasil login dengan nomor: ${loggedInNumber} \n`);
-            console.log("Bot sudah aktif!\n\nSelamat menikmati fitur auto read story whatsapp by Jauhariel\n\nCatatan :\n1. Klik CTRL dan C pada keyboard secara bersamaan untuk memberhentikan bot!\n\n2. Hapus folder sessions jika ingin login dengan nomor lain atau jika terjadi masalah login, seperti stuck di 'menghubungkan ke wangsaf', lalu jalankan ulang bot dengan mengetik 'npm start'!\n\n3. Kamu bisa menambahkan nomor yang tidak ingin kamu lihat story-nya secara otomatis di file blacklist.txt.\n");
+            console.log("Bot sudah aktif!\n\nSelamat menikmati fitur auto read story whatsapp by Jauhariel\n\nCatatan :\n1. Klik CTRL dan C pada keyboard secara bersamaan untuk memberhentikan bot!\n\n2. Hapus folder sessions jika ingin login dengan nomor lain atau jika terjadi masalah login, seperti stuck di 'menghubungkan ke wangsaf', lalu jalankan ulang bot dengan mengetik 'npm start'!\n\n3. Kamu bisa menambahkan nomor yang tidak ingin kamu lihat story-nya secara otomatis di file blacklist.txt.\n\n4. Kamu bisa menambahkan hanya nomor tertentu yang ingin kamu lihat story-nya secara otomatis di file whitelist.txt.\n\n5. Jika kamu ingin melihat story dari semua kontak, kosongkan isi file blacklist.txt dan whitelist.txt\n");
         }
     })
     sock.ev.on('creds.update', saveCreds);
@@ -100,11 +100,19 @@ async function connectToWhatsApp(){
             const blacklistPath = path.join(__dirname, 'blacklist.txt');
             const blacklist = fs.readFileSync(blacklistPath, 'utf-8').split('\n').map(num => num.trim());
 
+            const whitelistPath = path.join(__dirname, 'whitelist.txt');
+            const whitelist = fs.readFileSync(whitelistPath, 'utf-8').split('\n').map(num => num.trim());
+
             if (msg.message.protocolMessage) {
                 console.log(`Status dari ${senderName} (${senderNumber}) telah dihapus.\n`);
-            } else {
+            } else if (!msg.message.reactionMessage) {
                 if (blacklist.includes(senderNumber)) {
                     console.log(`${senderName} (${senderNumber}) membuat status tapi karena ada di blacklist. Status tidak akan dilihat.\n`);
+                    return;
+                }
+
+                if (whitelist.length > 0 && !whitelist.includes(senderNumber)) {
+                    console.log(`${senderName} (${senderNumber}) membuat status tapi karena tidak ada di whitelist. Status tidak akan dilihat.\n`);
                     return;
                 }
 
@@ -127,7 +135,7 @@ async function connectToWhatsApp(){
 
                     await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: messageContent });
                 }
-            }
+            } 
 	}
     });
 }
