@@ -111,7 +111,7 @@ async function connectToWhatsApp(){
                     return;
                 }
 
-                if (whitelist.length > 0 && !whitelist.includes(senderNumber)) {
+                if (whitelist[0] !== '' && !whitelist.includes(senderNumber)) {
                     console.log(`${senderName} (${senderNumber}) membuat status tapi karena tidak ada di whitelist. Status tidak akan dilihat.\n`);
                     return;
                 }
