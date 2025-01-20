@@ -1,5 +1,5 @@
 # Auto Read Story Whatsapp
-Auto Read Story/Status WhatsApp adalah bot sederhana yang memungkinkan kamu melihat dan menyukai status/story teman-teman WhatsAppmu secara otomatis, sehingga kamu menjadi orang pertamax yang melihat dan menyukai storynyaw.
+Auto Read Story/Status WhatsApp adalah bot sederhana yang memungkinkan kamu melihat, menyukai, dan mendownload status/story teman-teman WhatsAppmu secara otomatis, sehingga kamu menjadi orang pertamax yang melihat dan menyukai storynyaw.
 
 <p align="center">
   <img src="testing.jpg" alt="testing" width="500">
@@ -31,19 +31,19 @@ Auto Read Story/Status WhatsApp adalah bot sederhana yang memungkinkan kamu meli
 ## Cara menjalankan bot :
 1. Buka Terminal kesayangan kalian (⁠ ⁠╹⁠▽⁠╹⁠ ⁠) 👍
    
-2. Clone repository
+2. Clone repository dengan mengetik:
    ```bash
    git clone https://github.com/jauhariel/AutoReadStoryWhatsapp.git
    ```
-3. Masuk ke repository
+3. Masuk ke dalam folder repository dengan mengetik:
    ```bash
    cd AutoReadStoryWhatsapp
    ```
-4. Ketik
+4. Instal dependensi yang diperlukan dengan mengetik:
    ```bash
    npm i
    ```
-5. Ketik
+5. Jalankan bot dengan mengetik:
    ```bash
    npm start
    ```
@@ -51,15 +51,19 @@ Auto Read Story/Status WhatsApp adalah bot sederhana yang memungkinkan kamu meli
 <hr>
 
 ## Catatan
-1. Kamu bisa menambahkan nomor yang tidak ingin kamu lihat story-nya secara otomatis di file <strong>blacklist.txt</strong>.
+1. Kamu bisa menambahkan nomor yang tidak ingin kamu lihat story-nya secara otomatis di file <strong>config.js</strong> dengan menambahkan nomor pada variabel array <strong>blackList</strong>.
    
-2. Kamu bisa menambahkan hanya nomor tertentu yang ingin kamu lihat story-nya secara otomatis di file <strong>whitelist.txt</strong>.
+2. Kamu bisa menambahkan hanya nomor tertentu yang ingin kamu lihat story-nya secara otomatis di file <strong>config.js</strong> dengan menambahkan nomor pada variabel array <strong>whiteList</strong>.
    
-3. Jika kamu ingin melihat story dari semua kontak, kosongkan isi file <strong>blacklist.txt</strong> dan <strong>whitelist.txt</strong>.
+3. Jika kamu ingin melihat story dari semua kontak, kosongkan variabel array <strong>blackList</strong> dan <strong>whiteList</strong> yang ada di file <strong>config.js</strong>.
 
-4. Klik <strong>CTRL</strong> dan <strong>C</strong> pada keyboard secara bersamaan untuk memberhentikan bot!
+4. Ubah nilai variabel array <strong>autoLikeStatus</strong> yang terdapat di file <strong>config.js</strong> menjadi false untuk menonaktifkan fitur auto-like pada status, atau ubah menjadi true untuk mengaktifkannya.
+
+5. Ubah nilai variabel array <strong>downloadMediaStatus</strong> yang terdapat di file <strong>config.js</strong> menjadi true untuk secara otomatis mendownload media (foto, video, audio) dari status, atau ubah menjadi false untuk menonaktifkan fitur tersebut.
+
+6. Klik <strong>CTRL</strong> dan <strong>C</strong> pada keyboard secara bersamaan untuk memberhentikan bot!
    
-5. Hapus folder <strong>sessions</strong> jika ingin login dengan nomor lain atau jika terjadi masalah login, seperti stuck di 'menghubungkan ke wangsaf', lalu jalankan ulang dengan mengetik:
+7. Hapus folder <strong>sessions</strong> jika ingin login dengan nomor lain atau jika terjadi masalah login, seperti stuck di 'menghubungkan ke wangsaf', lalu jalankan ulang dengan mengetik:
    ```bash
    npm start
    ```
