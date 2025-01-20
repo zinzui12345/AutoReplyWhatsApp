@@ -1,9 +1,13 @@
 # Auto Read Story Whatsapp
 Auto Read Story/Status WhatsApp adalah bot sederhana yang memungkinkan kamu melihat, menyukai, dan mendownload status/story teman-teman WhatsAppmu secara otomatis, sehingga kamu menjadi orang pertamax yang melihat dan menyukai storynyaw.
 
-<p align="center">
+<div align="center">
   <img src="testing.jpg" alt="testing" width="500">
-</p>
+  <div>Melihat dan menyukai story secara otomatis</div>
+  <br>
+  <img src="testing2.jpeg" alt="testing" width="500">
+  <div>Mendownload media(foto, video, dan audio) dari story secara otomatis jika fitur downloadMediaStatus diaktifkan</div>
+</div>
 
 ## Instalasi :
 ### Windows
