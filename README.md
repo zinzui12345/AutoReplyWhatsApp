@@ -61,9 +61,9 @@ Auto Read Story/Status WhatsApp adalah bot sederhana yang memungkinkan kamu meli
    
 3. Jika kamu ingin melihat story dari semua kontak, kosongkan variabel array <strong>blackList</strong> dan <strong>whiteList</strong> yang ada di file <strong>config.js</strong>.
 
-4. Ubah nilai variabel array <strong>autoLikeStatus</strong> yang terdapat di file <strong>config.js</strong> menjadi false untuk menonaktifkan fitur auto-like pada status, atau ubah menjadi true untuk mengaktifkannya.
+4. Ubah nilai variabel <strong>autoLikeStatus</strong> yang terdapat di file <strong>config.js</strong> menjadi false untuk menonaktifkan fitur auto-like pada status, atau ubah menjadi true untuk mengaktifkannya.
 
-5. Ubah nilai variabel array <strong>downloadMediaStatus</strong> yang terdapat di file <strong>config.js</strong> menjadi true untuk secara otomatis mendownload media (foto, video, audio) dari status, atau ubah menjadi false untuk menonaktifkan fitur tersebut.
+5. Ubah nilai variabel <strong>downloadMediaStatus</strong> yang terdapat di file <strong>config.js</strong> menjadi true untuk secara otomatis mendownload media (foto, video, audio) dari status, atau ubah menjadi false untuk menonaktifkan fitur tersebut.
 
 6. Klik <strong>CTRL</strong> dan <strong>C</strong> pada keyboard secara bersamaan untuk memberhentikan bot!
    
