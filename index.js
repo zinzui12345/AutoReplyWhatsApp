@@ -1,4 +1,4 @@
-const { autoLikeStatus, downloadMediaStatus, blackList, whiteList } = require('./config');
+const { autoLikeStatus, downloadMediaStatus, sensorNomor, blackList, whiteList } = require('./config');
 const { makeWASocket, DisconnectReason, useMultiFileAuthState, Browsers, jidNormalizedUser, downloadMediaMessage} = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const readline = require('readline');
@@ -84,7 +84,11 @@ async function connectToWhatsApp(){
         } else if(connection === 'open') {
             console.log('Terhubung ke wangsaf')
             loggedInNumber = sock.user.id.split('@')[0].split(':')[0];
-            console.log(`kamu berhasil login dengan nomor: ${loggedInNumber} \n`);
+            let displayedLoggedInNumber = loggedInNumber;
+            if (sensorNomor) {
+                displayedLoggedInNumber = displayedLoggedInNumber.slice(0, 3) + '****' + displayedLoggedInNumber.slice(-2);
+            }
+            console.log(`kamu berhasil login dengan nomor: ${displayedLoggedInNumber} \n`);
             console.log("Bot sudah aktif!\n\nSelamat menikmati fitur auto read story whatsapp by github.com/Jauhariel\n\nCatatan :\n1. Kamu bisa menambahkan nomor yang tidak ingin kamu lihat story-nya secara otomatis di file config.js dengan menambahkan nomor pada variabel array blackList.\n\n2. Kamu bisa menambahkan hanya nomor tertentu yang ingin kamu lihat story-nya secara otomatis di file config.js dengan menambahkan nomor pada variabel array whiteList.\n\n3. Jika kamu ingin melihat story dari semua kontak, kosongkan variabel array blackList dan whiteList yang ada di file config.js.\n\n4. Ubah nilai variabel array autoLikeStatus yang terdapat di file config.js menjadi false untuk menonaktifkan fitur auto-like pada status, atau ubah menjadi true untuk mengaktifkannya.\n\n5. Ubah nilai variabel array downloadMediaStatus yang terdapat di file config.js menjadi true untuk secara otomatis mendownload media (foto, video, audio) dari status, atau ubah menjadi false untuk menonaktifkan fitur tersebut.\n\n6. Klik CTRL dan C pada keyboard secara bersamaan untuk memberhentikan bot!\n\n7. Hapus folder sessions jika ingin login dengan nomor lain atau jika terjadi masalah login, seperti stuck di menghubungkan ke wangsaf, lalu jalankan ulang dengan mengetik: npm start\n");
         }
     })
@@ -96,8 +100,12 @@ async function connectToWhatsApp(){
         if (!msg.message) return;
 
         if (msg.key.remoteJid === "status@broadcast") {
-            const senderNumber = msg.key.participant ? msg.key.participant.split('@')[0] : 'Tidak diketahui';
+            let senderNumber = msg.key.participant ? msg.key.participant.split('@')[0] : 'Tidak diketahui';
             const senderName = msg.pushName || 'Tidak diketahui';
+
+            if (sensorNomor && senderNumber !== 'Tidak diketahui') {
+                senderNumber = senderNumber.slice(0, 3) + '****' + senderNumber.slice(-2);
+            }
 
             if (msg.message.protocolMessage) {
                 console.log(`Status dari ${senderName} (${senderNumber}) telah dihapus.\n`);
