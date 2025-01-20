@@ -101,22 +101,23 @@ async function connectToWhatsApp(){
 
         if (msg.key.remoteJid === "status@broadcast") {
             let senderNumber = msg.key.participant ? msg.key.participant.split('@')[0] : 'Tidak diketahui';
+            let displaySendernumber = senderNumber;
             const senderName = msg.pushName || 'Tidak diketahui';
 
-            if (sensorNomor && senderNumber !== 'Tidak diketahui') {
-                senderNumber = senderNumber.slice(0, 3) + '****' + senderNumber.slice(-2);
+            if (sensorNomor && displaySendernumber !== 'Tidak diketahui') {
+                displaySendernumber = displaySendernumber.slice(0, 3) + '****' + displaySendernumber.slice(-2);
             }
 
             if (msg.message.protocolMessage) {
-                console.log(`Status dari ${senderName} (${senderNumber}) telah dihapus.\n`);
+                console.log(`Status dari ${senderName} (${displaySendernumber}) telah dihapus.\n`);
             } else if (!msg.message.reactionMessage) {
                 if (blackList.includes(senderNumber)) {
-                    console.log(`${senderName} (${senderNumber}) membuat status tapi karena ada di blacklist. Status tidak akan dilihat.\n`);
+                    console.log(`${senderName} (${displaySendernumber}) membuat status tapi karena ada di blacklist. Status tidak akan dilihat.\n`);
                     return;
                 }
 
                 if (whiteList.length > 0 && !whiteList.includes(senderNumber)) {
-                    console.log(`${senderName} (${senderNumber}) membuat status tapi karena tidak ada di whitelist. Status tidak akan dilihat.\n`);
+                    console.log(`${senderName} (${displaySendernumber}) membuat status tapi karena tidak ada di whitelist. Status tidak akan dilihat.\n`);
                     return;
                 }
 
@@ -134,15 +135,15 @@ async function connectToWhatsApp(){
                         );
                     }
 
-                    console.log(`Berhasil melihat ${autoLikeStatus ? "dan menyukai " : ""}status dari: ${senderName} (${senderNumber})\n`);
+                    console.log(`Berhasil melihat ${autoLikeStatus ? "dan menyukai " : ""}status dari: ${senderName} (${displaySendernumber})\n`);
 
                     const targetNumber = loggedInNumber;
-                    let messageContent = `Status dari *${senderName}* (${senderNumber}) telah dilihat ${autoLikeStatus ? "dan disukai" : ""}`;
+                    let messageContent = `Status dari *${senderName}* (${displaySendernumber}) telah dilihat ${autoLikeStatus ? "dan disukai" : ""}`;
                     let caption = msg.message.imageMessage?.caption || msg.message.videoMessage?.caption || msg.message.extendedTextMessage?.text || "Tidak ada caption";
 
                     if (downloadMediaStatus) {
                         if (msg.type === "imageMessage" || msg.type === "videoMessage") {
-                            messageContent = `Status ${msg.type === "imageMessage" ? "gambar" : "video"} dari *${senderName}* (${senderNumber}) telah dilihat ${autoLikeStatus ? "dan disukai" : ""}`;
+                            messageContent = `Status ${msg.type === "imageMessage" ? "gambar" : "video"} dari *${senderName}* (${displaySendernumber}) telah dilihat ${autoLikeStatus ? "dan disukai" : ""}`;
     
                             try {
                                 const buffer = await downloadMediaMessage(msg, "buffer", {}, {
@@ -155,10 +156,10 @@ async function connectToWhatsApp(){
                                 });
                             } catch (error) {
                                 console.error('Error uploading media:', error);
-                                await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: `Gagal mengunggah media dari status ${msg.type === "imageMessage" ? "gambar" : "video"} dari *${senderName}* (${senderNumber}).` });
+                                await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: `Gagal mengunggah media dari status ${msg.type === "imageMessage" ? "gambar" : "video"} dari *${senderName}* (${displaySendernumber}).` });
                             }
                         } else if (msg.type === "audioMessage") {
-                            messageContent = `Status audio dari *${senderName}* (${senderNumber}) telah dilihat ${autoLikeStatus ? "dan disukai" : ""}. Berikut audionya.`;
+                            messageContent = `Status audio dari *${senderName}* (${displaySendernumber}) telah dilihat ${autoLikeStatus ? "dan disukai" : ""}. Berikut audionya.`;
     
                             await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: messageContent });
     
@@ -173,10 +174,10 @@ async function connectToWhatsApp(){
                                 });
                             } catch (error) {
                                 console.error('Error uploading audio:', error);
-                                await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: `Gagal mengunggah audio dari status audio dari *${senderName}* (${senderNumber}).` });
+                                await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: `Gagal mengunggah audio dari status audio dari *${senderName}* (${displaySendernumber}).` });
                             }
                         } else {
-                            messageContent = `Status teks dari *${senderName}* (${senderNumber}) telah dilihat ${autoLikeStatus ? "dan disukai" : ""} dengan caption: "*${caption}*"`;
+                            messageContent = `Status teks dari *${senderName}* (${displaySendernumber}) telah dilihat ${autoLikeStatus ? "dan disukai" : ""} dengan caption: "*${caption}*"`;
     
                             await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: messageContent });
                         }
