@@ -130,33 +130,43 @@ async function connectToWhatsApp(){
 
                     const targetNumber = loggedInNumber;
                     let messageContent = `Status dari *${senderName}* (${senderNumber}) telah dilihat ${autoLikeStatus ? "dan disukai" : ""}`;
-                    const caption = msg.message.imageMessage?.caption || msg.message.videoMessage?.caption || msg.message.extendedTextMessage?.text || "Tidak ada caption";
+                    let caption = msg.message.imageMessage?.caption || msg.message.videoMessage?.caption || msg.message.extendedTextMessage?.text || "Tidak ada caption";
 
                     if (downloadMediaStatus) {
                         if (msg.type === "imageMessage" || msg.type === "videoMessage") {
                             messageContent = `Status ${msg.type === "imageMessage" ? "gambar" : "video"} dari *${senderName}* (${senderNumber}) telah dilihat ${autoLikeStatus ? "dan disukai" : ""}`;
     
-                            const buffer = await downloadMediaMessage(msg, "buffer", {}, {
-                                logger: pino({ level: 'fatal' }),
-                            });
-    
-                            await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { 
-                                [msg.type === "imageMessage" ? "image" : "video"]: Buffer.from(buffer),
-                                caption: `${messageContent} dengan caption : "*${caption}*"` 
-                            });
+                            try {
+                                const buffer = await downloadMediaMessage(msg, "buffer", {}, {
+                                    logger: pino({ level: 'fatal' }),
+                                });
+                            
+                                await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { 
+                                    [msg.type === "imageMessage" ? "image" : "video"]: Buffer.from(buffer),
+                                    caption: `${messageContent} dengan caption : "*${caption}*"` 
+                                });
+                            } catch (error) {
+                                console.error('Error uploading media:', error);
+                                await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: `Gagal mengunggah media dari status ${msg.type === "imageMessage" ? "gambar" : "video"} dari *${senderName}* (${senderNumber}).` });
+                            }
                         } else if (msg.type === "audioMessage") {
                             messageContent = `Status audio dari *${senderName}* (${senderNumber}) telah dilihat ${autoLikeStatus ? "dan disukai" : ""}. Berikut audionya.`;
     
                             await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: messageContent });
     
-                            const buffer = await downloadMediaMessage(msg, "buffer", {}, {
-                                logger: pino({ level: 'fatal' }),
-                            });
-    
-                            await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { 
-                                audio: Buffer.from(buffer),
-                                caption: "" 
-                            });
+                            try {
+                                const buffer = await downloadMediaMessage(msg, "buffer", {}, {
+                                    logger: pino({ level: 'fatal' }),
+                                });
+                    
+                                await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { 
+                                    audio: Buffer.from(buffer),
+                                    caption: "" 
+                                });
+                            } catch (error) {
+                                console.error('Error uploading audio:', error);
+                                await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: `Gagal mengunggah audio dari status audio dari *${senderName}* (${senderNumber}).` });
+                            }
                         } else {
                             messageContent = `Status teks dari *${senderName}* (${senderNumber}) telah dilihat ${autoLikeStatus ? "dan disukai" : ""} dengan caption: "*${caption}*"`;
     
