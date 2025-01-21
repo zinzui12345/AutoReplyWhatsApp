@@ -1,4 +1,4 @@
-const { autoLikeStatus, downloadMediaStatus, sensorNomor, blackList, whiteList } = require('./config');
+let { autoLikeStatus, downloadMediaStatus, sensorNomor, blackList, whiteList } = require('./config');
 const { makeWASocket, DisconnectReason, useMultiFileAuthState, Browsers, jidNormalizedUser, downloadMediaMessage} = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const readline = require('readline');
@@ -88,6 +88,17 @@ async function connectToWhatsApp(){
             if (sensorNomor) {
                 displayedLoggedInNumber = displayedLoggedInNumber.slice(0, 3) + '****' + displayedLoggedInNumber.slice(-2);
             }
+            let messageInfo = `Bot *AutoReadStoryWhatsApp* Aktif!
+Kamu berhasil login dengan nomor: ${displayedLoggedInNumber}
+
+info status fitur:
+- Auto Like Status: ${autoLikeStatus ? "*Aktif*" : "*Nonaktif*"}
+- Download Media Status: ${downloadMediaStatus ? "*Aktif*" : "*Nonaktif*"}
+- Sensor Nomor: ${sensorNomor ? "*Aktif*" : "*Nonaktif*"}
+
+Ketik *#menu* untuk melihat menu perintah yang tersedia.`;
+
+            sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: messageInfo });
             console.log(`kamu berhasil login dengan nomor: ${displayedLoggedInNumber} \n`);
             console.log("Bot sudah aktif!\n\nSelamat menikmati fitur auto read story whatsapp by github.com/Jauhariel\n\nCatatan :\n1. Kamu bisa menambahkan nomor yang tidak ingin kamu lihat story-nya secara otomatis di file config.js dengan menambahkan nomor pada variabel array blackList.\n\n2. Kamu bisa menambahkan hanya nomor tertentu yang ingin kamu lihat story-nya secara otomatis di file config.js dengan menambahkan nomor pada variabel array whiteList.\n\n3. Jika kamu ingin melihat story dari semua kontak, kosongkan variabel array blackList dan whiteList yang ada di file config.js.\n\n4. Ubah nilai variabel autoLikeStatus yang terdapat di file config.js menjadi false untuk menonaktifkan fitur auto-like pada status, atau ubah menjadi true untuk mengaktifkannya.\n\n5. Ubah nilai variabel downloadMediaStatus yang terdapat di file config.js menjadi true untuk secara otomatis mendownload media (foto, video, audio) dari status, atau ubah menjadi false untuk menonaktifkan fitur tersebut.\n\n6. Klik CTRL dan C pada keyboard secara bersamaan untuk memberhentikan bot!\n\n7. Hapus folder sessions jika ingin login dengan nomor lain atau jika terjadi masalah login, seperti stuck di menghubungkan ke wangsaf, lalu jalankan ulang dengan mengetik: npm start\n");
         }
@@ -96,9 +107,111 @@ async function connectToWhatsApp(){
 
     sock.ev.on('messages.upsert', async ({ messages }) => {
         const msg = messages[0];
-        msg.type = Object.keys(msg.message)[0];
         if (!msg.message) return;
+        
+        msg.type = Object.keys(msg.message)[0];
 
+        msg.text = msg.type == "conversation" ? msg.message.conversation : "";
+
+        const prefixes = [".", "#", "!", "/"];
+        let prefix = prefixes.find(p => msg.text.startsWith(p));
+
+        if (prefix) {
+            msg.cmd = msg.text.trim().split(" ")[0].replace(prefix, "").toLowerCase();
+        
+            // args
+            msg.args = msg.text.replace(/^\S*\b/g, "").trim().split("|");
+        
+            // command
+            switch (msg.cmd) {
+                case "on":
+                    msg.args[0].trim() === "" 
+                    ? await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `mana argumennya ?\ncontoh ketik : #on autolike\n\nArgumen yang tersedia:\n\n#on autolike\nuntuk mengaktifkan fitur autolike\n\n#on dlmedia\nuntuk mengaktifkan fitur download media(foto,video, dan audio) dari story\n\n#on sensornomor\nuntuk mengaktifkan sensor nomor` }, { quoted: msg })
+                    : msg.args.forEach(async arg => {
+                        switch (arg.trim().toLowerCase()) {
+                            case "autolike":
+                                autoLikeStatus = true;
+                                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Auto Like Status aktif" }, { quoted: msg });
+                                break;
+                            case "dlmedia":
+                                downloadMediaStatus = true;
+                                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Download Media Status aktif" }, { quoted: msg });
+                                break;
+                            case "sensornomor":
+                                sensorNomor = true;
+                                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Sensor Nomor aktif" }, { quoted: msg });
+                                break;
+                            default:
+                                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Argumen tidak valid: ${arg}. Pilihan yang tersedia: autolike, dlmedia, sensornomor` }, { quoted: msg });
+                                break;
+                        }
+                    });
+                    break;
+                case "off":
+                    msg.args[0].trim() === "" 
+                        ? await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `mana argumennya ?\ncontoh ketik : #off autolike\n\nArgumen yang tersedia:\n\n#off autolike\nuntuk menonaktifkan fitur autolike\n\n#off dlmedia\nuntuk menonaktifkan fitur download media(foto,video, dan audio) dari story\n\n#off sensornomor\nuntuk menonaktifkan sensor nomor` }, { quoted: msg })
+                        : msg.args.forEach(async arg => {
+                            switch (arg.trim().toLowerCase()) {
+                                case "autolike":
+                                    autoLikeStatus = false;
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Auto Like Status nonaktif" }, { quoted: msg });
+                                    break;
+                                case "dlmedia":
+                                    downloadMediaStatus = false;
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Download Media Status nonaktif" }, { quoted: msg });
+                                    break;
+                                case "sensornomor":
+                                    sensorNomor = false;
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Sensor Nomor nonaktif" }, { quoted: msg });
+                                    break;
+                                default:
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Argumen tidak valid: ${arg}. Pilihan yang tersedia: autolike, dlmedia, sensornomor` }, { quoted: msg });
+                                    break;
+                            }
+                        });
+                    break;
+                case "menu":
+                    const menuMessage = `Daftar Menu:
+contoh penggunaan: #on autolike
+
+Perintah On:
+*#on autolike*
+Mengaktifkan fitur autolike
+
+*#on dlmedia*
+Mengaktifkan fitur download media (foto, video, dan audio) dari story
+
+*#on sensornomor*
+Mengaktifkan sensor nomor
+
+Perintah Off:
+*#off autolike*
+Menonaktifkan fitur autolike
+
+*#off dlmedia*
+Menonaktifkan fitur download media (foto, video, dan audio) dari story
+
+*#off sensornomor*
+Menonaktifkan sensor nomor
+
+Perintah Info:
+*#info*
+Menampilkan informasi status fitur`;
+
+                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: menuMessage }, { quoted: msg });
+                    break;
+                case "info":
+                    const infoMessage = `Informasi Status Fitur:
+- Auto Like Status: ${autoLikeStatus ? "*Aktif*" : "*Nonaktif*"}
+- Download Media Status: ${downloadMediaStatus ? "*Aktif*" : "*Nonaktif*"}
+- Sensor Nomor: ${sensorNomor ? "*Aktif*" : "*Nonaktif*"}`;
+
+                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: infoMessage }, { quoted: msg });
+                    break;
+            }
+        }
+
+        // status
         if (msg.key.remoteJid === "status@broadcast") {
             let senderNumber = msg.key.participant ? msg.key.participant.split('@')[0] : 'Tidak diketahui';
             let displaySendernumber = senderNumber;
@@ -156,7 +269,7 @@ async function connectToWhatsApp(){
                                 });
                             } catch (error) {
                                 console.error('Error uploading media:', error);
-                                await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: `Gagal mengunggah media dari status ${msg.type === "imageMessage" ? "gambar" : "video"} dari *${senderName}* (${displaySendernumber}).` });
+                                await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: `${messageContent} namun Gagal mengunggah media dari status ${msg.type === "imageMessage" ? "gambar" : "video"} dari *${senderName}* (${displaySendernumber}).` });
                             }
                         } else if (msg.type === "audioMessage") {
                             messageContent = `Status audio dari *${senderName}* (${displaySendernumber}) telah dilihat ${autoLikeStatus ? "dan disukai" : ""}. Berikut audionya.`;
