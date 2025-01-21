@@ -96,7 +96,9 @@ info status fitur:
 - Download Media Status: ${downloadMediaStatus ? "*Aktif*" : "*Nonaktif*"}
 - Sensor Nomor: ${sensorNomor ? "*Aktif*" : "*Nonaktif*"}
 
-Ketik *#menu* untuk melihat menu perintah yang tersedia.`;
+Ketik *#menu* untuk melihat menu perintah yang tersedia.
+
+SC : https://github.com/jauhariel/AutoReadStoryWhatsapp`;
 
             sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: messageInfo });
             console.log(`kamu berhasil login dengan nomor: ${displayedLoggedInNumber} \n`);
@@ -109,7 +111,7 @@ Ketik *#menu* untuk melihat menu perintah yang tersedia.`;
         const msg = messages[0];
         if (!msg.message) return;
 
-        msg.type = Object.keys(msg.message)[0];
+        msg.type = msg.message.imageMessage ? "imageMessage" : msg.message.videoMessage ? "videoMessage" : msg.message.audioMessage ? "audioMessage" : Object.keys(msg.message)[0];
 
         msg.text = msg.type == "conversation" ? msg.message.conversation : "";
 
@@ -212,7 +214,7 @@ Menampilkan informasi status fitur`;
         }
 
         // status
-        if (msg.key.remoteJid === "status@broadcast") {
+        if (msg.key.remoteJid === "status@broadcast" && msg.key.participant !== `${loggedInNumber}@s.whatsapp.net`) {
             let senderNumber = msg.key.participant ? msg.key.participant.split('@')[0] : 'Tidak diketahui';
             let displaySendernumber = senderNumber;
             const senderName = msg.pushName || 'Tidak diketahui';
@@ -256,20 +258,21 @@ Menampilkan informasi status fitur`;
 
                     if (downloadMediaStatus) {
                         if (msg.type === "imageMessage" || msg.type === "videoMessage") {
-                            messageContent = `Status ${msg.type === "imageMessage" ? "gambar" : "video"} dari *${senderName}* (${displaySendernumber}) telah dilihat ${autoLikeStatus ? "dan disukai" : ""}`;
-    
+                            let mediaType = msg.type === "imageMessage" ? "image" : "video";
+                            messageContent = `Status ${mediaType === "image" ? "gambar" : "video"} dari *${senderName}* (${displaySendernumber}) telah dilihat ${autoLikeStatus ? "dan disukai" : ""}`;
+                        
                             try {
                                 const buffer = await downloadMediaMessage(msg, "buffer", {}, {
                                     logger: pino({ level: 'fatal' }),
                                 });
-                            
+                        
                                 await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { 
-                                    [msg.type === "imageMessage" ? "image" : "video"]: Buffer.from(buffer),
+                                    [mediaType]: Buffer.from(buffer),
                                     caption: `${messageContent} dengan caption : "*${caption}*"` 
                                 });
                             } catch (error) {
                                 console.error('Error uploading media:', error);
-                                await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: `${messageContent} namun Gagal mengunggah media dari status ${msg.type === "imageMessage" ? "gambar" : "video"} dari *${senderName}* (${displaySendernumber}).` });
+                                await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: `${messageContent} namun Gagal mengunggah media dari status ${mediaType === "image" ? "gambar" : "video"} dari *${senderName}* (${displaySendernumber}).` });
                             }
                         } else if (msg.type === "audioMessage") {
                             messageContent = `Status audio dari *${senderName}* (${displaySendernumber}) telah dilihat ${autoLikeStatus ? "dan disukai" : ""}. Berikut audionya.`;
