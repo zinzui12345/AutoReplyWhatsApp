@@ -7,6 +7,9 @@ Auto Read Story/Status WhatsApp adalah bot sederhana yang memungkinkan kamu meli
   <br>
   <img src="testing2.jpeg" alt="testing" width="500">
   <div>Mendownload media(foto, video, dan audio) dari story secara otomatis jika fitur downloadMediaStatus diaktifkan</div>
+  <br>
+  <img src="testing3.jpeg" alt="testing" width="500">
+  <div>Terdapat beberapa perintah (command) untuk mengaktifkan atau menonaktifkan fitur yang tersedia dengan mengetik #menu.</div>
 </div>
 
 ## Instalasi :
