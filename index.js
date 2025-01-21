@@ -21,9 +21,9 @@ async function connectToWhatsApp(){
         defaultQueryTimeoutMs: undefined,
         keepAliveIntervalMs: 30000,
         browser: Browsers.macOS('Chrome'),
-        shouldSyncHistoryMessage: () => false,
+        shouldSyncHistoryMessage: () => true,
         markOnlineOnConnect: true,
-        syncFullHistory: false,
+        syncFullHistory: true,
         generateHighQualityLinkPreview: true
     });
 
@@ -108,7 +108,7 @@ Ketik *#menu* untuk melihat menu perintah yang tersedia.`;
     sock.ev.on('messages.upsert', async ({ messages }) => {
         const msg = messages[0];
         if (!msg.message) return;
-        
+
         msg.type = Object.keys(msg.message)[0];
 
         msg.text = msg.type == "conversation" ? msg.message.conversation : "";
