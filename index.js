@@ -71,7 +71,7 @@ async function connectToWhatsApp(){
         askPairingCode();
     }
     
-    sock.ev.on('connection.update', (update) => {
+    sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect } = update;
         if(connection === 'close') {
             const shouldReconnect = lastDisconnect.error?.output.statusCode !== DisconnectReason.loggedOut;
@@ -100,7 +100,7 @@ Ketik *#menu* untuk melihat menu perintah yang tersedia.
 
 SC : https://github.com/jauhariel/AutoReadStoryWhatsapp`;
 
-            sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: messageInfo });
+            await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: messageInfo });
             console.log(`kamu berhasil login dengan nomor: ${displayedLoggedInNumber} \n`);
             console.log("Bot sudah aktif!\n\nSelamat menikmati fitur auto read story whatsapp by github.com/Jauhariel\n\nCatatan :\n1. Kamu bisa menambahkan nomor yang tidak ingin kamu lihat story-nya secara otomatis di file config.js dengan menambahkan nomor pada variabel array blackList.\n\n2. Kamu bisa menambahkan hanya nomor tertentu yang ingin kamu lihat story-nya secara otomatis di file config.js dengan menambahkan nomor pada variabel array whiteList.\n\n3. Jika kamu ingin melihat story dari semua kontak, kosongkan variabel array blackList dan whiteList yang ada di file config.js.\n\n4. Ubah nilai variabel autoLikeStatus yang terdapat di file config.js menjadi false untuk menonaktifkan fitur auto-like pada status, atau ubah menjadi true untuk mengaktifkannya.\n\n5. Ubah nilai variabel downloadMediaStatus yang terdapat di file config.js menjadi true untuk secara otomatis mendownload media (foto, video, audio) dari status, atau ubah menjadi false untuk menonaktifkan fitur tersebut.\n\n6. Klik CTRL dan C pada keyboard secara bersamaan untuk memberhentikan bot!\n\n7. Hapus folder sessions jika ingin login dengan nomor lain atau jika terjadi masalah login, seperti stuck di menghubungkan ke wangsaf, lalu jalankan ulang dengan mengetik: npm start\n");
         }
