@@ -1,0 +1,16 @@
+{
+    "autoLikeStatus": true,
+    "downloadMediaStatus": false,
+    "sensorNomor": true,
+    "antiTelpon": false,
+    "blackList": [
+        "628987654321",
+        "628123456789"
+    ],
+    "whiteList": [],
+    "emojis": [
+        "💚",
+        "❤️",
+        "👍"
+    ]
+}

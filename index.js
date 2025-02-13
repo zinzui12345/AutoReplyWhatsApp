@@ -1,4 +1,3 @@
-let { autoLikeStatus, downloadMediaStatus, sensorNomor, blackList, whiteList } = require('./config');
 const { makeWASocket, DisconnectReason, useMultiFileAuthState, Browsers, jidNormalizedUser, downloadMediaMessage} = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const readline = require('readline');
@@ -7,6 +6,18 @@ const path = require('path');
 
 let useCode = true;
 let loggedInNumber;
+
+const configPath = path.join(__dirname, 'config.json');
+let config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+
+let { autoLikeStatus, downloadMediaStatus, sensorNomor, antiTelpon, blackList, whiteList, emojis } = config;
+
+const updateConfig = (key, value) => {
+    config[key] = value;
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 4), 'utf-8');
+};
+
+let welcomeMessage = false;
 
 async function connectToWhatsApp(){
     const sessionPath = path.join(__dirname, 'sessions');
@@ -95,19 +106,29 @@ info status fitur:
 - Auto Like Status: ${autoLikeStatus ? "*Aktif*" : "*Nonaktif*"}
 - Download Media Status: ${downloadMediaStatus ? "*Aktif*" : "*Nonaktif*"}
 - Sensor Nomor: ${sensorNomor ? "*Aktif*" : "*Nonaktif*"}
+- Anti Telpon: ${antiTelpon ? "*Aktif*" : "*Nonaktif*"}
 
 Ketik *#menu* untuk melihat menu perintah yang tersedia.
 
 SC : https://github.com/jauhariel/AutoReadStoryWhatsapp`;
-
-            setTimeout(async () => {
-                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: messageInfo });
-            }, 5000);
             console.log(`kamu berhasil login dengan nomor: ${displayedLoggedInNumber} \n`);
-            console.log("Bot sudah aktif!\n\nSelamat menikmati fitur auto read story whatsapp by github.com/Jauhariel\n\nCatatan :\n1. Kamu bisa menambahkan nomor yang tidak ingin kamu lihat story-nya secara otomatis di file config.js dengan menambahkan nomor pada variabel array blackList.\n\n2. Kamu bisa menambahkan hanya nomor tertentu yang ingin kamu lihat story-nya secara otomatis di file config.js dengan menambahkan nomor pada variabel array whiteList.\n\n3. Jika kamu ingin melihat story dari semua kontak, kosongkan variabel array blackList dan whiteList yang ada di file config.js.\n\n4. Ubah nilai variabel autoLikeStatus yang terdapat di file config.js menjadi false untuk menonaktifkan fitur auto-like pada status, atau ubah menjadi true untuk mengaktifkannya.\n\n5. Ubah nilai variabel downloadMediaStatus yang terdapat di file config.js menjadi true untuk secara otomatis mendownload media (foto, video, audio) dari status, atau ubah menjadi false untuk menonaktifkan fitur tersebut.\n\n6. Klik CTRL dan C pada keyboard secara bersamaan untuk memberhentikan bot!\n\n7. Hapus folder sessions jika ingin login dengan nomor lain atau jika terjadi masalah login, seperti stuck di menghubungkan ke wangsaf, lalu jalankan ulang dengan mengetik: npm start\n");
+            console.log("Bot sudah aktif!\n\nSelamat menikmati fitur auto read story whatsapp by github.com/Jauhariel\n");
+
+            if (!welcomeMessage) {
+                setTimeout(async () => {
+                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: messageInfo });
+                    welcomeMessage = true;
+                }, 5000);
+            }
         }
     })
     sock.ev.on('creds.update', saveCreds);
+
+    sock.ev.on("call", (call) => {
+        const { id, status, from } = call[0];
+        if (status === "offer" && antiTelpon)
+          return sock.rejectCall(id, from);
+    });
 
     sock.ev.on('messages.upsert', async ({ messages }) => {
         const msg = messages[0];
@@ -129,78 +150,190 @@ SC : https://github.com/jauhariel/AutoReadStoryWhatsapp`;
             // command
             switch (msg.cmd) {
                 case "on":
-                    msg.args[0].trim() === "" 
-                    ? await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `mana argumennya ?\ncontoh ketik : #on autolike\n\nArgumen yang tersedia:\n\n#on autolike\nuntuk mengaktifkan fitur autolike\n\n#on dlmedia\nuntuk mengaktifkan fitur download media(foto,video, dan audio) dari story\n\n#on sensornomor\nuntuk mengaktifkan sensor nomor` }, { quoted: msg })
-                    : msg.args.forEach(async arg => {
-                        switch (arg.trim().toLowerCase()) {
-                            case "autolike":
-                                autoLikeStatus = true;
-                                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Auto Like Status aktif" }, { quoted: msg });
-                                break;
-                            case "dlmedia":
-                                downloadMediaStatus = true;
-                                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Download Media Status aktif" }, { quoted: msg });
-                                break;
-                            case "sensornomor":
-                                sensorNomor = true;
-                                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Sensor Nomor aktif" }, { quoted: msg });
-                                break;
-                            default:
-                                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Argumen tidak valid: ${arg}. Pilihan yang tersedia: autolike, dlmedia, sensornomor` }, { quoted: msg });
-                                break;
-                        }
-                    });
+                    msg.args[0].trim() === ""
+                        ? await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `mana argumennya ?\ncontoh ketik : \`#on autolike\`\n\nArgumen yang tersedia:\n\n\`#on autolike\`\nuntuk mengaktifkan fitur autolike\n\n\`#on dlmedia\`\nuntuk mengaktifkan fitur download media(foto,video, dan audio) dari story\n\n\`#on sensornomor\`\nuntuk mengaktifkan sensor nomor\n\n\`#on antitelpon\`\nuntuk mengaktifkan anti-telpon` }, { quoted: msg })
+                        : msg.args.forEach(async arg => {
+                            switch (arg.trim().toLowerCase()) {
+                                case "autolike":
+                                    autoLikeStatus = true;
+                                    updateConfig('autoLikeStatus', true);
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Auto Like Status aktif" }, { quoted: msg });
+                                    break;
+                                case "dlmedia":
+                                    downloadMediaStatus = true;
+                                    updateConfig('downloadMediaStatus', true);
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Download Media Status aktif" }, { quoted: msg });
+                                    break;
+                                case "sensornomor":
+                                    sensorNomor = true;
+                                    updateConfig('sensorNomor', true);
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Sensor Nomor aktif" }, { quoted: msg });
+                                    break;
+                                case "antitelpon":
+                                    antiTelpon = true;
+                                    updateConfig('antiTelpon', true);
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Anti-telpon aktif" }, { quoted: msg });
+                                    break;
+                                default:
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Argumen tidak valid: ${arg}. Pilihan yang tersedia: autolike, dlmedia, sensornomor, dan antitelpon` }, { quoted: msg });
+                                    break;
+                            }
+                        });
                     break;
                 case "off":
-                    msg.args[0].trim() === "" 
-                        ? await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `mana argumennya ?\ncontoh ketik : #off autolike\n\nArgumen yang tersedia:\n\n#off autolike\nuntuk menonaktifkan fitur autolike\n\n#off dlmedia\nuntuk menonaktifkan fitur download media(foto,video, dan audio) dari story\n\n#off sensornomor\nuntuk menonaktifkan sensor nomor` }, { quoted: msg })
+                    msg.args[0].trim() === ""
+                        ? await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `mana argumennya ?\ncontoh ketik : \`#off autolike\`\n\nArgumen yang tersedia:\n\n\`#off autolike\`\nuntuk menonaktifkan fitur autolike\n\n\`#off dlmedia\`\nuntuk menonaktifkan fitur download media(foto,video, dan audio) dari story\n\n\`#off sensornomor\`\nuntuk menonaktifkan sensor nomor\n\n\`#off antitelpon\`\nuntuk menonaktifkan anti-telpon` }, { quoted: msg })
                         : msg.args.forEach(async arg => {
                             switch (arg.trim().toLowerCase()) {
                                 case "autolike":
                                     autoLikeStatus = false;
+                                    updateConfig('autoLikeStatus', false);
                                     await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Auto Like Status nonaktif" }, { quoted: msg });
                                     break;
                                 case "dlmedia":
                                     downloadMediaStatus = false;
+                                    updateConfig('downloadMediaStatus', false);
                                     await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Download Media Status nonaktif" }, { quoted: msg });
                                     break;
                                 case "sensornomor":
                                     sensorNomor = false;
+                                    updateConfig('sensorNomor', false);
                                     await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Sensor Nomor nonaktif" }, { quoted: msg });
                                     break;
+                                case "antitelpon":
+                                    antiTelpon = false;
+                                    updateConfig('antiTelpon', false);
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Anti-telpon nonaktif" }, { quoted: msg });
+                                    break;
                                 default:
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Argumen tidak valid: ${arg}. Pilihan yang tersedia: autolike, dlmedia, sensornomor` }, { quoted: msg });
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Argumen tidak valid: ${arg}. Pilihan yang tersedia: autolike, dlmedia, sensornomor, dan antitelpon` }, { quoted: msg });
                                     break;
                             }
                         });
+                    break;
+                case "add":
+                    msg.args[0].trim() === ""
+                        ? await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `mana argumennya ?\ncontoh ketik :\n\`#add blacklist 628123456789\`\n\nArgumen yang tersedia:\n\n\`#add blacklist nomornya\`\nuntuk menambahkan nomor ke blacklist\n\n\`#add whitelist nomornya\`\nuntuk menambahkan nomor ke whitelist` }, { quoted: msg })
+                        : msg.args.forEach(async arg => {
+                            const [list, number] = arg.trim().split(" ");
+                            if (!/^\d+$/.test(number)) {
+                                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor harus diisi dan berupa angka.` }, { quoted: msg });
+                                return;
+                            }
+                            if (!number.startsWith('62')) {
+                                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor harus diawali dengan 62.` }, { quoted: msg });
+                                return;
+                            }
+                            if (list === "blacklist") {
+                                if (!blackList.includes(number)) {
+                                    blackList.push(number);
+                                    updateConfig('blackList', blackList);
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor ${number} berhasil ditambahkan ke blacklist` }, { quoted: msg });
+                                } else {
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor ${number} sudah ada di blacklist` }, { quoted: msg });
+                                }
+                            } else if (list === "whitelist") {
+                                if (!whiteList.includes(number)) {
+                                    whiteList.push(number);
+                                    updateConfig('whiteList', whiteList);
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor ${number} berhasil ditambahkan ke whitelist` }, { quoted: msg });
+                                } else {
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor ${number} sudah ada di whitelist` }, { quoted: msg });
+                                }
+                            } else {
+                                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Argumen tidak valid: ${arg}. Pilihan yang tersedia: blacklist, whitelist` }, { quoted: msg });
+                            }
+                        });
+                    break;
+                case "remove":
+                    msg.args[0].trim() === ""
+                        ? await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `mana argumennya ?\ncontoh ketik :\n\`#remove blacklist 628123456789\`\n\nArgumen yang tersedia:\n\n\`#remove blacklist nomornya\`\nuntuk menghapus nomor dari blacklist\n\n\`#remove whitelist nomornya\`\nuntuk menghapus nomor dari whitelist` }, { quoted: msg })
+                        : msg.args.forEach(async arg => {
+                            const [list, number] = arg.trim().split(" ");
+                            if (!/^\d+$/.test(number)) {
+                                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor harus diisi dan berupa angka.` }, { quoted: msg });
+                                return;
+                            }
+                            if (!number.startsWith('62')) {
+                                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor harus diawali dengan 62.` }, { quoted: msg });
+                                return;
+                            }
+                            if (list === "blacklist") {
+                                if (blackList.includes(number)) {
+                                    blackList = blackList.filter(n => n !== number);
+                                    updateConfig('blackList', blackList);
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor ${number} berhasil dihapus dari blacklist` }, { quoted: msg });
+                                } else {
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor tidak ada di blacklist\n\nKetik \`#listnomor\` untuk mengecek daftar nomor yang tersedia` }, { quoted: msg });
+                                }
+                            } else if (list === "whitelist") {
+                                if (whiteList.includes(number)) {
+                                    whiteList = whiteList.filter(n => n !== number);
+                                    updateConfig('whiteList', whiteList);
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor ${number} berhasil dihapus dari whitelist` }, { quoted: msg });
+                                } else {
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor tidak ada di whitelist\n\nKetik \`#listnomor\` untuk mengecek daftar nomor yang tersedia` }, { quoted: msg });
+                                }
+                            } else {
+                                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Argumen tidak valid: ${arg}. Pilihan yang tersedia: blacklist, whitelist` }, { quoted: msg });
+                            }
+                        });
+                    break;
+                case "listnomor":
+                    const blacklistMessage = blackList.length > 0 ? `Blacklist:\n${blackList.join('\n')}` : "Blacklist kosong.";
+                    const whitelistMessage = whiteList.length > 0 ? `Whitelist:\n${whiteList.join('\n')}` : "Whitelist kosong.";
+                    const listMessage = `${blacklistMessage}\n\n${whitelistMessage}\n\nKetik \`#add\` untuk menambahkan nomor ke blacklist atau whitelist\nKetik \`#remove\` untuk menghapus nomor dari blacklist atau whitelist`;
+                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: listMessage }, { quoted: msg });
                     break;
                 case "menu":
                     const menuMessage = `Daftar Menu:
 contoh penggunaan: #on autolike
 
 Perintah On:
-*#on autolike*
+\`#on autolike\`
 Mengaktifkan fitur autolike
 
-*#on dlmedia*
+\`#on dlmedia\`
 Mengaktifkan fitur download media (foto, video, dan audio) dari story
 
-*#on sensornomor*
+\`#on sensornomor\`
 Mengaktifkan sensor nomor
 
+\`#on antitelpon\`
+Mengaktifkan anti telpon
+
 Perintah Off:
-*#off autolike*
+\`#off autolike\`
 Menonaktifkan fitur autolike
 
-*#off dlmedia*
+\`#off dlmedia\`
 Menonaktifkan fitur download media (foto, video, dan audio) dari story
 
-*#off sensornomor*
+\`#off sensornomor\`
 Menonaktifkan sensor nomor
 
+\`#off antitelpon\`
+Menonaktifkan anti telpon
+
+Perintah Add:
+\`#add blacklist nomornya\`
+Menambahkan nomor ke blacklist
+
+\`#add whitelist nomornya\`
+Menambahkan nomor ke whitelist
+
+Perintah Remove:
+\`#remove blacklist nomornya\`
+Menghapus nomor dari blacklist
+
+\`#remove whitelist nomornya\`
+Menghapus nomor dari whitelist
+
 Perintah Info:
-*#info*
-Menampilkan informasi status fitur`;
+\`#info\`
+Menampilkan informasi status fitur
+\`#listnomor\`
+Menampilkan daftar nomor di blacklist dan whitelist`;
 
                     await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: menuMessage }, { quoted: msg });
                     break;
@@ -208,7 +341,8 @@ Menampilkan informasi status fitur`;
                     const infoMessage = `Informasi Status Fitur:
 - Auto Like Status: ${autoLikeStatus ? "*Aktif*" : "*Nonaktif*"}
 - Download Media Status: ${downloadMediaStatus ? "*Aktif*" : "*Nonaktif*"}
-- Sensor Nomor: ${sensorNomor ? "*Aktif*" : "*Nonaktif*"}`;
+- Sensor Nomor: ${sensorNomor ? "*Aktif*" : "*Nonaktif*"}
+- Anti Telpon: ${antiTelpon ? "*Aktif*" : "*Nonaktif*"}`;
 
                     await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: infoMessage }, { quoted: msg });
                     break;
@@ -239,7 +373,7 @@ Menampilkan informasi status fitur`;
                 }
 
                 const myself = jidNormalizedUser(sock.user.id);
-                const emojiToReact = '💚';
+                const emojiToReact = emojis[Math.floor(Math.random() * emojis.length)];
 
                 if (msg.key.remoteJid && msg.key.participant) {
                     await sock.readMessages([msg.key]);
