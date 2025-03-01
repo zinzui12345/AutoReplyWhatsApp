@@ -145,14 +145,27 @@ SC : https://github.com/jauhariel/AutoReadStoryWhatsapp`;
         const msg = messages[0];
         if (!msg.message) return;
 
-        msg.type = msg.message.imageMessage ? "imageMessage" : msg.message.videoMessage ? "videoMessage" : msg.message.audioMessage ? "audioMessage" : Object.keys(msg.message)[0];
-
-        msg.text = msg.type == "conversation" ? msg.message.conversation : "";
+	msg.type = msg.message.imageMessage
+	    ? "imageMessage"
+	    : msg.message.videoMessage
+	    ? "videoMessage"
+	    : msg.message.audioMessage
+	    ? "audioMessage"
+	    : msg.message.extendedTextMessage
+	    ? "extendedTextMessage"
+	    : Object.keys(msg.message)[0];
+	
+	msg.text =
+	    msg.type === "conversation"
+	        ? msg.message.conversation
+	        : msg.type === "extendedTextMessage"
+	        ? msg.message.extendedTextMessage.text
+	        : msg.message[msg.type]?.caption || "";
 
         const prefixes = [".", "#", "!", "/"];
         let prefix = prefixes.find(p => msg.text.startsWith(p));
 
-        if (prefix) {
+        if (prefix && msg.key.fromMe) {
             msg.cmd = msg.text.trim().split(" ")[0].replace(prefix, "").toLowerCase();
         
             // args
