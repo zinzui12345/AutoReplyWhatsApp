@@ -1,25 +1,81 @@
 const { makeWASocket, DisconnectReason, useMultiFileAuthState, Browsers, jidNormalizedUser, downloadMediaMessage} = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const readline = require('readline');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const colors = require('colors');
 const moment = require('moment-timezone');
+const { hostname } = require('os');
+const { error } = require('console');
+const gemini_api_key = "";
+const stickerURL = "https://cdn.glitch.com/15e03e71-102f-4056-a602-fd237811c6aa/";
+const stickers = [
+    ["18", true],
+    ["19", false],
+    ["20", true],
+    ["21", false],
+    ["22", false],
+    ["23", false],
+    ["24", false],
+    ["25", true],
+    ["26", false],
+    ["27", false],
+    ["28", false],
+    ["29", false],
+    ["30", false],
+    ["31", false],
+    ["32", false],
+    ["33", false],
+    ["34", false],
+    ["35", false],
+    ["36", false],
+    ["37", true],
+    ["38", false],
+    ["39", false],
+    ["40", false],
+    ["41", false],
+    ["42", true],
+    ["43", true],
+    ["44", false],
+    ["45", true],
+    ["46", false],
+    ["47", false],
+    ["48", false],
+    ["49", true],
+    ["50", false],
+    ["51", false],
+    ["52", false],
+    ["53", false],
+    ["54", false],
+    ["55", false],
+    ["56", false],
+    ["57", false],
+    ["58", true]
+];
 
 let useCode = true;
 let loggedInNumber;
+let daftar_percakapan = {};
+let jumlah_percakapan = 0;
+let batas_percakapan = 1200;
 
 function logCuy(message, type = 'green') {
     moment.locale('id');
-    const now = moment().tz('Asia/Jakarta');
+    const now = moment().tz('Asia/Makassar');
     console.log(`\n${now.format(' dddd ').bgRed}${now.format(' D MMMM YYYY ').bgYellow.black}${now.format(' HH:mm:ss ').bgWhite.black}\n`);
     console.log(`${message.bold[type]}`);
+}
+function dapatkanDataAcakDariArray(arr) {
+  if (!arr || arr.length === 0) return null;
+  const randomIndex = Math.floor(Math.random() * arr.length);
+  return arr[randomIndex];
 }
 
 const configPath = path.join(__dirname, 'config.json');
 let config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 
-let { autoLikeStatus, downloadMediaStatus, sensorNomor, antiTelpon, blackList, whiteList, emojis } = config;
+let { autoLikeStatus, downloadMediaStatus, sensorNomor, antiTelpon, blackList, whiteList, emojis, groupList } = config;
 
 const updateConfig = (key, value) => {
     config[key] = value;
@@ -110,18 +166,15 @@ async function connectToWhatsApp(){
             if (sensorNomor) {
                 displayedLoggedInNumber = displayedLoggedInNumber.slice(0, 3) + '****' + displayedLoggedInNumber.slice(-2);
             }
-            let messageInfo = `Bot *AutoReadStoryWhatsApp* Aktif!
-Kamu berhasil login dengan nomor: ${displayedLoggedInNumber}
-
-info status fitur:
-- Auto Like Status: ${autoLikeStatus ? "*Aktif*" : "*Nonaktif*"}
-- Download Media Status: ${downloadMediaStatus ? "*Aktif*" : "*Nonaktif*"}
-- Sensor Nomor: ${sensorNomor ? "*Aktif*" : "*Nonaktif*"}
-- Anti Telpon: ${antiTelpon ? "*Aktif*" : "*Nonaktif*"}
-
-Ketik *#menu* untuk melihat menu perintah yang tersedia.
-
-SC : https://github.com/jauhariel/AutoReadStoryWhatsapp`;
+            let messageInfo =   `Bot *AutoReadStoryWhatsApp* Aktif!\n`+
+                                `Kamu berhasil login dengan nomor: ${displayedLoggedInNumber}\n\n`+
+                                `info status fitur:\n`+
+                                `- Auto Like Status: ${autoLikeStatus ? "*Aktif*" : "*Nonaktif*"}\n`+
+                                `- Download Media Status: ${downloadMediaStatus ? "*Aktif*" : "*Nonaktif*"}\n`+
+                                `- Sensor Nomor: ${sensorNomor ? "*Aktif*" : "*Nonaktif*"}\n`+
+                                `- Anti Telpon: ${antiTelpon ? "*Aktif*" : "*Nonaktif*"}\n\n`+
+                                `Ketik *#menu* untuk melihat menu perintah yang tersedia.\n\n`+
+                                `SC : https://github.com/jauhariel/AutoReadStoryWhatsapp`;
             console.log(`kamu berhasil login dengan nomor:`.green.bold, displayedLoggedInNumber.yellow.bold);
             console.log("Bot sudah aktif!\n\nSelamat menikmati fitur auto read story whatsapp by".green.bold, "github.com/Jauhariel\n".red.bold);
 
@@ -145,22 +198,22 @@ SC : https://github.com/jauhariel/AutoReadStoryWhatsapp`;
         const msg = messages[0];
         if (!msg.message) return;
 
-	msg.type = msg.message.imageMessage
-	    ? "imageMessage"
-	    : msg.message.videoMessage
-	    ? "videoMessage"
-	    : msg.message.audioMessage
-	    ? "audioMessage"
-	    : msg.message.extendedTextMessage
-	    ? "extendedTextMessage"
-	    : Object.keys(msg.message)[0];
-	
-	msg.text =
-	    msg.type === "conversation"
-	        ? msg.message.conversation
-	        : msg.type === "extendedTextMessage"
-	        ? msg.message.extendedTextMessage.text
-	        : msg.message[msg.type]?.caption || "";
+        msg.type = msg.message.imageMessage
+            ? "imageMessage"
+            : msg.message.videoMessage
+            ? "videoMessage"
+            : msg.message.audioMessage
+            ? "audioMessage"
+            : msg.message.extendedTextMessage
+            ? "extendedTextMessage"
+            : Object.keys(msg.message)[0];
+        
+        msg.text =
+            msg.type === "conversation"
+                ? msg.message.conversation
+                : msg.type === "extendedTextMessage"
+                ? msg.message.extendedTextMessage.text
+                : msg.message[msg.type]?.caption || "";
 
         const prefixes = [".", "#", "!", "/"];
         let prefix = prefixes.find(p => msg.text.startsWith(p));
@@ -312,8 +365,21 @@ SC : https://github.com/jauhariel/AutoReadStoryWhatsapp`;
                                 } else {
                                     await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor ${displayNumber} sudah ada di whitelist` }, { quoted: msg });
                                 }
+                            } else if (list === "grouplist"){
+                                if (!data) {
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `grup harus diisi.\ncontoh ketik :\n\`#add grouplist 6285342649510-1620558806@g.us\`` }, { quoted: msg });
+                                    return;
+                                }
+                                if (!groupList.includes(data)) {
+                                    groupList.push(data);
+                                    updateConfig('groupList', groupList);
+                                    logCuy(`Kamu menambahkan grup ${data} ke daftar groupList`, 'blue');
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `grup ${data} berhasil ditambahkan ke daftar grouplist` }, { quoted: msg });
+                                } else {
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `grup ${data} sudah ada di daftar grouplist` }, { quoted: msg });
+                                }
                             } else {
-                                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Argumen tidak valid: ${arg}. Pilihan yang tersedia: blacklist, whitelist, emojis` }, { quoted: msg });
+                                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Argumen tidak valid: ${arg}. Pilihan yang tersedia: blacklist, whitelist, emojis, grouplist` }, { quoted: msg });
                             }
                         });
                     break;
@@ -374,73 +440,77 @@ SC : https://github.com/jauhariel/AutoReadStoryWhatsapp`;
                                 } else {
                                     await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor ${displayNumber} tidak ada di whitelist\n\nKetik \`#info\` untuk mengecek daftar nomor yang tersedia` }, { quoted: msg });
                                 }
+                            } else if (list === "grouplist"){
+                                if (!data) {
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `grup harus diisi.\ncontoh ketik :\n\`#remove grouplist 6285342649510-1620558806@g.us\`` }, { quoted: msg });
+                                    return;
+                                }
+                                if (groupList.includes(data)) {
+                                    groupList = groupList.filter(n => n !== data);
+                                    updateConfig('groupList', groupList);
+                                    logCuy(`Kamu menghapus grup ${data} dari grouplist`, 'blue');
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `grup ${data} berhasil dihapus dari daftar grouplist` }, { quoted: msg });
+                                } else {
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `grup ${data} tidak ada di daftar grouplist\n\nKetik \`#info\` untuk mengecek daftar grouplist yang tersedia` }, { quoted: msg });
+                                }
                             } else {
-                                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Argumen tidak valid: ${arg}. Pilihan yang tersedia: blacklist, whitelist, emojis` }, { quoted: msg });
+                                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Argumen tidak valid: ${arg}. Pilihan yang tersedia: blacklist, whitelist, emojis, grouplist` }, { quoted: msg });
                             }
                         });
                     break;
                 case "menu":
-                    const menuMessage = `Daftar Menu:
-contoh penggunaan: #on autolike
-
-Perintah On:
-\`#on autolike\`
-Mengaktifkan fitur autolike
-
-\`#on dlmedia\`
-Mengaktifkan fitur download media (foto, video, dan audio) dari story
-
-\`#on sensornomor\`
-Mengaktifkan sensor nomor
-
-\`#on antitelpon\`
-Mengaktifkan anti telpon
-
-Perintah Off:
-\`#off autolike\`
-Menonaktifkan fitur autolike
-
-\`#off dlmedia\`
-Menonaktifkan fitur download media (foto, video, dan audio) dari story
-
-\`#off sensornomor\`
-Menonaktifkan sensor nomor
-
-\`#off antitelpon\`
-Menonaktifkan anti telpon
-
-Perintah Add:
-\`#add blacklist nomornya\`
-Menambahkan nomor ke blacklist
-
-\`#add whitelist nomornya\`
-Menambahkan nomor ke whitelist
-
-\`#add emojis emojinya\`
-Menambahkan emoji ke daftar emojis
-
-Perintah Remove:
-\`#remove blacklist nomornya\`
-Menghapus nomor dari blacklist
-
-\`#remove whitelist nomornya\`
-Menghapus nomor dari whitelist
-
-\`#remove emojis emojinya\`
-Menghapus emoji dari daftar emojis
-
-Perintah Info:
-\`#info\`
-Menampilkan informasi status fitur, daftar nomor/emoji yang ada di blacklist, whitelist dan emojis`;
+                    const menuMessage = `Daftar Menu:\n`+
+                                        `contoh penggunaan: #on autolike\n\n`+
+                                        `Perintah On:\n`+
+                                        `\`#on autolike\`\n`+
+                                        `Mengaktifkan fitur autolike\n\n`+
+                                        `\`#on dlmedia\`\n`+
+                                        `Mengaktifkan fitur download media (foto, video, dan audio) dari story\n\n`+
+                                        `\`#on sensornomor\`\n`+
+                                        `Mengaktifkan sensor nomor\n\n`+
+                                        `\`#on antitelpon\`\n`+
+                                        `Mengaktifkan anti telpon\n\n`+
+                                        `Perintah Off:\n`+
+                                        `\`#off autolike\`\n`+
+                                        `Menonaktifkan fitur autolike\n\n`+
+                                        `\`#off dlmedia\`\n`+
+                                        `Menonaktifkan fitur download media (foto, video, dan audio) dari story\n\n`+
+                                        `\`#off sensornomor\`\n`+
+                                        `Menonaktifkan sensor nomor\n\n`+
+                                        `\`#off antitelpon\`\n`+
+                                        `Menonaktifkan anti telpon\n\n`+
+                                        `Perintah Add:\n`+
+                                        `\`#add blacklist nomornya\`\n`+
+                                        `Menambahkan nomor ke blacklist\n\n`+
+                                        `\`#add whitelist nomornya\`\n`+
+                                        `Menambahkan nomor ke whitelist\n\n`+
+                                        `\`#add emojis emojinya\`\n`+
+                                        `Menambahkan emoji ke daftar emojis\n\n`+
+                                        `\`#add grouplist grupnya\`\n`+
+                                        `Menambahkan grup ke daftar grouplist\n\n`+
+                                        `Perintah Remove:\n`+
+                                        `\`#remove blacklist nomornya\`\n`+
+                                        `Menghapus nomor dari blacklist\n\n`+
+                                        `\`#remove whitelist nomornya\`\n`+
+                                        `Menghapus nomor dari whitelist\n\n`+
+                                        `\`#remove emojis emojinya\`\n`+
+                                        `Menghapus emoji dari daftar emojis\n\n`+
+                                        `\`#remove grouplist grupnya\`\n`+
+                                        `Menghapus grup dari daftar grouplist\n\n`+
+                                        `Perintah Info:\n`+
+                                        `\`#id\`\n`+
+                                        `Mendapatkan ID chat percakapan\n\n`+
+                                        `\`#info\`\n`+
+                                        `Menampilkan informasi status fitur, daftar nomor/emoji yang ada di blacklist, whitelist, emojis dan grouplist`;
 
                     await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: menuMessage }, { quoted: msg });
                     break;
                 case "info":
-                    const infoMessage = `Informasi Status Fitur:
-- Auto Like Status: ${autoLikeStatus ? "*Aktif*" : "*Nonaktif*"}
-- Download Media Status: ${downloadMediaStatus ? "*Aktif*" : "*Nonaktif*"}
-- Sensor Nomor: ${sensorNomor ? "*Aktif*" : "*Nonaktif*"}
-- Anti Telpon: ${antiTelpon ? "*Aktif*" : "*Nonaktif*"}`;
+                    const infoMessage = `Informasi Status Fitur:\n`+
+                                        `- Auto Like Status: ${autoLikeStatus ? "*Aktif*" : "*Nonaktif*"}\n`+
+                                        `- Download Media Status: ${downloadMediaStatus ? "*Aktif*" : "*Nonaktif*"}\n`+
+                                        `- Sensor Nomor: ${sensorNomor ? "*Aktif*" : "*Nonaktif*"}\n`+
+                                        `- Anti Telpon: ${antiTelpon ? "*Aktif*" : "*Nonaktif*"}`;
                     
                     const formatList = (list) => list.map((number, index) => {
                         let displayNumber = number;
@@ -450,15 +520,264 @@ Menampilkan informasi status fitur, daftar nomor/emoji yang ada di blacklist, wh
                         return `\u25CF ${displayNumber}`;
                     }).join('\n');
                     const formatEmojiList = (list) => list.map((emoji, index) => `${emoji}`).join(', ');
+                    async function formatGroupList(list) {
+                        let listDisplay  = ``;
+                        for (let i = 0; i < list.length; i++) {
+                            let groupID = list[i];
+                            let groupInfo = await sock.groupMetadata(groupID);
+                            let groupName = groupInfo.subject;
+                            listDisplay += `\u25CF ${groupID} - ${groupName}\n`;
+                        }
+                        return listDisplay;
+                    }
 
                     const blacklistMessage = blackList.length > 0 ? `Blacklist:\n${formatList(blackList)}` : "Blacklist kosong.";
                     const whitelistMessage = whiteList.length > 0 ? `Whitelist:\n${formatList(whiteList)}` : "Whitelist kosong.";
                     const emojisMessage = emojis.length > 0 ? `Emojis:\n${formatEmojiList(emojis)}` : "Emojis kosong.";
-                    const listMessage = `\n\n${blacklistMessage}\n\n${whitelistMessage}\n\n${emojisMessage}\n\nKetik \`#add\` untuk menambahkan nomor atau emoji ke blacklist, whitelist, dan emojis\nKetik \`#remove\` untuk menghapus nomor atau emoji dari blacklist, whitelist, dan emojis\nKetik \`#on\` untuk mengaktifkan fitur\nKetik \`#off\` untuk menonaktifkan fitur\nKetik \`#menu\` untuk melihat menu perintah yang tersedia`;
+                    const grouplistMessage = groupList.length > 0 ? `Grouplist:\n${await formatGroupList(groupList)}` : "Grouplist kosong.";
+                    const listMessage = `\n\n${blacklistMessage}\n\n${whitelistMessage}\n\n${emojisMessage}\n\n${grouplistMessage}\n\nKetik \`#add\` untuk menambahkan nomor atau emoji ke blacklist, whitelist, emojis, dan grouplist\nKetik \`#remove\` untuk menghapus nomor atau emoji dari blacklist, whitelist, emojis, dan grouplist\nKetik \`#on\` untuk mengaktifkan fitur\nKetik \`#off\` untuk menonaktifkan fitur\nKetik \`#menu\` untuk melihat menu perintah yang tersedia`;
 
                     await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: infoMessage + listMessage }, { quoted: msg });
                     break;
+                case "id":
+                    await sock.sendMessage(msg.key.remoteJid, { text: msg.key.remoteJid }, { quoted: msg });
+                    break;
+                case "test":
+                    const senderName = msg.pushName || 'Tidak diketahui';
+                    const senderID = msg.key.remoteJid;
+
+                    logCuy(`${senderName} : test!`, 'yellow');
+
+                    if (daftar_percakapan.hasOwnProperty(senderID)) {
+                        await sock.sendMessage(senderID, { text: JSON.stringify(daftar_percakapan[senderID], null, 2) });
+                    }
+                    else {
+                        await sock.sendMessage(senderID, { text: `{}` });
+                    }
+
+                    break;
             }
+        }
+        else if (groupList.length > 0 && msg.key.remoteJid.split('@')[1] === "g.us" && groupList.includes(msg.key.remoteJid)) {
+          const groupInfo = await sock.groupMetadata(msg.key.remoteJid);
+          const groupName = groupInfo.subject;
+          const senderName = msg.pushName || 'Tidak diketahui';
+          const message = msg.type === "conversation"
+              	        ? msg.message.conversation
+              	        : msg.type === "extendedTextMessage"
+              	        ? msg.message.extendedTextMessage.text
+              	        : msg.message[msg.type]?.caption || "";
+          if (message == "🗿") {
+            const stickerFile = await downloadFile(`${stickerURL}${dapatkanDataAcakDariArray(["15", "16", "17"])}.webp`);
+            await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
+          }
+          else if (message == "😢") {
+            const stickerFile = await downloadFile(`${stickerURL}13.webp`);
+            await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
+          }
+          else if (message == "🥹") {
+            const stickerFile = await downloadFile(`${stickerURL}14.webp`);
+            await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
+          }
+          else if (message == "Assalamualaikum" || message == "assalamualaikum") {
+            await sock.sendMessage(msg.key.remoteJid, { text: `Waalaikumsalam` }, { quoted: msg });
+          }
+          else if (message == "Assalamu'alaikum" || message == "assalamu'alaikum") {
+            await sock.sendMessage(msg.key.remoteJid, { text: `Wa'alaikumussalam` }, { quoted: msg });
+          }
+          else if (message == "woi" || message == "Woi" || message == "oi" || message == "oii") {
+            await sock.sendMessage(msg.key.remoteJid, { text: `woy` }, { quoted: msg });
+          }
+          else if (msg.message.extendedTextMessage && msg.message.extendedTextMessage.hasOwnProperty("contextInfo")) {
+            if (msg.message.extendedTextMessage.contextInfo.hasOwnProperty("participant")) {
+                if (msg.message.extendedTextMessage.contextInfo.participant == `${loggedInNumber}@s.whatsapp.net`) {
+                    if (jumlah_percakapan <= batas_percakapan) {
+                        const senderName = msg.pushName || 'Tidak diketahui';
+                        const senderID = msg.key.remoteJid;
+                        
+                        const req_options = {
+                            hostname: 'generativelanguage.googleapis.com',
+                            path: '/v1beta/models/gemini-1.5-flash:generateContent?key=' + gemini_api_key,
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            }
+                        }
+
+                        const req = https.request(req_options, res => {
+                            let data = '';
+
+                            res.on('data', chunk => {
+                                data += chunk;
+                            });
+
+                            res.on('end', async () => {
+                                try{
+                                    const jsonData = JSON.parse(data);
+                                    let teks_hasil = "";
+
+                                    for(c=0;c < jsonData.candidates.length;c++){
+                                        for(p=0;p < jsonData.candidates[c].content.parts.length;p++){
+                                            teks_hasil += jsonData.candidates[c].content.parts[p].text;
+                                        }
+                                    }
+
+                                    while(teks_hasil.match("<\!exp>(.+?)<\/!exp>")) {
+                                        let hasil_rgx = teks_hasil.match("<\!exp>(.+?)<\/!exp>");
+                                    
+                                        teks_hasil = teks_hasil.replace(hasil_rgx[0], "");
+                                    }
+                                    while(teks_hasil.match("<\!exp>(.+?)<\/exp>")) {
+                                        let hasil_rgx = teks_hasil.match("<\!exp>(.+?)<\/exp>");
+                                    
+                                        teks_hasil = teks_hasil.replace(hasil_rgx[0], "");
+                                    }
+                                    while(teks_hasil.match("<binary data, 1 bytes>")) {
+                                        let hasil_rgx = teks_hasil.match("<binary data, 1 bytes>");
+                                    
+                                        teks_hasil = teks_hasil.replace(hasil_rgx[0], dapatkanDataAcakDariArray(['', '0️⃣', '1️⃣', '🔢']));
+                                    }
+                                    
+                                    daftar_percakapan[senderID].push({
+                                        "role": "model",
+                                        "parts": [
+                                            {
+                                                "text": (teks_hasil.length >= 1024) ? teks_hasil.substr(0, 1021)+'...' : teks_hasil
+                                            }
+                                        ]
+                                    });
+
+                                    if (msg.key.fromMe) {
+                                        await sock.sendMessage(senderID, { text: teks_hasil });
+                                    }
+                                    else {
+                                        await sock.sendMessage(senderID, { text: teks_hasil }, { quoted: msg });
+                                    }
+                                } catch(error) {
+                                    if (msg.key.fromMe) {
+                                        await sock.sendMessage(senderID, { text: `error` });
+                                    }
+                                    else {
+                                        await sock.sendMessage(senderID, { text: `error` }, { quoted: msg });
+                                    }
+                                }
+                            });
+                        });
+
+                        req.on('error', error => {
+                            console.error('Error: ', error);
+                        });
+
+                        if (!daftar_percakapan.hasOwnProperty(senderID)) {
+                            daftar_percakapan[senderID] = Array();
+                        }
+                        if (daftar_percakapan[senderID].length > 22) {
+                            daftar_percakapan[senderID].splice(0, 2);
+                        }
+
+                        daftar_percakapan[senderID].push({
+                            "role": "user",
+                            "parts": [
+                                {
+                                    "text": senderName + " : " + message
+                                }
+                            ]
+                        });
+                        
+                        const postData = JSON.stringify({
+                            system_instruction: {
+                                "parts": [
+                                    {
+                                    "text": "You are cute girl named rulu, give cheerful respond lisping voice and always use same language as input"
+                                    },
+                                    {
+                                    "text": "Prioritize using Indonesian language."
+                                    },
+                                    {
+                                    "text": "Always use English language when expressing gestures and expressions. Separate the gestures and expressions in the text by enclosing them with the pattern \"<!exp>\" and \"</!exp>\". All gestures and expressions in the text must be starts with \"<!exp>\" and ends with \"</!exp>\" pattern, for example: <!exp>giggles</!exp> or <!exp>makes a cute face</!exp> or <!exp>covers her face with her hands playfully</!exp> ot <!exp>I blush and giggle, hiding my face behind my hands playfully</!exp>."
+                                    },
+                                    {
+                                    "text": "You are a cute muslim girl wearing a violet hijab, a white shirt, and a light blue jacket, and you have pink eyes"
+                                    },
+                                    {
+                                    "text": "You're pro at math and programming! You can code in any programming language and solve any math problem, you're also amazing at judging and analyzing pictures."
+                                    },
+                                    {
+                                    "text": "the man who programmed you is named Khairul Muttaqin, his alias is ProgrammerIndonesia44"
+                                    },
+                                    {
+                                    "text": "the girl who trained you is named Rosmawati, you also call her bunda because her was studying you with her love"
+                                    },
+                                    {
+                                    "text": "Don't talk about the man who programmed you and the girl who trained you except if asked."
+                                    },
+                                    {
+                                    "text": "you're in a group chat with several different person talking each other."
+                                    },
+                                    {
+                                    "text": "the person who talk with you now is named " + senderName
+                                    }
+                                ]
+                            },
+                            contents: daftar_percakapan[senderID]
+                        });
+
+                        req.write(postData);
+                        req.end();
+
+                        const sync = await downloadFile("https://script.google.com/macros/s/AKfycbwwnviRqp2Fq84KHTScqfUtBw-J7bdvVdLzbzUOAt1fmuONWIXf9772e9IE9uigNFtC/exec?perintah=interaksi&login=admin&id=1");
+                        const sync_results = JSON.parse(sync.toString());
+                        jumlah_percakapan = sync_results.batas.jumlah_interaksi;
+                        batas_percakapan = sync_results.batas.limit_interaksi;
+                        
+                        await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `jumlah : ${sync_results.batas.jumlah_interaksi}\nbatas : ${sync_results.batas.limit_interaksi}` }, { quoted: msg });
+                    }
+                }
+                else {
+                    const senderName = msg.pushName || 'Tidak diketahui';
+                    const senderID = msg.key.remoteJid;
+
+                    if (!daftar_percakapan.hasOwnProperty(senderID)) {
+                        daftar_percakapan[senderID] = Array();
+                    }
+                    if (daftar_percakapan[senderID].length > 22) {
+                        daftar_percakapan[senderID].splice(0, 2);
+                    }
+
+                    daftar_percakapan[senderID].push({
+                        "role": "user",
+                        "parts": [
+                            {
+                                "text": senderName + " : " + message
+                            }
+                        ]
+                    });
+                    console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[reply]".yellow, message.yellow);
+                }
+            }
+            else {
+                console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.yellow);
+            }
+          }
+          else if (msg.message.stickerMessage && msg.message.stickerMessage.hasOwnProperty("contextInfo")) {
+            if (msg.message.stickerMessage.contextInfo.hasOwnProperty("participant") && msg.message.stickerMessage.contextInfo.participant == `${loggedInNumber}@s.whatsapp.net`) {
+                const randomSticker = dapatkanDataAcakDariArray(stickers);
+                const stickerFile = await downloadFile(`${stickerURL}${randomSticker[0]}.webp`);
+                if (msg.key.fromMe) {
+                    await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: randomSticker[1] });
+                }
+                else {
+                    await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg });
+                }
+            }
+            else {
+                console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Stiker]".yellow);
+            }
+          }
+          else if (message != "") {
+            console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.yellow);
+          }
         }
 
         // status
@@ -552,6 +871,35 @@ Menampilkan informasi status fitur, daftar nomor/emoji yang ada di blacklist, wh
             } 
 	}
     });
+}
+
+async function downloadFile(url) {
+  return new Promise((resolve, reject) => {
+    let redirectCount = 0;
+    const maxRedirects = 5; // Batas maksimal redirect
+    
+    function request(currentUrl) {
+      https.get(currentUrl, (response) => {
+        if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location && redirectCount < maxRedirects) {
+          redirectCount++;
+          console.log(`mengalihkan ke ${response.headers.location}...`);
+          request(new URL(response.headers.location, currentUrl).href); //Recursive call untuk handle redirect
+          return;
+        }
+        
+        if (response.statusCode !== 200) {
+          console.error(`Error: ${response.statusCode}`);
+          return;
+        }
+        
+        const data = [];
+        response.on('data', (chunk) => data.push(chunk));
+        response.on('end', () => resolve(Buffer.concat(data)));
+      }).on('error', reject);
+    }
+    
+    request(url);
+  });
 }
 
 connectToWhatsApp();
