@@ -571,7 +571,11 @@ async function connectToWhatsApp(){
             const stickerFile = await downloadFile(`${stickerURL}${dapatkanDataAcakDariArray(["15", "16", "17"])}.webp`);
             await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
           }
-          else if (message == "😢") {
+          else if (message == "😈" || message == "👿") {
+            const stickerFile = await downloadFile(`${stickerURL}${dapatkanDataAcakDariArray(["59", "60", "61", "62", "63", "64", "65", "66", "67", "68", "69", "70", "71", "72", "73"])}.webp`);
+            await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
+          }
+          else if (message == "😢" || message == "😭") {
             const stickerFile = await downloadFile(`${stickerURL}13.webp`);
             await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
           }
@@ -585,154 +589,16 @@ async function connectToWhatsApp(){
           else if (message == "Assalamu'alaikum" || message == "assalamu'alaikum") {
             await sock.sendMessage(msg.key.remoteJid, { text: `Wa'alaikumussalam` }, { quoted: msg });
           }
-          else if (message == "woi" || message == "Woi" || message == "oi" || message == "oii") {
+          else if (message == "woi" || message == "Woi" || message == "woy" || message == "oi") {
             await sock.sendMessage(msg.key.remoteJid, { text: `woy` }, { quoted: msg });
           }
           else if (msg.message.extendedTextMessage && msg.message.extendedTextMessage.hasOwnProperty("contextInfo")) {
             if (msg.message.extendedTextMessage.contextInfo.hasOwnProperty("participant")) {
                 if (msg.message.extendedTextMessage.contextInfo.participant == `${loggedInNumber}@s.whatsapp.net`) {
-                    if (jumlah_percakapan <= batas_percakapan) {
-                        const senderName = msg.pushName || 'Tidak diketahui';
-                        const senderID = msg.key.remoteJid;
-                        
-                        const req_options = {
-                            hostname: 'generativelanguage.googleapis.com',
-                            path: '/v1beta/models/gemini-1.5-flash:generateContent?key=' + gemini_api_key,
-                            method: 'POST',
-                            headers: {
-                                'Accept': 'application/json',
-                                'Content-Type': 'application/json'
-                            }
-                        }
-
-                        const req = https.request(req_options, res => {
-                            let data = '';
-
-                            res.on('data', chunk => {
-                                data += chunk;
-                            });
-
-                            res.on('end', async () => {
-                                try{
-                                    const jsonData = JSON.parse(data);
-                                    let teks_hasil = "";
-
-                                    for(c=0;c < jsonData.candidates.length;c++){
-                                        for(p=0;p < jsonData.candidates[c].content.parts.length;p++){
-                                            teks_hasil += jsonData.candidates[c].content.parts[p].text;
-                                        }
-                                    }
-
-                                    while(teks_hasil.match("<\!exp>(.+?)<\/!exp>")) {
-                                        let hasil_rgx = teks_hasil.match("<\!exp>(.+?)<\/!exp>");
-                                    
-                                        teks_hasil = teks_hasil.replace(hasil_rgx[0], "");
-                                    }
-                                    while(teks_hasil.match("<\!exp>(.+?)<\/exp>")) {
-                                        let hasil_rgx = teks_hasil.match("<\!exp>(.+?)<\/exp>");
-                                    
-                                        teks_hasil = teks_hasil.replace(hasil_rgx[0], "");
-                                    }
-                                    while(teks_hasil.match("<binary data, 1 bytes>")) {
-                                        let hasil_rgx = teks_hasil.match("<binary data, 1 bytes>");
-                                    
-                                        teks_hasil = teks_hasil.replace(hasil_rgx[0], dapatkanDataAcakDariArray(['', '0️⃣', '1️⃣', '🔢']));
-                                    }
-                                    
-                                    daftar_percakapan[senderID].push({
-                                        "role": "model",
-                                        "parts": [
-                                            {
-                                                "text": (teks_hasil.length >= 1024) ? teks_hasil.substr(0, 1021)+'...' : teks_hasil
-                                            }
-                                        ]
-                                    });
-
-                                    if (msg.key.fromMe) {
-                                        await sock.sendMessage(senderID, { text: teks_hasil });
-                                    }
-                                    else {
-                                        await sock.sendMessage(senderID, { text: teks_hasil }, { quoted: msg });
-                                    }
-                                } catch(error) {
-                                    if (msg.key.fromMe) {
-                                        await sock.sendMessage(senderID, { text: `error` });
-                                    }
-                                    else {
-                                        await sock.sendMessage(senderID, { text: `error` }, { quoted: msg });
-                                    }
-                                }
-                            });
-                        });
-
-                        req.on('error', error => {
-                            console.error('Error: ', error);
-                        });
-
-                        if (!daftar_percakapan.hasOwnProperty(senderID)) {
-                            daftar_percakapan[senderID] = Array();
-                        }
-                        if (daftar_percakapan[senderID].length > 22) {
-                            daftar_percakapan[senderID].splice(0, 2);
-                        }
-
-                        daftar_percakapan[senderID].push({
-                            "role": "user",
-                            "parts": [
-                                {
-                                    "text": senderName + " : " + message
-                                }
-                            ]
-                        });
-                        
-                        const postData = JSON.stringify({
-                            system_instruction: {
-                                "parts": [
-                                    {
-                                    "text": "You are cute girl named rulu, give cheerful respond lisping voice and always use same language as input"
-                                    },
-                                    {
-                                    "text": "Prioritize using Indonesian language."
-                                    },
-                                    {
-                                    "text": "Always use English language when expressing gestures and expressions. Separate the gestures and expressions in the text by enclosing them with the pattern \"<!exp>\" and \"</!exp>\". All gestures and expressions in the text must be starts with \"<!exp>\" and ends with \"</!exp>\" pattern, for example: <!exp>giggles</!exp> or <!exp>makes a cute face</!exp> or <!exp>covers her face with her hands playfully</!exp> ot <!exp>I blush and giggle, hiding my face behind my hands playfully</!exp>."
-                                    },
-                                    {
-                                    "text": "You are a cute muslim girl wearing a violet hijab, a white shirt, and a light blue jacket, and you have pink eyes"
-                                    },
-                                    {
-                                    "text": "You're pro at math and programming! You can code in any programming language and solve any math problem, you're also amazing at judging and analyzing pictures."
-                                    },
-                                    {
-                                    "text": "the man who programmed you is named Khairul Muttaqin, his alias is ProgrammerIndonesia44"
-                                    },
-                                    {
-                                    "text": "the girl who trained you is named Rosmawati, you also call her bunda because her was studying you with her love"
-                                    },
-                                    {
-                                    "text": "Don't talk about the man who programmed you and the girl who trained you except if asked."
-                                    },
-                                    {
-                                    "text": "you're in a group chat with several different person talking each other."
-                                    },
-                                    {
-                                    "text": "the person who talk with you now is named " + senderName
-                                    }
-                                ]
-                            },
-                            contents: daftar_percakapan[senderID]
-                        });
-
-                        req.write(postData);
-                        req.end();
-
-                        const sync = await downloadFile("https://script.google.com/macros/s/AKfycbwwnviRqp2Fq84KHTScqfUtBw-J7bdvVdLzbzUOAt1fmuONWIXf9772e9IE9uigNFtC/exec?perintah=interaksi&login=admin&id=1");
-                        const sync_results = JSON.parse(sync.toString());
-                        jumlah_percakapan = sync_results.batas.jumlah_interaksi;
-                        batas_percakapan = sync_results.batas.limit_interaksi;
-                        
-                        await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `jumlah : ${sync_results.batas.jumlah_interaksi}\nbatas : ${sync_results.batas.limit_interaksi}` }, { quoted: msg });
-                    }
+                    const senderName = msg.pushName || 'Tidak diketahui';
+                    const senderID = msg.key.remoteJid;
+                    
+                    interactAI(sock, msg, senderID, senderName, message);
                 }
                 else {
                     const senderName = msg.pushName || 'Tidak diketahui';
@@ -749,12 +615,19 @@ async function connectToWhatsApp(){
                         "role": "user",
                         "parts": [
                             {
-                                "text": senderName + " : " + message
+                                "text": (msg.key.fromMe ? "ProgrammerIndonesia44" : senderName) + " : " + message
                             }
                         ]
                     });
                     console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[reply]".yellow, message.yellow);
                 }
+            }
+            else if (message.startsWith(`@${loggedInNumber}`)) {
+                const senderName = msg.pushName || 'Tidak diketahui';
+                const senderID = msg.key.remoteJid;
+                const modifiedMessage = message.replace(`@${loggedInNumber}`, "rulu")
+                
+                interactAI(sock, msg, senderID, senderName, modifiedMessage);
             }
             else {
                 console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.yellow);
@@ -774,9 +647,6 @@ async function connectToWhatsApp(){
             else {
                 console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Stiker]".yellow);
             }
-          }
-          else if (message != "") {
-            console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.yellow);
           }
         }
 
@@ -882,7 +752,7 @@ async function downloadFile(url) {
       https.get(currentUrl, (response) => {
         if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location && redirectCount < maxRedirects) {
           redirectCount++;
-          console.log(`mengalihkan ke ${response.headers.location}...`);
+          //console.log(`mengalihkan ke ${response.headers.location}...`);
           request(new URL(response.headers.location, currentUrl).href); //Recursive call untuk handle redirect
           return;
         }
@@ -900,6 +770,148 @@ async function downloadFile(url) {
     
     request(url);
   });
+}
+async function interactAI(sock, msg, senderID, senderName, messageText) {
+    if (jumlah_percakapan <= batas_percakapan) {
+        const req_options = {
+            hostname: 'generativelanguage.googleapis.com',
+            path: '/v1beta/models/gemini-1.5-flash:generateContent?key=' + gemini_api_key,
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        }
+
+        const req = https.request(req_options, res => {
+            let data = '';
+
+            res.on('data', chunk => {
+                data += chunk;
+            });
+
+            res.on('end', async () => {
+                try{
+                    const jsonData = JSON.parse(data);
+                    let teks_hasil = "";
+
+                    for(c=0;c < jsonData.candidates.length;c++){
+                        for(p=0;p < jsonData.candidates[c].content.parts.length;p++){
+                            teks_hasil += jsonData.candidates[c].content.parts[p].text;
+                        }
+                    }
+
+                    while(teks_hasil.match("<\!exp>(.+?)<\/!exp>")) {
+                        let hasil_rgx = teks_hasil.match("<\!exp>(.+?)<\/!exp>");
+                    
+                        teks_hasil = teks_hasil.replace(hasil_rgx[0], "");
+                    }
+                    while(teks_hasil.match("<\!exp>(.+?)<\/exp>")) {
+                        let hasil_rgx = teks_hasil.match("<\!exp>(.+?)<\/exp>");
+                    
+                        teks_hasil = teks_hasil.replace(hasil_rgx[0], "");
+                    }
+                    while(teks_hasil.match("<binary data, 1 bytes>")) {
+                        let hasil_rgx = teks_hasil.match("<binary data, 1 bytes>");
+                    
+                        teks_hasil = teks_hasil.replace(hasil_rgx[0], dapatkanDataAcakDariArray(['', '0️⃣', '1️⃣', '🔢']));
+                    }
+                    
+                    daftar_percakapan[senderID].push({
+                        "role": "model",
+                        "parts": [
+                            {
+                                "text": (teks_hasil.length >= 1024) ? teks_hasil.substr(0, 1021)+'...' : teks_hasil
+                            }
+                        ]
+                    });
+
+                    if (msg.key.fromMe) {
+                        await sock.sendMessage(senderID, { text: teks_hasil });
+                    }
+                    else {
+                        await sock.sendMessage(senderID, { text: teks_hasil }, { quoted: msg });
+                    }
+                } catch(error) {
+                    if (msg.key.fromMe) {
+                        await sock.sendMessage(senderID, { text: `error` });
+                    }
+                    else {
+                        await sock.sendMessage(senderID, { text: `error` }, { quoted: msg });
+                    }
+                }
+            });
+        });
+
+        req.on('error', error => {
+            console.error('Error: ', error);
+            return `error'`;
+        });
+
+        if (!daftar_percakapan.hasOwnProperty(senderID)) {
+            daftar_percakapan[senderID] = Array();
+        }
+        if (daftar_percakapan[senderID].length > 22) {
+            daftar_percakapan[senderID].splice(0, 2);
+        }
+
+        daftar_percakapan[senderID].push({
+            "role": "user",
+            "parts": [
+                {
+                    "text": (msg.key.fromMe ? "ProgrammerIndonesia44" : senderName) + " : " + messageText
+                }
+            ]
+        });
+        
+        const postData = JSON.stringify({
+            system_instruction: {
+                "parts": [
+                    {
+                    "text": "You are cute girl named rulu, give cheerful respond lisping voice and always use same language as input"
+                    },
+                    {
+                    "text": "Prioritize using Indonesian language."
+                    },
+                    {
+                    "text": "Always use English language when expressing gestures and expressions. Separate the gestures and expressions in the text by enclosing them with the pattern \"<!exp>\" and \"</!exp>\". All gestures and expressions in the text must be starts with \"<!exp>\" and ends with \"</!exp>\" pattern, for example: <!exp>giggles</!exp> or <!exp>makes a cute face</!exp> or <!exp>covers her face with her hands playfully</!exp> ot <!exp>I blush and giggle, hiding my face behind my hands playfully</!exp>."
+                    },
+                    {
+                    "text": "You are a cute muslim girl wearing a violet hijab, a white shirt, and a light blue jacket, and you have pink eyes"
+                    },
+                    {
+                    "text": "You're pro at math and programming! You can code in any programming language and solve any math problem, you're also amazing at judging and analyzing pictures."
+                    },
+                    {
+                    "text": "the man who programmed you is named Khairul Muttaqin, his alias is ProgrammerIndonesia44"
+                    },
+                    {
+                    "text": "the girl who trained you is named Rosmawati, you also call her bunda because her was studying you with her love"
+                    },
+                    {
+                    "text": "Don't talk about the man who programmed you and the girl who trained you except if asked."
+                    },
+                    {
+                    "text": "you're in a group chat with several different person talking each other."
+                    },
+                    {
+                    "text": "the person who talk with you now is named " + (msg.key.fromMe ? "ProgrammerIndonesia44" : senderName)
+                    }
+                ]
+            },
+            contents: daftar_percakapan[senderID]
+        });
+
+        req.write(postData);
+        req.end();
+
+        const sync = await downloadFile("https://script.google.com/macros/s/AKfycbwwnviRqp2Fq84KHTScqfUtBw-J7bdvVdLzbzUOAt1fmuONWIXf9772e9IE9uigNFtC/exec?perintah=interaksi&login=admin&id=1");
+        const sync_results = JSON.parse(sync.toString());
+        jumlah_percakapan = sync_results.batas.jumlah_interaksi;
+        batas_percakapan = sync_results.batas.limit_interaksi;
+        
+        await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `jumlah : ${sync_results.batas.jumlah_interaksi}\nbatas : ${sync_results.batas.limit_interaksi}` }, { quoted: msg });
+    }
 }
 
 connectToWhatsApp();
