@@ -589,8 +589,11 @@ async function connectToWhatsApp(){
           else if (message == "Assalamu'alaikum" || message == "assalamu'alaikum") {
             await sock.sendMessage(msg.key.remoteJid, { text: `Wa'alaikumussalam` }, { quoted: msg });
           }
-          else if (message == "woi" || message == "Woi" || message == "woy" || message == "oi") {
-            await sock.sendMessage(msg.key.remoteJid, { text: `woy` }, { quoted: msg });
+          else if (message == "woy" || message == "oii" || message == "oiii") {
+            await sock.sendMessage(msg.key.remoteJid, { text: `hai` }, { quoted: msg });
+          }
+          else if (message == "woi" || message == "Woi" || message == "oi") {
+            await sock.sendMessage(msg.key.remoteJid, { text: `hay` }, { quoted: msg });
           }
           else if (msg.message.extendedTextMessage && msg.message.extendedTextMessage.hasOwnProperty("contextInfo")) {
             if (msg.message.extendedTextMessage.contextInfo.hasOwnProperty("participant")) {
@@ -598,6 +601,7 @@ async function connectToWhatsApp(){
                     const senderName = msg.pushName || 'Tidak diketahui';
                     const senderID = msg.key.remoteJid;
                     
+                    logCuy(`${senderName} : ${message}`);
                     interactAI(sock, msg, senderID, senderName, message);
                 }
                 else {
@@ -627,6 +631,7 @@ async function connectToWhatsApp(){
                 const senderID = msg.key.remoteJid;
                 const modifiedMessage = message.replace(`@${loggedInNumber}`, "rulu")
                 
+                logCuy(`${senderName} : ${modifiedMessage}`);
                 interactAI(sock, msg, senderID, senderName, modifiedMessage);
             }
             else {
