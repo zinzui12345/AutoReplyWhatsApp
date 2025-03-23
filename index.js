@@ -637,6 +637,24 @@ async function connectToWhatsApp(){
                 console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.yellow);
             }
           }
+          else if (msg.message.imageMessage) {
+            let caption = msg.message.imageMessage?.caption || "Tidak ada caption";
+
+            try {
+                const buffer = await downloadMediaMessage(msg, "buffer", {}, {
+                    logger: pino({ level: 'fatal' }),
+                });
+        
+                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { 
+                    image: Buffer.from(buffer),
+                    caption: `Citra dengan caption : "*${caption}*"` 
+                }, { quoted: msg });
+            } catch (error) {
+                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Error : tidak dapat mendapatkan citra` }, { quoted: msg });
+            }
+            await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: JSON.stringify(msg.message.imageMessage, null, 2) }, { quoted: msg });
+            console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Citra]".yellow);
+          }
           else if (msg.message.stickerMessage && msg.message.stickerMessage.hasOwnProperty("contextInfo")) {
             if (msg.message.stickerMessage.contextInfo.hasOwnProperty("participant") && msg.message.stickerMessage.contextInfo.participant == `${loggedInNumber}@s.whatsapp.net`) {
                 const randomSticker = dapatkanDataAcakDariArray(stickers);
@@ -915,6 +933,9 @@ async function interactAI(sock, msg, senderID, senderName, messageText) {
         batas_percakapan = sync_results.batas.limit_interaksi;
         
         await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `jumlah : ${sync_results.batas.jumlah_interaksi}\nbatas : ${sync_results.batas.limit_interaksi}` }, { quoted: msg });
+    }
+    else {
+        console.log(`${geminiApiKey} : ${jumlah_percakapan} / ${batas_percakapan}`);
     }
 }
 
