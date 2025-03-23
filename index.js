@@ -8,6 +8,8 @@ const colors = require('colors');
 const moment = require('moment-timezone');
 const { hostname } = require('os');
 const { error } = require('console');
+const { buffer } = require('stream/consumers');
+const { Blob } = require('buffer');
 const stickerURL = "https://cdn.glitch.com/15e03e71-102f-4056-a602-fd237811c6aa/";
 const stickers = [
     ["18", true],
@@ -639,7 +641,11 @@ async function connectToWhatsApp(){
           }
           else if (msg.message.imageMessage) {
             let caption = msg.message.imageMessage?.caption || "Tidak ada caption";
-
+            const senderName = msg.pushName || 'Tidak diketahui';
+            const senderID = msg.key.remoteJid;
+            
+            logCuy(`${senderName} : [Citra] ${caption}`);
+            
             try {
                 const buffer = await downloadMediaMessage(msg, "buffer", {}, {
                     logger: pino({ level: 'fatal' }),
@@ -649,11 +655,13 @@ async function connectToWhatsApp(){
                     image: Buffer.from(buffer),
                     caption: `Citra dengan caption : "*${caption}*"` 
                 }, { quoted: msg });
+
+                interactAI(sock, msg, senderID, senderName, message, buffer);
             } catch (error) {
                 await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Error : tidak dapat mendapatkan citra` }, { quoted: msg });
             }
-            await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: JSON.stringify(msg.message.imageMessage, null, 2) }, { quoted: msg });
-            console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Citra]".yellow);
+            // await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: JSON.stringify(msg.message.imageMessage, null, 2) }, { quoted: msg });
+            console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Citra] ".yellow, caption.yellow);
           }
           else if (msg.message.stickerMessage && msg.message.stickerMessage.hasOwnProperty("contextInfo")) {
             if (msg.message.stickerMessage.contextInfo.hasOwnProperty("participant") && msg.message.stickerMessage.contextInfo.participant == `${loggedInNumber}@s.whatsapp.net`) {
@@ -793,7 +801,7 @@ async function downloadFile(url) {
     request(url);
   });
 }
-async function interactAI(sock, msg, senderID, senderName, messageText) {
+async function interactAI(sock, msg, senderID, senderName, messageText, messageMediaBuffer = null) {
     if (jumlah_percakapan <= batas_percakapan && geminiApiKey != "") {
         const req_options = {
             hostname: 'generativelanguage.googleapis.com',
@@ -877,14 +885,34 @@ async function interactAI(sock, msg, senderID, senderName, messageText) {
             daftar_percakapan[senderID].splice(0, 2);
         }
 
-        daftar_percakapan[senderID].push({
-            "role": "user",
-            "parts": [
-                {
-                    "text": (msg.key.fromMe ? "ProgrammerIndonesia44" : senderName) + " : " + messageText
-                }
-            ]
-        });
+        if (messageMediaBuffer != null) {
+            const buffer_media = Buffer.from(messageMediaBuffer);
+            
+            daftar_percakapan[senderID].push({
+                "role": "user",
+                "parts": [
+                    {
+                        "text": (msg.key.fromMe ? "ProgrammerIndonesia44" : senderName) + " : " + messageText
+                    },
+                    {
+                        "inline_data": {
+                            "mime_type": msg.message.imageMessage.mimetype,
+                            "data": bufferToBase64(buffer_media)
+                        }
+                    }
+                ]
+            });
+        }
+        else {
+            daftar_percakapan[senderID].push({
+                "role": "user",
+                "parts": [
+                    {
+                        "text": (msg.key.fromMe ? "ProgrammerIndonesia44" : senderName) + " : " + messageText
+                    }
+                ]
+            });
+        }
         
         const postData = JSON.stringify({
             system_instruction: {
@@ -937,6 +965,14 @@ async function interactAI(sock, msg, senderID, senderName, messageText) {
     else {
         console.log(`${geminiApiKey} : ${jumlah_percakapan} / ${batas_percakapan}`);
     }
+}
+
+function bufferToBase64(buffer) {
+    let binary = '';
+    for (let i = 0; i < buffer.length; i++) {
+    binary += String.fromCharCode(buffer[i]);
+    }
+    return btoa(binary);
 }
 
 connectToWhatsApp();
