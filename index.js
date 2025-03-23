@@ -8,7 +8,6 @@ const colors = require('colors');
 const moment = require('moment-timezone');
 const { hostname } = require('os');
 const { error } = require('console');
-const gemini_api_key = "";
 const stickerURL = "https://cdn.glitch.com/15e03e71-102f-4056-a602-fd237811c6aa/";
 const stickers = [
     ["18", true],
@@ -75,7 +74,7 @@ function dapatkanDataAcakDariArray(arr) {
 const configPath = path.join(__dirname, 'config.json');
 let config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 
-let { autoLikeStatus, downloadMediaStatus, sensorNomor, antiTelpon, blackList, whiteList, emojis, groupList } = config;
+let { autoLikeStatus, downloadMediaStatus, sensorNomor, antiTelpon, blackList, whiteList, emojis, groupList, geminiApiKey } = config;
 
 const updateConfig = (key, value) => {
     config[key] = value;
@@ -777,10 +776,10 @@ async function downloadFile(url) {
   });
 }
 async function interactAI(sock, msg, senderID, senderName, messageText) {
-    if (jumlah_percakapan <= batas_percakapan) {
+    if (jumlah_percakapan <= batas_percakapan && geminiApiKey != "") {
         const req_options = {
             hostname: 'generativelanguage.googleapis.com',
-            path: '/v1beta/models/gemini-1.5-flash:generateContent?key=' + gemini_api_key,
+            path: '/v1beta/models/gemini-1.5-flash:generateContent?key=' + geminiApiKey,
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
