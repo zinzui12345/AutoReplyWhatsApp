@@ -9,7 +9,6 @@ const moment = require('moment-timezone');
 const { hostname } = require('os');
 const { error } = require('console');
 const { buffer } = require('stream/consumers');
-const { Blob } = require('buffer');
 const stickerURL = "https://cdn.glitch.com/15e03e71-102f-4056-a602-fd237811c6aa/";
 const stickers = [
     ["18", true],
@@ -76,7 +75,7 @@ function dapatkanDataAcakDariArray(arr) {
 const configPath = path.join(__dirname, 'config.json');
 let config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 
-let { autoLikeStatus, downloadMediaStatus, sensorNomor, antiTelpon, blackList, whiteList, emojis, groupList, geminiApiKey } = config;
+let { autoLikeStatus, downloadMediaStatus, sensorNomor, antiTelpon, blackList, whiteList, emojis, groupList, appsScriptApiKey, geminiApiKey } = config;
 
 const updateConfig = (key, value) => {
     config[key] = value;
@@ -167,7 +166,7 @@ async function connectToWhatsApp(){
             if (sensorNomor) {
                 displayedLoggedInNumber = displayedLoggedInNumber.slice(0, 3) + '****' + displayedLoggedInNumber.slice(-2);
             }
-            let messageInfo =   `Bot *AutoReadStoryWhatsApp* Aktif!\n`+
+            let messageInfo =   `Bot *AutoReplyWhatsApp* Aktif!\n`+
                                 `Kamu berhasil login dengan nomor: ${displayedLoggedInNumber}\n\n`+
                                 `info status fitur:\n`+
                                 `- Auto Like Status: ${autoLikeStatus ? "*Aktif*" : "*Nonaktif*"}\n`+
@@ -661,7 +660,7 @@ async function connectToWhatsApp(){
                 await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Error : tidak dapat mendapatkan citra` }, { quoted: msg });
             }
             // await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: JSON.stringify(msg.message.imageMessage, null, 2) }, { quoted: msg });
-            console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Citra] ".yellow, caption.yellow);
+            //console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Citra] ".yellow, caption.yellow);
           }
           else if (msg.message.stickerMessage && msg.message.stickerMessage.hasOwnProperty("contextInfo")) {
             if (msg.message.stickerMessage.contextInfo.hasOwnProperty("participant") && msg.message.stickerMessage.contextInfo.participant == `${loggedInNumber}@s.whatsapp.net`) {
@@ -955,12 +954,15 @@ async function interactAI(sock, msg, senderID, senderName, messageText, messageM
         req.write(postData);
         req.end();
 
-        const sync = await downloadFile("https://script.google.com/macros/s/AKfycbwwnviRqp2Fq84KHTScqfUtBw-J7bdvVdLzbzUOAt1fmuONWIXf9772e9IE9uigNFtC/exec?perintah=interaksi&login=admin&id=1");
-        const sync_results = JSON.parse(sync.toString());
-        jumlah_percakapan = sync_results.batas.jumlah_interaksi;
-        batas_percakapan = sync_results.batas.limit_interaksi;
-        
-        await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `jumlah : ${sync_results.batas.jumlah_interaksi}\nbatas : ${sync_results.batas.limit_interaksi}` }, { quoted: msg });
+        if (appsScriptApiKey != "") {
+            const sync = await downloadFile(`https://script.google.com/macros/s/${appsScriptApiKey}/exec?perintah=interaksi&login=admin&id=1`);
+            const sync_results = JSON.parse(sync.toString());
+            
+            jumlah_percakapan = sync_results.batas.jumlah_interaksi;
+            batas_percakapan = sync_results.batas.limit_interaksi;
+            
+            await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `jumlah : ${sync_results.batas.jumlah_interaksi}\nbatas : ${sync_results.batas.limit_interaksi}` }, { quoted: msg });
+        }
     }
     else {
         console.log(`${geminiApiKey} : ${jumlah_percakapan} / ${batas_percakapan}`);
