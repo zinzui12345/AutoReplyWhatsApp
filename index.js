@@ -9,8 +9,9 @@ const moment = require('moment-timezone');
 const { hostname } = require('os');
 const { error } = require('console');
 const { buffer } = require('stream/consumers');
+
 const stickerURL = "https://cdn.glitch.com/15e03e71-102f-4056-a602-fd237811c6aa/";
-const stickers = [
+const reply_stickers = [
     ["18", true],
     ["19", false],
     ["20", true],
@@ -53,10 +54,43 @@ const stickers = [
     ["57", false],
     ["58", true]
 ];
+const stickers = [
+    ["74", false],
+    ["75", true],
+    ["76", true],
+    ["77", false],
+    ["78", false],
+    ["79", true],
+    ["80", true],
+    ["81", false],
+    ["82", false],
+    ["83", true],
+    ["84", false],
+    ["85", false],
+    ["86", true],
+    ["87", false],
+    ["88", false],
+    ["89", false],
+    ["90", false],
+    ["91", false],
+    ["92", false],
+    ["93", false],
+    ["94", true],
+    ["95", true],
+    ["96", true],
+    ["97", false],
+    ["98", false],
+    ["99", false],
+    ["100", false],
+    ["101", false],
+    ["102", false],
+    ["103", false]
+];
 
 let useCode = true;
 let loggedInNumber;
 let daftar_percakapan = {};
+let daftar_waktu_percakapan = {};
 let jumlah_percakapan = 0;
 let batas_percakapan = 1200;
 
@@ -548,8 +582,8 @@ async function connectToWhatsApp(){
 
                     logCuy(`${senderName} : test!`, 'yellow');
 
-                    if (daftar_percakapan.hasOwnProperty(senderID)) {
-                        await sock.sendMessage(senderID, { text: JSON.stringify(daftar_percakapan[senderID], null, 2) });
+                    if (daftar_waktu_percakapan.hasOwnProperty(senderID)) {
+                        await sock.sendMessage(senderID, { text: JSON.stringify(daftar_waktu_percakapan, null, 2) });
                     }
                     else {
                         await sock.sendMessage(senderID, { text: `{}` });
@@ -559,87 +593,108 @@ async function connectToWhatsApp(){
             }
         }
         else if (groupList.length > 0 && msg.key.remoteJid.split('@')[1] === "g.us" && groupList.includes(msg.key.remoteJid)) {
-          const groupInfo = await sock.groupMetadata(msg.key.remoteJid);
-          const groupName = groupInfo.subject;
-          const senderName = msg.pushName || 'Tidak diketahui';
-          const message = msg.type === "conversation"
-              	        ? msg.message.conversation
-              	        : msg.type === "extendedTextMessage"
-              	        ? msg.message.extendedTextMessage.text
-              	        : msg.message[msg.type]?.caption || "";
-          if (message == "🗿") {
-            const stickerFile = await downloadFile(`${stickerURL}${dapatkanDataAcakDariArray(["15", "16", "17"])}.webp`);
-            await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
-          }
-          else if (message == "😈" || message == "👿") {
-            const stickerFile = await downloadFile(`${stickerURL}${dapatkanDataAcakDariArray(["59", "60", "61", "62", "63", "64", "65", "66", "67", "68", "69", "70", "71", "72", "73"])}.webp`);
-            await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
-          }
-          else if (message == "😢" || message == "😭") {
-            const stickerFile = await downloadFile(`${stickerURL}13.webp`);
-            await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
-          }
-          else if (message == "🥹") {
-            const stickerFile = await downloadFile(`${stickerURL}14.webp`);
-            await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
-          }
-          else if (message == "Assalamualaikum" || message == "assalamualaikum") {
+            const groupInfo = await sock.groupMetadata(msg.key.remoteJid);
+            const groupName = groupInfo.subject;
+            const senderID = msg.key.remoteJid;
+            const senderName = msg.pushName || 'Tidak diketahui';
+            const message = msg.type === "conversation"
+                        ? msg.message.conversation
+                        : msg.type === "extendedTextMessage"
+                        ? msg.message.extendedTextMessage.text
+                        : msg.message[msg.type]?.caption || "";
+            if (message == "🗿") {
+                const stickerFile = await downloadFile(`${stickerURL}${dapatkanDataAcakDariArray(["15", "16", "17"])}.webp`);
+                await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
+            }
+            else if (message == "😈" || message == "👿") {
+                const stickerFile = await downloadFile(`${stickerURL}${dapatkanDataAcakDariArray(["59", "60", "61", "62", "63", "64", "65", "66", "67", "68", "69", "70", "71", "72", "73"])}.webp`);
+                await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
+            }
+            else if (message == "😢" || message == "😭") {
+                const stickerFile = await downloadFile(`${stickerURL}13.webp`);
+                await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
+            }
+            else if (message == "🥹") {
+                const stickerFile = await downloadFile(`${stickerURL}14.webp`);
+                await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
+            }
+            else if (message == "Assalamualaikum" || message == "assalamualaikum") {
             await sock.sendMessage(msg.key.remoteJid, { text: `Waalaikumsalam` }, { quoted: msg });
-          }
-          else if (message == "Assalamu'alaikum" || message == "assalamu'alaikum") {
-            await sock.sendMessage(msg.key.remoteJid, { text: `Wa'alaikumussalam` }, { quoted: msg });
-          }
-          else if (message == "woy" || message == "oii" || message == "oiii") {
-            await sock.sendMessage(msg.key.remoteJid, { text: `hai` }, { quoted: msg });
-          }
-          else if (message == "woi" || message == "Woi" || message == "oi") {
-            await sock.sendMessage(msg.key.remoteJid, { text: `hay` }, { quoted: msg });
-          }
-          else if (msg.message.extendedTextMessage && msg.message.extendedTextMessage.hasOwnProperty("contextInfo")) {
-            if (msg.message.extendedTextMessage.contextInfo.hasOwnProperty("participant")) {
-                if (msg.message.extendedTextMessage.contextInfo.participant == `${loggedInNumber}@s.whatsapp.net`) {
-                    const senderName = msg.pushName || 'Tidak diketahui';
-                    const senderID = msg.key.remoteJid;
+            }
+            else if (message == "Assalamu'alaikum" || message == "assalamu'alaikum") {
+                await sock.sendMessage(msg.key.remoteJid, { text: `Wa'alaikumussalam` }, { quoted: msg });
+            }
+            else if (message == "woy" || message == "oii" || message == "oiii") {
+                await sock.sendMessage(msg.key.remoteJid, { text: `hai` }, { quoted: msg });
+            }
+            else if (message == "woi" || message == "Woi" || message == "oi") {
+                await sock.sendMessage(msg.key.remoteJid, { text: `hay` }, { quoted: msg });
+            }
+            else if (msg.message.extendedTextMessage && msg.message.extendedTextMessage.hasOwnProperty("contextInfo")) {
+                if (msg.message.extendedTextMessage.contextInfo.hasOwnProperty("participant")) {
+                    if (msg.message.extendedTextMessage.contextInfo.participant == `${loggedInNumber}@s.whatsapp.net`) {
+                        logCuy(`${senderName} : ${message}`);
+                        interactAI(sock, msg, senderID, senderName, message);
+                    }
+                    else {
+                        if (!daftar_percakapan.hasOwnProperty(senderID)) {
+                            daftar_percakapan[senderID] = Array();
+                        }
+                        if (daftar_percakapan[senderID].length > 22) {
+                            daftar_percakapan[senderID].splice(0, 2);
+                        }
+
+                        daftar_percakapan[senderID].push({
+                            "role": "user",
+                            "parts": [
+                                {
+                                    "text": (msg.key.fromMe ? "ProgrammerIndonesia44" : senderName) + " : " + message
+                                }
+                            ]
+                        });
+
+                        let lastTimestamp = 0;
+                        const currentTimestamp = msg.messageTimestamp;
+
+                        if (daftar_waktu_percakapan.hasOwnProperty(senderID)) {
+                            lastTimestamp = daftar_waktu_percakapan[senderID];
+                        }
+
+                        if ((currentTimestamp - lastTimestamp) > (60 * 5)) {
+                            const randomSticker = dapatkanDataAcakDariArray(stickers);
+                            const stickerFile = await downloadFile(`${stickerURL}${randomSticker[0]}.webp`);
+                            
+                            await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: randomSticker[1] });
+                        }
+
+                        console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[reply]".yellow, message.yellow);
+                    }
+                }
+                else if (message.startsWith(`@${loggedInNumber}`)) {
+                    const modifiedMessage = message.replace(`@${loggedInNumber}`, "rulu")
                     
-                    logCuy(`${senderName} : ${message}`);
-                    interactAI(sock, msg, senderID, senderName, message);
+                    logCuy(`${senderName} : ${modifiedMessage}`);
+                    interactAI(sock, msg, senderID, senderName, modifiedMessage);
                 }
                 else {
-                    const senderName = msg.pushName || 'Tidak diketahui';
-                    const senderID = msg.key.remoteJid;
+                    let lastTimestamp = 0;
+                    const currentTimestamp = msg.messageTimestamp;
 
-                    if (!daftar_percakapan.hasOwnProperty(senderID)) {
-                        daftar_percakapan[senderID] = Array();
-                    }
-                    if (daftar_percakapan[senderID].length > 22) {
-                        daftar_percakapan[senderID].splice(0, 2);
+                    if (daftar_waktu_percakapan.hasOwnProperty(senderID)) {
+                        lastTimestamp = daftar_waktu_percakapan[senderID];
                     }
 
-                    daftar_percakapan[senderID].push({
-                        "role": "user",
-                        "parts": [
-                            {
-                                "text": (msg.key.fromMe ? "ProgrammerIndonesia44" : senderName) + " : " + message
-                            }
-                        ]
-                    });
+                    if ((currentTimestamp - lastTimestamp) > (60 * 3)) {
+                        const randomSticker = dapatkanDataAcakDariArray(stickers);
+                        const stickerFile = await downloadFile(`${stickerURL}${randomSticker[0]}.webp`);
+                        
+                        await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: randomSticker[1] });
+                    }
 
-                    console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[reply]".yellow, message.yellow);
+                    console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.yellow);
                 }
             }
-            else if (message.startsWith(`@${loggedInNumber}`)) {
-                const senderName = msg.pushName || 'Tidak diketahui';
-                const senderID = msg.key.remoteJid;
-                const modifiedMessage = message.replace(`@${loggedInNumber}`, "rulu")
-                
-                logCuy(`${senderName} : ${modifiedMessage}`);
-                interactAI(sock, msg, senderID, senderName, modifiedMessage);
-            }
-            else {
-                console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.yellow);
-            }
-          }
-          else if (msg.message.imageMessage) {
+            else if (msg.message.imageMessage) {
             let caption = msg.message.imageMessage?.caption || "Tidak ada caption";
             const senderName = msg.pushName || 'Tidak diketahui';
             const senderID = msg.key.remoteJid;
@@ -662,10 +717,10 @@ async function connectToWhatsApp(){
             }
             // await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: JSON.stringify(msg.message.imageMessage, null, 2) }, { quoted: msg });
             console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Citra] ".yellow, caption.yellow);
-          }
-          else if (msg.message.stickerMessage && msg.message.stickerMessage.hasOwnProperty("contextInfo")) {
+            }
+            else if (msg.message.stickerMessage && msg.message.stickerMessage.hasOwnProperty("contextInfo")) {
             if (msg.message.stickerMessage.contextInfo.hasOwnProperty("participant") && msg.message.stickerMessage.contextInfo.participant == `${loggedInNumber}@s.whatsapp.net`) {
-                const randomSticker = dapatkanDataAcakDariArray(stickers);
+                const randomSticker = dapatkanDataAcakDariArray(reply_stickers);
                 const stickerFile = await downloadFile(`${stickerURL}${randomSticker[0]}.webp`);
                 if (msg.key.fromMe) {
                     await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: randomSticker[1] });
@@ -677,7 +732,9 @@ async function connectToWhatsApp(){
             else {
                 console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Stiker]".yellow);
             }
-          }
+            }
+
+            daftar_waktu_percakapan[senderID] = msg.messageTimestamp;
         }
 
         // status
@@ -833,6 +890,11 @@ async function interactAI(sock, msg, senderID, senderName, messageText, messageM
 
                     while(teks_hasil.match("<\!exp>(.+?)<\/!exp>")) {
                         let hasil_rgx = teks_hasil.match("<\!exp>(.+?)<\/!exp>");
+                    
+                        teks_hasil = teks_hasil.replace(hasil_rgx[0], "");
+                    }
+                    while(teks_hasil.match("< \!exp>(.+?)<\/!exp>")) {
+                        let hasil_rgx = teks_hasil.match("< \!exp>(.+?)<\/!exp>");
                     
                         teks_hasil = teks_hasil.replace(hasil_rgx[0], "");
                     }
