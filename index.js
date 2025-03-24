@@ -623,6 +623,7 @@ async function connectToWhatsApp(){
                             }
                         ]
                     });
+
                     console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[reply]".yellow, message.yellow);
                 }
             }
@@ -650,17 +651,17 @@ async function connectToWhatsApp(){
                     logger: pino({ level: 'fatal' }),
                 });
         
-                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { 
-                    image: Buffer.from(buffer),
-                    caption: `Citra dengan caption : "*${caption}*"` 
-                }, { quoted: msg });
+                // await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { 
+                //     image: Buffer.from(buffer),
+                //     caption: `Citra dengan caption : "*${caption}*"` 
+                // }, { quoted: msg });
 
                 interactAI(sock, msg, senderID, senderName, message, buffer);
             } catch (error) {
                 await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Error : tidak dapat mendapatkan citra` }, { quoted: msg });
             }
             // await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: JSON.stringify(msg.message.imageMessage, null, 2) }, { quoted: msg });
-            //console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Citra] ".yellow, caption.yellow);
+            console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Citra] ".yellow, caption.yellow);
           }
           else if (msg.message.stickerMessage && msg.message.stickerMessage.hasOwnProperty("contextInfo")) {
             if (msg.message.stickerMessage.contextInfo.hasOwnProperty("participant") && msg.message.stickerMessage.contextInfo.participant == `${loggedInNumber}@s.whatsapp.net`) {
