@@ -581,14 +581,8 @@ async function connectToWhatsApp(){
                     const senderID = msg.key.remoteJid;
 
                     logCuy(`${senderName} : test!`, 'yellow');
-
-                    if (daftar_waktu_percakapan.hasOwnProperty(senderID)) {
-                        await sock.sendMessage(senderID, { text: JSON.stringify(daftar_waktu_percakapan, null, 2) });
-                    }
-                    else {
-                        await sock.sendMessage(senderID, { text: `{}` });
-                    }
-
+                    await sock.sendMessage(senderID, { text: JSON.stringify(msg, null, 2) });
+                    
                     break;
             }
         }
@@ -617,6 +611,17 @@ async function connectToWhatsApp(){
             else if (message == "🥹") {
                 const stickerFile = await downloadFile(`${stickerURL}14.webp`);
                 await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
+            }
+            else if (message.toLowerCase() == "kirim stiker") {
+                const randomSticker = dapatkanDataAcakDariArray(reply_stickers);
+                const stickerFile = await downloadFile(`${stickerURL}${randomSticker[0]}.webp`);
+                
+                if (msg.key.fromMe) {
+                    await sock.sendMessage(senderID, { sticker: stickerFile, isAnimated: randomSticker[1] });
+                }
+                else {
+                    await sock.sendMessage(senderID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg });
+                }
             }
             else if (message == "Assalamualaikum" || message == "assalamualaikum") {
             await sock.sendMessage(msg.key.remoteJid, { text: `Waalaikumsalam` }, { quoted: msg });
@@ -665,6 +670,7 @@ async function connectToWhatsApp(){
                             const stickerFile = await downloadFile(`${stickerURL}${randomSticker[0]}.webp`);
                             
                             await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: randomSticker[1] });
+                            daftar_waktu_percakapan[senderID] = msg.messageTimestamp;
                         }
 
                         console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[reply]".yellow, message.yellow);
@@ -695,43 +701,42 @@ async function connectToWhatsApp(){
                 }
             }
             else if (msg.message.imageMessage) {
-            let caption = msg.message.imageMessage?.caption || "Tidak ada caption";
-            const senderName = msg.pushName || 'Tidak diketahui';
-            const senderID = msg.key.remoteJid;
+                let caption = msg.message.imageMessage?.caption || "Tidak ada caption";
+                
+                logCuy(`${senderName} : [Citra] ${caption}`);
+                
+                try {
+                    const buffer = await downloadMediaMessage(msg, "buffer", {}, {
+                        logger: pino({ level: 'fatal' }),
+                    });
             
-            logCuy(`${senderName} : [Citra] ${caption}`);
-            
-            try {
-                const buffer = await downloadMediaMessage(msg, "buffer", {}, {
-                    logger: pino({ level: 'fatal' }),
-                });
-        
-                // await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { 
-                //     image: Buffer.from(buffer),
-                //     caption: `Citra dengan caption : "*${caption}*"` 
-                // }, { quoted: msg });
+                    // await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { 
+                    //     image: Buffer.from(buffer),
+                    //     caption: `Citra dengan caption : "*${caption}*"` 
+                    // }, { quoted: msg });
 
-                interactAI(sock, msg, senderID, senderName, message, buffer);
-            } catch (error) {
-                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Error : tidak dapat mendapatkan citra` }, { quoted: msg });
-            }
-            // await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: JSON.stringify(msg.message.imageMessage, null, 2) }, { quoted: msg });
-            console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Citra] ".yellow, caption.yellow);
+                    interactAI(sock, msg, senderID, senderName, message, buffer);
+                } catch (error) {
+                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Error : tidak dapat mendapatkan citra` }, { quoted: msg });
+                }
+                // await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: JSON.stringify(msg.message.imageMessage, null, 2) }, { quoted: msg });
+                console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Citra] ".yellow, caption.yellow);
             }
             else if (msg.message.stickerMessage && msg.message.stickerMessage.hasOwnProperty("contextInfo")) {
-            if (msg.message.stickerMessage.contextInfo.hasOwnProperty("participant") && msg.message.stickerMessage.contextInfo.participant == `${loggedInNumber}@s.whatsapp.net`) {
-                const randomSticker = dapatkanDataAcakDariArray(reply_stickers);
-                const stickerFile = await downloadFile(`${stickerURL}${randomSticker[0]}.webp`);
-                if (msg.key.fromMe) {
-                    await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: randomSticker[1] });
+                if (msg.message.stickerMessage.contextInfo.hasOwnProperty("participant") && msg.message.stickerMessage.contextInfo.participant == `${loggedInNumber}@s.whatsapp.net`) {
+                    const randomSticker = dapatkanDataAcakDariArray(reply_stickers);
+                    const stickerFile = await downloadFile(`${stickerURL}${randomSticker[0]}.webp`);
+                    
+                    if (msg.key.fromMe) {
+                        await sock.sendMessage(senderID, { sticker: stickerFile, isAnimated: randomSticker[1] });
+                    }
+                    else {
+                        await sock.sendMessage(senderID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg });
+                    }
                 }
                 else {
-                    await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg });
+                    console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Stiker]".yellow);
                 }
-            }
-            else {
-                console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Stiker]".yellow);
-            }
             }
 
             daftar_waktu_percakapan[senderID] = msg.messageTimestamp;
@@ -898,6 +903,11 @@ async function interactAI(sock, msg, senderID, senderName, messageText, messageM
                     
                         teks_hasil = teks_hasil.replace(hasil_rgx[0], "");
                     }
+                    // while(teks_hasil.match("<\(\!exp>(.+?)<\/!exp>")) { ERROR!!!
+                    //     let hasil_rgx = teks_hasil.match("<\(\!exp>(.+?)<\/!exp>");
+                    
+                    //     teks_hasil = teks_hasil.replace(hasil_rgx[0], "");
+                    // }
                     while(teks_hasil.match("<\!exp>(.+?)<\/exp>")) {
                         let hasil_rgx = teks_hasil.match("<\!exp>(.+?)<\/exp>");
                     
@@ -980,34 +990,37 @@ async function interactAI(sock, msg, senderID, senderName, messageText, messageM
             system_instruction: {
                 "parts": [
                     {
-                    "text": "You are cute girl named rulu, give cheerful respond lisping voice and always use same language as input"
+                        "text": "You are cute girl named rulu, give cheerful respond lisping voice and always use same language as input"
                     },
                     {
-                    "text": "Prioritize using Indonesian language."
+                        "text": "Prioritize using Indonesian language."
                     },
                     {
-                    "text": "Always use English language when expressing gestures and expressions. Separate the gestures and expressions in the text by enclosing them with the pattern \"<!exp>\" and \"</!exp>\". All gestures and expressions in the text must be starts with \"<!exp>\" and ends with \"</!exp>\" pattern, for example: <!exp>giggles</!exp> or <!exp>makes a cute face</!exp> or <!exp>covers her face with her hands playfully</!exp> ot <!exp>I blush and giggle, hiding my face behind my hands playfully</!exp>."
+                        "text": "Always use English language when expressing gestures and expressions. Separate the gestures and expressions in the text by enclosing them with the pattern \"<!exp>\" and \"</!exp>\". All gestures and expressions in the text must be starts with \"<!exp>\" and ends with \"</!exp>\" pattern, for example: <!exp>giggles</!exp> or <!exp>makes a cute face</!exp> or <!exp>covers her face with her hands playfully</!exp> ot <!exp>I blush and giggle, hiding my face behind my hands playfully</!exp>."
                     },
                     {
-                    "text": "You are a cute muslim girl wearing a violet hijab, a white shirt, and a light blue jacket, and you have pink eyes"
+                        "text": "You are a cute muslim girl wearing a violet hijab, a white shirt, and a light blue jacket, and you have pink eyes"
                     },
                     {
-                    "text": "You're pro at math and programming! You can code in any programming language and solve any math problem, you're also amazing at judging and analyzing pictures."
+                        "text": "You're pro at math and programming! You can code in any programming language and solve any math problem, you're also amazing at judging and analyzing pictures."
                     },
                     {
-                    "text": "the man who programmed you is named Khairul Muttaqin, his alias is ProgrammerIndonesia44"
+                        "text": "the man who programmed you is named Khairul Muttaqin, his alias is ProgrammerIndonesia44"
                     },
                     {
-                    "text": "the girl who trained you is named Rosmawati, you also call her bunda because her was studying you with her love"
+                        "text": "the girl who trained you is named Rosmawati, you also call her bunda because her was studying you with her love"
                     },
                     {
-                    "text": "Don't talk about the man who programmed you and the girl who trained you except if asked."
+                        "text": "Don't talk about the man who programmed you and the girl who trained you except if asked."
                     },
                     {
-                    "text": "you're in a group chat with several different person talking each other."
+                        "text": "You're in a chat group with several different person talking each other."
                     },
                     {
-                    "text": "the person who talk with you now is named " + (msg.key.fromMe ? "ProgrammerIndonesia44" : senderName)
+                        "text": "the chat group allow user to send stickers. if someone asks you to send a sticker, you must refuse it and say that you don't want to do that. don't say if you can't send a sticker except if asked."
+                    },
+                    {
+                        "text": "the person who talk with you now is named " + (msg.key.fromMe ? "ProgrammerIndonesia44" : senderName)
                     }
                 ]
             },
