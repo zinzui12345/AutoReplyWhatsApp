@@ -1,4 +1,4 @@
-const { makeWASocket, DisconnectReason, useMultiFileAuthState, Browsers, jidNormalizedUser, downloadMediaMessage} = require('@whiskeysockets/baileys');
+const { makeWASocket, DisconnectReason, useMultiFileAuthState, Browsers, jidNormalizedUser, downloadMediaMessage, WA_DEFAULT_EPHEMERAL} = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const readline = require('readline');
 const https = require('https');
@@ -89,6 +89,7 @@ const stickers = [
 
 let useCode = true;
 let loggedInNumber;
+let log_timeout = 86400;
 let daftar_percakapan = {};
 let daftar_waktu_percakapan = {};
 let jumlah_percakapan = 0;
@@ -214,7 +215,7 @@ async function connectToWhatsApp(){
 
             if (!welcomeMessage) {
                 setTimeout(async () => {
-                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: messageInfo });
+                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: messageInfo }, { ephemeralExpiration: log_timeout });
                     welcomeMessage = true;
                 }, 5000);
             }
@@ -582,6 +583,11 @@ async function connectToWhatsApp(){
 
                     logCuy(`${senderName} : test!`, 'yellow');
                     await sock.sendMessage(senderID, { text: JSON.stringify(msg, null, 2) });
+
+                    if (msg.key.remoteJid.split('@')[1] === "g.us") {
+                        const groupInfo = await sock.groupMetadata(msg.key.remoteJid);
+                        await sock.sendMessage(senderID, { text: JSON.stringify(groupInfo, null, 2) });
+                    }
                     
                     break;
             }
@@ -597,46 +603,47 @@ async function connectToWhatsApp(){
                         : msg.type === "extendedTextMessage"
                         ? msg.message.extendedTextMessage.text
                         : msg.message[msg.type]?.caption || "";
+            const messageDuration = groupInfo.ephemeralDuration || 0;
             
             if (!blackList.includes(senderNumber)) {
                 if (message == "🗿") {
                     const stickerFile = await downloadFile(`${stickerURL}${dapatkanDataAcakDariArray(["15", "16", "17"])}.webp`);
-                    await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
+                    await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true }, { ephemeralExpiration: messageDuration });
                 }
                 else if (message == "😈" || message == "👿") {
                     const stickerFile = await downloadFile(`${stickerURL}${dapatkanDataAcakDariArray(["59", "60", "61", "62", "63", "64", "65", "66", "67", "68", "69", "70", "71", "72", "73"])}.webp`);
-                    await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
+                    await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true }, { ephemeralExpiration: messageDuration });
                 }
                 else if (message == "😢" || message == "😭") {
                     const stickerFile = await downloadFile(`${stickerURL}13.webp`);
-                    await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
+                    await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true }, { ephemeralExpiration: messageDuration });
                 }
                 else if (message == "🥹") {
                     const stickerFile = await downloadFile(`${stickerURL}14.webp`);
-                    await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
+                    await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true }, { ephemeralExpiration: messageDuration });
                 }
                 else if (message.match("^(bagi|kirim|send) (stiker|sticker)$")) {
                     const randomSticker = dapatkanDataAcakDariArray(reply_stickers);
                     const stickerFile = await downloadFile(`${stickerURL}${randomSticker[0]}.webp`);
                     
                     if (msg.key.fromMe) {
-                        await sock.sendMessage(senderID, { sticker: stickerFile, isAnimated: randomSticker[1] });
+                        await sock.sendMessage(senderID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
                     }
                     else {
-                        await sock.sendMessage(senderID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg });
+                        await sock.sendMessage(senderID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg, ephemeralExpiration: messageDuration });
                     }
                 }
                 else if (message == "Assalamualaikum" || message == "assalamualaikum") {
-                await sock.sendMessage(msg.key.remoteJid, { text: `Waalaikumsalam` }, { quoted: msg });
+                    await sock.sendMessage(msg.key.remoteJid, { text: `Waalaikumsalam` }, { quoted: msg, ephemeralExpiration: messageDuration });
                 }
                 else if (message == "Assalamu'alaikum" || message == "assalamu'alaikum") {
-                    await sock.sendMessage(msg.key.remoteJid, { text: `Wa'alaikumussalam` }, { quoted: msg });
+                    await sock.sendMessage(msg.key.remoteJid, { text: `Wa'alaikumussalam` }, { quoted: msg, ephemeralExpiration: messageDuration });
                 }
                 else if (message == "woy" || message == "oii" || message == "oiii") {
-                    await sock.sendMessage(msg.key.remoteJid, { text: `hai` }, { quoted: msg });
+                    await sock.sendMessage(msg.key.remoteJid, { text: `hai` }, { quoted: msg, ephemeralExpiration: messageDuration });
                 }
                 else if (message == "woi" || message == "Woi" || message == "oi") {
-                    await sock.sendMessage(msg.key.remoteJid, { text: `hay` }, { quoted: msg });
+                    await sock.sendMessage(msg.key.remoteJid, { text: `hay` }, { quoted: msg, ephemeralExpiration: messageDuration });
                 }
                 else if (msg.message.extendedTextMessage && msg.message.extendedTextMessage.hasOwnProperty("contextInfo")) {
                     if (msg.message.extendedTextMessage.contextInfo.hasOwnProperty("participant")) {
@@ -644,7 +651,7 @@ async function connectToWhatsApp(){
                        
                         if (participantNumber == loggedInNumber) {
                             logCuy(`${senderName} : ${message}`);
-                            interactAI(sock, msg, senderID, senderName, message);
+                            interactAI(sock, msg, senderID, senderName, messageDuration, message);
                         }
                         else if (!blackList.includes(participantNumber)) {
                             if (!daftar_percakapan.hasOwnProperty(senderID)) {
@@ -674,7 +681,7 @@ async function connectToWhatsApp(){
                                 const randomSticker = dapatkanDataAcakDariArray(stickers);
                                 const stickerFile = await downloadFile(`${stickerURL}${randomSticker[0]}.webp`);
                                 
-                                await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: randomSticker[1] });
+                                await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
                                 daftar_waktu_percakapan[senderID] = msg.messageTimestamp;
                             }
 
@@ -685,7 +692,7 @@ async function connectToWhatsApp(){
                         const modifiedMessage = message.replace(`@${loggedInNumber}`, "rulu")
                         
                         logCuy(`${senderName} : ${modifiedMessage}`);
-                        interactAI(sock, msg, senderID, senderName, modifiedMessage);
+                        interactAI(sock, msg, senderID, senderName, messageDuration, modifiedMessage);
                     }
                     else {
                         let lastTimestamp = 0;
@@ -699,7 +706,8 @@ async function connectToWhatsApp(){
                             const randomSticker = dapatkanDataAcakDariArray(stickers);
                             const stickerFile = await downloadFile(`${stickerURL}${randomSticker[0]}.webp`);
                             
-                            await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: randomSticker[1] });
+                            await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
+                            daftar_waktu_percakapan[senderID] = msg.messageTimestamp;
                         }
 
                         console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.yellow);
@@ -720,7 +728,7 @@ async function connectToWhatsApp(){
                         //     caption: `Citra dengan caption : "*${caption}*"` 
                         // }, { quoted: msg });
 
-                        interactAI(sock, msg, senderID, senderName, message, buffer);
+                        interactAI(sock, msg, senderID, senderName, messageDuration, message, buffer);
                     } catch (error) {
                         await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Error : tidak dapat mendapatkan citra` }, { quoted: msg });
                     }
@@ -733,10 +741,10 @@ async function connectToWhatsApp(){
                         const stickerFile = await downloadFile(`${stickerURL}${randomSticker[0]}.webp`);
                         
                         if (msg.key.fromMe) {
-                            await sock.sendMessage(senderID, { sticker: stickerFile, isAnimated: randomSticker[1] });
+                            await sock.sendMessage(senderID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
                         }
                         else {
-                            await sock.sendMessage(senderID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg });
+                            await sock.sendMessage(senderID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg, ephemeralExpiration: messageDuration });
                         }
                     }
                     else {
@@ -830,10 +838,10 @@ async function connectToWhatsApp(){
                         } else {
                             messageContent = `Status teks dari *${senderName}* (${displaySendernumber}) telah dilihat ${autoLikeStatus ? "dan disukai" : ""} dengan caption: "*${caption}*"`;
     
-                            await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: messageContent });
+                            await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: messageContent }, { ephemeralExpiration: log_timeout });
                         }
                     } else {
-                        await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: messageContent });
+                        await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: messageContent }, { ephemeralExpiration: log_timeout });
                     }
                 }
             } 
@@ -869,7 +877,7 @@ async function downloadFile(url) {
     request(url);
   });
 }
-async function interactAI(sock, msg, senderID, senderName, messageText, messageMediaBuffer = null) {
+async function interactAI(sock, msg, senderID, senderName, messageDuration, messageText, messageMediaBuffer = null) {
     if (jumlah_percakapan <= batas_percakapan && geminiApiKey != "") {
         const req_options = {
             hostname: 'generativelanguage.googleapis.com',
@@ -935,17 +943,17 @@ async function interactAI(sock, msg, senderID, senderName, messageText, messageM
                     });
 
                     if (msg.key.fromMe) {
-                        await sock.sendMessage(senderID, { text: teks_hasil });
+                        await sock.sendMessage(senderID, { text: teks_hasil }, { ephemeralExpiration: messageDuration });
                     }
                     else {
-                        await sock.sendMessage(senderID, { text: teks_hasil }, { quoted: msg });
+                        await sock.sendMessage(senderID, { text: teks_hasil }, { quoted: msg, ephemeralExpiration: messageDuration });
                     }
                 } catch(error) {
                     if (msg.key.fromMe) {
-                        await sock.sendMessage(senderID, { text: `error` });
+                        await sock.sendMessage(senderID, { text: `error` }, { ephemeralExpiration: messageDuration });
                     }
                     else {
-                        await sock.sendMessage(senderID, { text: `error` }, { quoted: msg });
+                        await sock.sendMessage(senderID, { text: `error` }, { quoted: msg, ephemeralExpiration: messageDuration });
                     }
                 }
             });
@@ -1043,7 +1051,7 @@ async function interactAI(sock, msg, senderID, senderName, messageText, messageM
             jumlah_percakapan = sync_results.batas.jumlah_interaksi;
             batas_percakapan = sync_results.batas.limit_interaksi;
             
-            await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `jumlah : ${sync_results.batas.jumlah_interaksi}\nbatas : ${sync_results.batas.limit_interaksi}` }, { quoted: msg });
+            await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `jumlah : ${sync_results.batas.jumlah_interaksi}\nbatas : ${sync_results.batas.limit_interaksi}` }, { quoted: msg, ephemeralExpiration: log_timeout });
         }
     }
     else {
