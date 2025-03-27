@@ -267,7 +267,7 @@ async function connectToWhatsApp(){
                     await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor harus berupa angka.\ncontoh ketik :\n\`${commandname} blacklist 628123456789\`\n\nArgumen yang tersedia:\n\n\`${commandname} blacklist nomornya\`\nuntuk ${type} nomor ${sc} blacklist\n\n\`${commandname} whitelist nomornya\`\nuntuk ${type} nomor ${sc} whitelist` }, { quoted: msg });
                     return false;
                 }
-                if (!data.startsWith('62')) {
+                if (!data.startsWith('62') && !data.startsWith('60')) {
                     await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor harus diawali dengan 62.\ncontoh ketik :\n\`${commandname} blacklist 628123456789\`\n\nArgumen yang tersedia:\n\n\`${commandname} blacklist nomornya\`\nuntuk ${type} nomor ${sc} blacklist\n\n\`${commandname} whitelist nomornya\`\nuntuk ${type} nomor ${sc} whitelist` }, { quoted: msg });
                     return false;
                 }
@@ -591,139 +591,31 @@ async function connectToWhatsApp(){
             const groupName = groupInfo.subject;
             const senderID = msg.key.remoteJid;
             const senderName = msg.pushName || 'Tidak diketahui';
+            const senderNumber = msg.key.participant ? msg.key.participant.split('@')[0] : 'Tidak diketahui';
             const message = msg.type === "conversation"
                         ? msg.message.conversation
                         : msg.type === "extendedTextMessage"
                         ? msg.message.extendedTextMessage.text
                         : msg.message[msg.type]?.caption || "";
-            if (message == "🗿") {
-                const stickerFile = await downloadFile(`${stickerURL}${dapatkanDataAcakDariArray(["15", "16", "17"])}.webp`);
-                await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
-            }
-            else if (message == "😈" || message == "👿") {
-                const stickerFile = await downloadFile(`${stickerURL}${dapatkanDataAcakDariArray(["59", "60", "61", "62", "63", "64", "65", "66", "67", "68", "69", "70", "71", "72", "73"])}.webp`);
-                await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
-            }
-            else if (message == "😢" || message == "😭") {
-                const stickerFile = await downloadFile(`${stickerURL}13.webp`);
-                await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
-            }
-            else if (message == "🥹") {
-                const stickerFile = await downloadFile(`${stickerURL}14.webp`);
-                await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
-            }
-            else if (message.toLowerCase() == "kirim stiker") {
-                const randomSticker = dapatkanDataAcakDariArray(reply_stickers);
-                const stickerFile = await downloadFile(`${stickerURL}${randomSticker[0]}.webp`);
-                
-                if (msg.key.fromMe) {
-                    await sock.sendMessage(senderID, { sticker: stickerFile, isAnimated: randomSticker[1] });
-                }
-                else {
-                    await sock.sendMessage(senderID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg });
-                }
-            }
-            else if (message == "Assalamualaikum" || message == "assalamualaikum") {
-            await sock.sendMessage(msg.key.remoteJid, { text: `Waalaikumsalam` }, { quoted: msg });
-            }
-            else if (message == "Assalamu'alaikum" || message == "assalamu'alaikum") {
-                await sock.sendMessage(msg.key.remoteJid, { text: `Wa'alaikumussalam` }, { quoted: msg });
-            }
-            else if (message == "woy" || message == "oii" || message == "oiii") {
-                await sock.sendMessage(msg.key.remoteJid, { text: `hai` }, { quoted: msg });
-            }
-            else if (message == "woi" || message == "Woi" || message == "oi") {
-                await sock.sendMessage(msg.key.remoteJid, { text: `hay` }, { quoted: msg });
-            }
-            else if (msg.message.extendedTextMessage && msg.message.extendedTextMessage.hasOwnProperty("contextInfo")) {
-                if (msg.message.extendedTextMessage.contextInfo.hasOwnProperty("participant")) {
-                    if (msg.message.extendedTextMessage.contextInfo.participant == `${loggedInNumber}@s.whatsapp.net`) {
-                        logCuy(`${senderName} : ${message}`);
-                        interactAI(sock, msg, senderID, senderName, message);
-                    }
-                    else {
-                        if (!daftar_percakapan.hasOwnProperty(senderID)) {
-                            daftar_percakapan[senderID] = Array();
-                        }
-                        if (daftar_percakapan[senderID].length > 22) {
-                            daftar_percakapan[senderID].splice(0, 2);
-                        }
-
-                        daftar_percakapan[senderID].push({
-                            "role": "user",
-                            "parts": [
-                                {
-                                    "text": (msg.key.fromMe ? "ProgrammerIndonesia44" : senderName) + " : " + message
-                                }
-                            ]
-                        });
-
-                        let lastTimestamp = 0;
-                        const currentTimestamp = msg.messageTimestamp;
-
-                        if (daftar_waktu_percakapan.hasOwnProperty(senderID)) {
-                            lastTimestamp = daftar_waktu_percakapan[senderID];
-                        }
-
-                        if ((currentTimestamp - lastTimestamp) > (60 * 5)) {
-                            const randomSticker = dapatkanDataAcakDariArray(stickers);
-                            const stickerFile = await downloadFile(`${stickerURL}${randomSticker[0]}.webp`);
-                            
-                            await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: randomSticker[1] });
-                            daftar_waktu_percakapan[senderID] = msg.messageTimestamp;
-                        }
-
-                        console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[reply]".yellow, message.yellow);
-                    }
-                }
-                else if (message.startsWith(`@${loggedInNumber}`)) {
-                    const modifiedMessage = message.replace(`@${loggedInNumber}`, "rulu")
-                    
-                    logCuy(`${senderName} : ${modifiedMessage}`);
-                    interactAI(sock, msg, senderID, senderName, modifiedMessage);
-                }
-                else {
-                    let lastTimestamp = 0;
-                    const currentTimestamp = msg.messageTimestamp;
-
-                    if (daftar_waktu_percakapan.hasOwnProperty(senderID)) {
-                        lastTimestamp = daftar_waktu_percakapan[senderID];
-                    }
-
-                    if ((currentTimestamp - lastTimestamp) > (60 * 3)) {
-                        const randomSticker = dapatkanDataAcakDariArray(stickers);
-                        const stickerFile = await downloadFile(`${stickerURL}${randomSticker[0]}.webp`);
-                        
-                        await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: randomSticker[1] });
-                    }
-
-                    console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.yellow);
-                }
-            }
-            else if (msg.message.imageMessage) {
-                let caption = msg.message.imageMessage?.caption || "Tidak ada caption";
-                
-                logCuy(`${senderName} : [Citra] ${caption}`);
-                
-                try {
-                    const buffer = await downloadMediaMessage(msg, "buffer", {}, {
-                        logger: pino({ level: 'fatal' }),
-                    });
             
-                    // await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { 
-                    //     image: Buffer.from(buffer),
-                    //     caption: `Citra dengan caption : "*${caption}*"` 
-                    // }, { quoted: msg });
-
-                    interactAI(sock, msg, senderID, senderName, message, buffer);
-                } catch (error) {
-                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Error : tidak dapat mendapatkan citra` }, { quoted: msg });
+            if (!blackList.includes(senderNumber)) {
+                if (message == "🗿") {
+                    const stickerFile = await downloadFile(`${stickerURL}${dapatkanDataAcakDariArray(["15", "16", "17"])}.webp`);
+                    await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
                 }
-                // await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: JSON.stringify(msg.message.imageMessage, null, 2) }, { quoted: msg });
-                console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Citra] ".yellow, caption.yellow);
-            }
-            else if (msg.message.stickerMessage && msg.message.stickerMessage.hasOwnProperty("contextInfo")) {
-                if (msg.message.stickerMessage.contextInfo.hasOwnProperty("participant") && msg.message.stickerMessage.contextInfo.participant == `${loggedInNumber}@s.whatsapp.net`) {
+                else if (message == "😈" || message == "👿") {
+                    const stickerFile = await downloadFile(`${stickerURL}${dapatkanDataAcakDariArray(["59", "60", "61", "62", "63", "64", "65", "66", "67", "68", "69", "70", "71", "72", "73"])}.webp`);
+                    await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
+                }
+                else if (message == "😢" || message == "😭") {
+                    const stickerFile = await downloadFile(`${stickerURL}13.webp`);
+                    await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
+                }
+                else if (message == "🥹") {
+                    const stickerFile = await downloadFile(`${stickerURL}14.webp`);
+                    await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true });
+                }
+                else if (message.match("^(bagi|kirim|send) (stiker|sticker)$")) {
                     const randomSticker = dapatkanDataAcakDariArray(reply_stickers);
                     const stickerFile = await downloadFile(`${stickerURL}${randomSticker[0]}.webp`);
                     
@@ -734,8 +626,122 @@ async function connectToWhatsApp(){
                         await sock.sendMessage(senderID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg });
                     }
                 }
-                else {
-                    console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Stiker]".yellow);
+                else if (message == "Assalamualaikum" || message == "assalamualaikum") {
+                await sock.sendMessage(msg.key.remoteJid, { text: `Waalaikumsalam` }, { quoted: msg });
+                }
+                else if (message == "Assalamu'alaikum" || message == "assalamu'alaikum") {
+                    await sock.sendMessage(msg.key.remoteJid, { text: `Wa'alaikumussalam` }, { quoted: msg });
+                }
+                else if (message == "woy" || message == "oii" || message == "oiii") {
+                    await sock.sendMessage(msg.key.remoteJid, { text: `hai` }, { quoted: msg });
+                }
+                else if (message == "woi" || message == "Woi" || message == "oi") {
+                    await sock.sendMessage(msg.key.remoteJid, { text: `hay` }, { quoted: msg });
+                }
+                else if (msg.message.extendedTextMessage && msg.message.extendedTextMessage.hasOwnProperty("contextInfo")) {
+                    if (msg.message.extendedTextMessage.contextInfo.hasOwnProperty("participant")) {
+                        const participantNumber = msg.message.extendedTextMessage.contextInfo.participant ? msg.message.extendedTextMessage.contextInfo.participant.split('@')[0] : 'Tidak diketahui';
+                       
+                        if (participantNumber == loggedInNumber) {
+                            logCuy(`${senderName} : ${message}`);
+                            interactAI(sock, msg, senderID, senderName, message);
+                        }
+                        else if (!blackList.includes(participantNumber)) {
+                            if (!daftar_percakapan.hasOwnProperty(senderID)) {
+                                daftar_percakapan[senderID] = Array();
+                            }
+                            if (daftar_percakapan[senderID].length > 22) {
+                                daftar_percakapan[senderID].splice(0, 2);
+                            }
+
+                            daftar_percakapan[senderID].push({
+                                "role": "user",
+                                "parts": [
+                                    {
+                                        "text": (msg.key.fromMe ? "ProgrammerIndonesia44" : senderName) + " : " + message
+                                    }
+                                ]
+                            });
+
+                            let lastTimestamp = 0;
+                            const currentTimestamp = msg.messageTimestamp;
+
+                            if (daftar_waktu_percakapan.hasOwnProperty(senderID)) {
+                                lastTimestamp = daftar_waktu_percakapan[senderID];
+                            }
+
+                            if ((currentTimestamp - lastTimestamp) > (60 * 5)) {
+                                const randomSticker = dapatkanDataAcakDariArray(stickers);
+                                const stickerFile = await downloadFile(`${stickerURL}${randomSticker[0]}.webp`);
+                                
+                                await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: randomSticker[1] });
+                                daftar_waktu_percakapan[senderID] = msg.messageTimestamp;
+                            }
+
+                            console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[reply]".yellow, message.yellow);
+                        }
+                    }
+                    else if (message.startsWith(`@${loggedInNumber}`)) {
+                        const modifiedMessage = message.replace(`@${loggedInNumber}`, "rulu")
+                        
+                        logCuy(`${senderName} : ${modifiedMessage}`);
+                        interactAI(sock, msg, senderID, senderName, modifiedMessage);
+                    }
+                    else {
+                        let lastTimestamp = 0;
+                        const currentTimestamp = msg.messageTimestamp;
+
+                        if (daftar_waktu_percakapan.hasOwnProperty(senderID)) {
+                            lastTimestamp = daftar_waktu_percakapan[senderID];
+                        }
+
+                        if ((currentTimestamp - lastTimestamp) > (60 * 3)) {
+                            const randomSticker = dapatkanDataAcakDariArray(stickers);
+                            const stickerFile = await downloadFile(`${stickerURL}${randomSticker[0]}.webp`);
+                            
+                            await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: randomSticker[1] });
+                        }
+
+                        console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.yellow);
+                    }
+                }
+                else if (msg.message.imageMessage) {
+                    let caption = msg.message.imageMessage?.caption || "Tidak ada caption";
+                    
+                    logCuy(`${senderName} : [Citra] ${caption}`);
+                    
+                    try {
+                        const buffer = await downloadMediaMessage(msg, "buffer", {}, {
+                            logger: pino({ level: 'fatal' }),
+                        });
+                
+                        // await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { 
+                        //     image: Buffer.from(buffer),
+                        //     caption: `Citra dengan caption : "*${caption}*"` 
+                        // }, { quoted: msg });
+
+                        interactAI(sock, msg, senderID, senderName, message, buffer);
+                    } catch (error) {
+                        await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Error : tidak dapat mendapatkan citra` }, { quoted: msg });
+                    }
+                    // await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: JSON.stringify(msg.message.imageMessage, null, 2) }, { quoted: msg });
+                    console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Citra] ".yellow, caption.yellow);
+                }
+                else if (msg.message.stickerMessage && msg.message.stickerMessage.hasOwnProperty("contextInfo")) {
+                    if (msg.message.stickerMessage.contextInfo.hasOwnProperty("participant") && msg.message.stickerMessage.contextInfo.participant == `${loggedInNumber}@s.whatsapp.net`) {
+                        const randomSticker = dapatkanDataAcakDariArray(reply_stickers);
+                        const stickerFile = await downloadFile(`${stickerURL}${randomSticker[0]}.webp`);
+                        
+                        if (msg.key.fromMe) {
+                            await sock.sendMessage(senderID, { sticker: stickerFile, isAnimated: randomSticker[1] });
+                        }
+                        else {
+                            await sock.sendMessage(senderID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg });
+                        }
+                    }
+                    else {
+                        console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Stiker]".yellow);
+                    }
                 }
             }
 
@@ -1017,7 +1023,7 @@ async function interactAI(sock, msg, senderID, senderName, messageText, messageM
                         "text": "You're in a chat group with several different person talking each other."
                     },
                     {
-                        "text": "the chat group allow user to send stickers. if someone asks you to send a sticker, you must refuse it and say that you don't want to do that. don't say if you can't send a sticker except if asked."
+                        "text": "the chat group allow user to send stickers. if someone asks you to send a sticker, you must refuse it and say that you don't want to do that. don't say if you don't want to send a sticker except if asked. don't say you can't send sticker, but explain that you can only do it automatically."
                     },
                     {
                         "text": "the person who talk with you now is named " + (msg.key.fromMe ? "ProgrammerIndonesia44" : senderName)
