@@ -1,5 +1,5 @@
-# Auto Read Story Whatsapp
-Auto Read Story/Status WhatsApp adalah bot sederhana yang memungkinkan kamu melihat, menyukai, dan mendownload status/story teman-teman WhatsAppmu secara otomatis, sehingga kamu menjadi orang pertamax yang melihat dan menyukai storynyaw.
+# Auto Reply WhatsApp
+Auto Reply WhatsApp adalah bot yang berfungsi untuk membalas pesan grup secara otomatis dan memungkinkan kamu melihat, menyukai, dan mendownload status/story teman-teman WhatsAppmu secara otomatis, sehingga kamu menjadi orang pertamax yang melihat dan menyukai storynyaw.
 
 <div align="center">
   <img src="img/testing.jpg" alt="testing" width="500">
@@ -20,6 +20,7 @@ Auto Read Story/Status WhatsApp adalah bot sederhana yang memungkinkan kamu meli
 5. **Blacklist**: Mengatur hanya nomor tertentu yang statusnya tidak akan dilihat.
 6. **Whitelist**: Mengatur hanya nomor tertentu yang statusnya akan dilihat.
 7. **Emojis**: Mengatur emoji yang digunakan untuk menyukai status.
+8. **Grouplist**: Mengatur grup tertentu yang akan dibalas pesan-nya.
 
 ## Instalasi :
 ### Windows
