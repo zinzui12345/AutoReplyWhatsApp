@@ -89,7 +89,8 @@ const stickers = [
 const pesan_error = [
     "itu gak mungkin",
     "gak masuk akal",
-    "konteksnya bukan itu"
+    "konteksnya bukan itu",
+    "gak mungkin begitu"
 ];
 
 let useCode = true;
@@ -113,7 +114,9 @@ function dapatkanDataAcakDariArray(arr) {
 }
 
 const configPath = path.join(__dirname, 'config.json');
+const userPath = path.join(__dirname, 'user.json');
 let config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+let user = JSON.parse(fs.readFileSync(userPath, 'utf-8'));
 
 let { autoLikeStatus, downloadMediaStatus, sensorNomor, antiTelpon, blackList, whiteList, emojis, groupList, appsScriptApiKey, geminiApiKey } = config;
 
@@ -593,20 +596,7 @@ async function connectToWhatsApp(){
 
                     logCuy(`${senderName} : test!`, 'yellow');
                     await sock.sendMessage(msg.key.remoteJid, { text: JSON.stringify(msg, null, 2) });
-
-                    const tombol = [
-                        { buttonId: 'id1', buttonText: { displayText: 'Tombol 1' }, type: 1 },
-                        { buttonId: 'id2', buttonText: { displayText: 'Tombol 2' }, type: 1 },
-                        { buttonId: 'id3', buttonText: { displayText: 'Tombol 3' }, type: 1 }
-                    ]
-                    const pesan_tombol = {
-                        image: { url: stickerURL + "rulu.png" },
-                        caption: "ini pesan dengan tombol",
-                        footer: 'rulu',
-                        buttons: tombol,
-                        headerType: 4
-                    }
-                    await sock.sendMessage(msg.key.remoteJid, pesan_tombol);
+                    await sock.sendMessage(msg.key.remoteJid, { text: Object.prototype.toString.call(user) });
                     
                     break;
             }
@@ -615,7 +605,9 @@ async function connectToWhatsApp(){
             const groupInfo = await sock.groupMetadata(msg.key.remoteJid);
             const groupName = groupInfo.subject;
             const senderID = msg.key.remoteJid;
-            const senderName = msg.pushName || 'Tidak diketahui';
+            const senderProfile = (msg.key.participant && user.hasOwnProperty(msg.key.participant) ? user[msg.key.participant] : {} );
+            const senderName = senderProfile.displayName || msg.pushName || 'Tidak diketahui';
+            const senderPrompt = senderProfile.customPrompt || "You're in a chat group with several different person talking each other. The chat group allow user to send stickers.";
             const senderNumber = msg.key.participant ? msg.key.participant.split('@')[0] : 'Tidak diketahui';
             const message = msg.type === "conversation"
                         ? msg.message.conversation
@@ -670,7 +662,7 @@ async function connectToWhatsApp(){
                        
                         if (participantNumber == loggedInNumber) {
                             logCuy(`${senderName} : ${message}`);
-                            interactAI(sock, msg, senderID, senderName, messageDuration, message);
+                            interactAI(sock, msg, senderID, senderName, senderPrompt, messageDuration, message);
                         }
                         else if (!blackList.includes(participantNumber)) {
                             if (!daftar_percakapan.hasOwnProperty(senderID)) {
@@ -684,7 +676,7 @@ async function connectToWhatsApp(){
                                 "role": "user",
                                 "parts": [
                                     {
-                                        "text": (msg.key.fromMe ? "ProgrammerIndonesia44" : senderName) + " : " + message
+                                        "text": senderName + " : " + message
                                     }
                                 ]
                             });
@@ -711,7 +703,7 @@ async function connectToWhatsApp(){
                         const modifiedMessage = message.replace(`@${loggedInNumber}`, "rulu")
                         
                         logCuy(`${senderName} : ${modifiedMessage}`);
-                        interactAI(sock, msg, senderID, senderName, messageDuration, modifiedMessage);
+                        interactAI(sock, msg, senderID, senderName, senderPrompt, messageDuration, modifiedMessage);
                     }
                     else {
                         let lastTimestamp = 0;
@@ -747,7 +739,7 @@ async function connectToWhatsApp(){
                         //     caption: `Citra dengan caption : "*${caption}*"` 
                         // }, { quoted: msg });
 
-                        interactAI(sock, msg, senderID, senderName, messageDuration, message, buffer);
+                        interactAI(sock, msg, senderID, senderName, senderPrompt, messageDuration, message, buffer);
                     } catch (error) {
                         await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Error : tidak dapat mendapatkan citra` }, { quoted: msg });
                     }
@@ -896,7 +888,7 @@ async function downloadFile(url) {
     request(url);
   });
 }
-async function interactAI(sock, msg, senderID, senderName, messageDuration, messageText, messageMediaBuffer = null) {
+async function interactAI(sock, msg, senderID, senderName, senderPrompt, messageDuration, messageText, messageMediaBuffer = null) {
     if (jumlah_percakapan <= batas_percakapan && geminiApiKey != "") {
         const req_options = {
             hostname: 'generativelanguage.googleapis.com',
@@ -997,7 +989,7 @@ async function interactAI(sock, msg, senderID, senderName, messageDuration, mess
                 "role": "user",
                 "parts": [
                     {
-                        "text": (msg.key.fromMe ? "ProgrammerIndonesia44" : senderName) + " : " + messageText
+                        "text": senderName + " : " + messageText
                     },
                     {
                         "inline_data": {
@@ -1013,7 +1005,7 @@ async function interactAI(sock, msg, senderID, senderName, messageDuration, mess
                 "role": "user",
                 "parts": [
                     {
-                        "text": (msg.key.fromMe ? "ProgrammerIndonesia44" : senderName) + " : " + messageText
+                        "text": senderName + " : " + messageText
                     }
                 ]
             });
@@ -1050,16 +1042,16 @@ async function interactAI(sock, msg, senderID, senderName, messageDuration, mess
                         "text": "Don't talk about the man who programmed you and the girl who trained you except if asked."
                     },
                     {
-                        "text": "You're in a chat group with several different person talking each other."
+                        "text": senderPrompt
                     },
                     {
-                        "text": "The chat group allow user to send stickers. If someone asks you to send a sticker, you must refuse it and say that you can only do it automatically."
+                        "text": "If someone asks you to send a sticker, you must refuse it and say that you can only do it automatically."
                     },
                     {
                         "text": "You can only reply to text and image messages, but you have a separate program that can automatically reply and send stickers randomly and you can't control that program."
                     },
                     {
-                        "text": "the person who talk with you now is named " + (msg.key.fromMe ? "ProgrammerIndonesia44" : senderName)
+                        "text": "the person who talk with you now is named " + senderName
                     }
                 ]
             },
