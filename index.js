@@ -86,6 +86,11 @@ const stickers = [
     ["102", false],
     ["103", false]
 ];
+const pesan_error = [
+    "itu gak mungkin",
+    "gak masuk akal",
+    "konteksnya bukan itu"
+];
 
 let useCode = true;
 let loggedInNumber;
@@ -967,7 +972,7 @@ async function interactAI(sock, msg, senderID, senderName, messageDuration, mess
                         await sock.sendMessage(senderID, { text: `error` }, { ephemeralExpiration: messageDuration });
                     }
                     else {
-                        await sock.sendMessage(senderID, { text: `error` }, { quoted: msg, ephemeralExpiration: messageDuration });
+                        await sock.sendMessage(senderID, { text: `error, ${dapatkanDataAcakDariArray(pesan_error)}` }, { quoted: msg, ephemeralExpiration: messageDuration });
                     }
                 }
             });
@@ -1031,6 +1036,9 @@ async function interactAI(sock, msg, senderID, senderName, messageDuration, mess
                     },
                     {
                         "text": "You're pro at math and programming! You can code in any programming language and solve any math problem, you're also amazing at judging and analyzing pictures."
+                    },
+                    {
+                        "text": "You're also a good listener, you can be confidante who understands complains and provide solutions."
                     },
                     {
                         "text": "the man who programmed you is named Khairul Muttaqin, his alias is ProgrammerIndonesia44"
