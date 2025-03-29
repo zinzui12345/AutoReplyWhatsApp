@@ -577,17 +577,17 @@ async function connectToWhatsApp(){
                 case "id":
                     await sock.sendMessage(msg.key.remoteJid, { text: msg.key.remoteJid }, { quoted: msg });
                     break;
+                case "reset":
+                    if (msg.key.remoteJid.split('@')[1] === "g.us" && groupList.includes(msg.key.remoteJid)) {
+                        daftar_percakapan[msg.key.remoteJid] = Array();
+                        await sock.sendMessage(msg.key.remoteJid, { text: JSON.stringify(daftar_percakapan) });
+                    }
+                    break;
                 case "test":
                     const senderName = msg.pushName || 'Tidak diketahui';
-                    const senderID = msg.key.remoteJid;
 
                     logCuy(`${senderName} : test!`, 'yellow');
-                    await sock.sendMessage(senderID, { text: JSON.stringify(msg, null, 2) });
-
-                    // if (msg.key.remoteJid.split('@')[1] === "g.us") {
-                    //     const groupInfo = await sock.groupMetadata(msg.key.remoteJid);
-                    //     await sock.sendMessage(senderID, { text: JSON.stringify(groupInfo, null, 2) });
-                    // }
+                    await sock.sendMessage(msg.key.remoteJid, { text: JSON.stringify(msg, null, 2) });
 
                     const tombol = [
                         { buttonId: 'id1', buttonText: { displayText: 'Tombol 1' }, type: 1 },
@@ -601,7 +601,7 @@ async function connectToWhatsApp(){
                         buttons: tombol,
                         headerType: 4
                     }
-                    await sock.sendMessage(senderID, pesan_tombol);
+                    await sock.sendMessage(msg.key.remoteJid, pesan_tombol);
                     
                     break;
             }
@@ -622,19 +622,19 @@ async function connectToWhatsApp(){
             if (!blackList.includes(senderNumber)) {
                 if (message == "🗿") {
                     const stickerFile = await downloadFile(`${stickerURL}${dapatkanDataAcakDariArray(["15", "16", "17"])}.webp`);
-                    await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true }, { ephemeralExpiration: messageDuration });
+                    await sock.sendMessage(senderID, { sticker: stickerFile, isAnimated: true }, { ephemeralExpiration: messageDuration });
                 }
                 else if (message == "😈" || message == "👿") {
                     const stickerFile = await downloadFile(`${stickerURL}${dapatkanDataAcakDariArray(["59", "60", "61", "62", "63", "64", "65", "66", "67", "68", "69", "70", "71", "72", "73"])}.webp`);
-                    await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true }, { ephemeralExpiration: messageDuration });
+                    await sock.sendMessage(senderID, { sticker: stickerFile, isAnimated: true }, { ephemeralExpiration: messageDuration });
                 }
                 else if (message == "😢" || message == "😭") {
                     const stickerFile = await downloadFile(`${stickerURL}13.webp`);
-                    await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true }, { ephemeralExpiration: messageDuration });
+                    await sock.sendMessage(senderID, { sticker: stickerFile, isAnimated: true }, { ephemeralExpiration: messageDuration });
                 }
                 else if (message == "🥹") {
                     const stickerFile = await downloadFile(`${stickerURL}14.webp`);
-                    await sock.sendMessage(msg.key.remoteJid, { sticker: stickerFile, isAnimated: true }, { ephemeralExpiration: messageDuration });
+                    await sock.sendMessage(senderID, { sticker: stickerFile, isAnimated: true }, { ephemeralExpiration: messageDuration });
                 }
                 else if (message.match("^(bagi|kirim|send) (stiker|sticker)$")) {
                     const randomSticker = dapatkanDataAcakDariArray(reply_stickers);
@@ -702,7 +702,7 @@ async function connectToWhatsApp(){
                             console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[reply]".yellow, message.yellow);
                         }
                     }
-                    else if (message.startsWith(`@${loggedInNumber}`)) {
+                    else if (message.match(`(\@${loggedInNumber})`)) {
                         const modifiedMessage = message.replace(`@${loggedInNumber}`, "rulu")
                         
                         logCuy(`${senderName} : ${modifiedMessage}`);
