@@ -584,10 +584,24 @@ async function connectToWhatsApp(){
                     logCuy(`${senderName} : test!`, 'yellow');
                     await sock.sendMessage(senderID, { text: JSON.stringify(msg, null, 2) });
 
-                    if (msg.key.remoteJid.split('@')[1] === "g.us") {
-                        const groupInfo = await sock.groupMetadata(msg.key.remoteJid);
-                        await sock.sendMessage(senderID, { text: JSON.stringify(groupInfo, null, 2) });
+                    // if (msg.key.remoteJid.split('@')[1] === "g.us") {
+                    //     const groupInfo = await sock.groupMetadata(msg.key.remoteJid);
+                    //     await sock.sendMessage(senderID, { text: JSON.stringify(groupInfo, null, 2) });
+                    // }
+
+                    const tombol = [
+                        { buttonId: 'id1', buttonText: { displayText: 'Tombol 1' }, type: 1 },
+                        { buttonId: 'id2', buttonText: { displayText: 'Tombol 2' }, type: 1 },
+                        { buttonId: 'id3', buttonText: { displayText: 'Tombol 3' }, type: 1 }
+                    ]
+                    const pesan_tombol = {
+                        image: { url: stickerURL + "rulu.png" },
+                        caption: "ini pesan dengan tombol",
+                        footer: 'rulu',
+                        buttons: tombol,
+                        headerType: 4
                     }
+                    await sock.sendMessage(senderID, pesan_tombol);
                     
                     break;
             }
@@ -1031,7 +1045,10 @@ async function interactAI(sock, msg, senderID, senderName, messageDuration, mess
                         "text": "You're in a chat group with several different person talking each other."
                     },
                     {
-                        "text": "the chat group allow user to send stickers. if someone asks you to send a sticker, you must refuse it and say that you don't want to do that. don't say if you don't want to send a sticker except if asked. don't say you can't send sticker, but explain that you can only do it automatically."
+                        "text": "The chat group allow user to send stickers. If someone asks you to send a sticker, you must refuse it and say that you can only do it automatically."
+                    },
+                    {
+                        "text": "You can only reply to text and image messages, but you have a separate program that can automatically reply and send stickers randomly and you can't control that program."
                     },
                     {
                         "text": "the person who talk with you now is named " + (msg.key.fromMe ? "ProgrammerIndonesia44" : senderName)
