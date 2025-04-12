@@ -696,17 +696,17 @@ async function connectToWhatsApp(){
                                 daftar_percakapan[chatID].splice(0, 2);
                             }
 
-                            daftar_percakapan[chatID].push({
-                                "role": (msg.key.fromMe ? "model" : "user"),
-                                "parts": [
-                                    {
-                                        "text": `message_info: { sender_name: "${(msg.key.fromMe ? "rulu" : senderName)}", sender_id: "${senderID}" }`
-                                    },
-                                    {
-                                        "text":  t_message
-                                    }
-                                ]
-                            });
+                            // daftar_percakapan[chatID].push({
+                            //     "role": (msg.key.fromMe ? "model" : "user"),
+                            //     "parts": [
+                            //         {
+                            //             "text": `message_info: { sender_name: "${(msg.key.fromMe ? "rulu" : senderName)}", sender_id: "${senderID}" }`
+                            //         },
+                            //         {
+                            //             "text":  t_message
+                            //         }
+                            //     ]
+                            // });
 
                             let lastTimestamp = 0;
                             const currentTimestamp = msg.messageTimestamp;
@@ -1066,16 +1066,12 @@ async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt,
                     
                         teks_hasil = teks_hasil.replace(hasil_rgx[0], "");
                     }
+                    teks_hasil = teks_hasil.replaceAll("<(!exp>", "< !exp>");
                     while(teks_hasil.match("< \!exp>(.+?)<\/!exp>")) {
                         let hasil_rgx = teks_hasil.match("< \!exp>(.+?)<\/!exp>");
                     
                         teks_hasil = teks_hasil.replace(hasil_rgx[0], "");
                     }
-                    // while(teks_hasil.match("<\(\!exp>(.+?)<\/!exp>")) { ERROR!!!
-                    //     let hasil_rgx = teks_hasil.match("<\(\!exp>(.+?)<\/!exp>");
-                    
-                    //     teks_hasil = teks_hasil.replace(hasil_rgx[0], "");
-                    // }
                     while(teks_hasil.match("<\!exp>(.+?)<\/exp>")) {
                         let hasil_rgx = teks_hasil.match("<\!exp>(.+?)<\/exp>");
                     
