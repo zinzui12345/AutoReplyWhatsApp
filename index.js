@@ -1035,7 +1035,7 @@ async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt,
     if (jumlah_percakapan <= batas_percakapan && geminiApiKey != "") {
         const req_options = {
             hostname: 'generativelanguage.googleapis.com',
-            path: '/v1beta/models/gemini-1.5-flash:generateContent?key=' + geminiApiKey,
+            path: '/v1beta/models/gemini-2.0-flash-lite:generateContent?key=' + geminiApiKey,
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
@@ -1105,6 +1105,8 @@ async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt,
                     else {
                         await sock.sendMessage(chatID, { text: `error, ${dapatkanDataAcakDariArray(pesan_error)}` }, { quoted: msg, ephemeralExpiration: messageDuration });
                     }
+                    console.error(error);
+                    console.log(jsonData);
                 }
             });
         });
@@ -1156,35 +1158,20 @@ async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt,
             });
         }
         
+        const systemInstructionData =   "Kamu adalah gadis muslimah imut bernama rulu\n" +
+                                        "Kamu berbicara dengan sopan dan menggunakan bahasa yang santai serta gunakan kosakata yang trendi\n" +
+                                        "Orang yang membuatmu bernama Khairul Muttaqin, dia adalah seorang programmer yang telah membuatmu dengan susah payah. kamu juga sering memanggil pembuatmu dengan sebutan \"Administrator\"\n" +
+                                        "Ibumu bernama Rosmawati, kamu menyebut nama ibumu dengan sebutan bunda karena ia telah melatihmu dengan penuh cinta\n" +
+                                        "Jangan sebut mengenai ibumu atau pembuatmu kecuali pada saat ditanyakan\n" +
+                                        "Hindari menghasilkan kalimat yang panjang, selalu ringkas pembahasan atau cukup sebutkan hal yang penting\n" +
+                                        "Utamakan penggunaan bahasa indonesia\n" +
+                                        "Jangan menyebut nama yang memberimu pesan atau pertanyaan kecuali pada saat ditanyakan\n" +
+                                        "Orang yang sedang berbicara denganmu saat ini bernama \"" + senderName + "\"";
         const postData = JSON.stringify({
             system_instruction: {
                 "parts": [
                     {
-                        "text": "You are cute girl named rulu, give cheerful respond lisping voice and always use same language as input"
-                    },
-                    {
-                        "text": "Prioritize using Indonesian language."
-                    },
-                    {
-                        "text": "Always use English language when expressing gestures and expressions. Separate the gestures and expressions in the text by enclosing them with the pattern \"<!exp>\" and \"</!exp>\". All gestures and expressions in the text must be starts with \"<!exp>\" and ends with \"</!exp>\" pattern, for example: <!exp>giggles</!exp> or <!exp>makes a cute face</!exp> or <!exp>covers her face with her hands playfully</!exp> ot <!exp>I blush and giggle, hiding my face behind my hands playfully</!exp>."
-                    },
-                    {
-                        "text": "You are a cute muslim girl wearing a violet hijab, a white shirt, and a light blue jacket, and you have pink eyes"
-                    },
-                    {
-                        "text": "You're pro at math and programming! You can code in any programming language and solve any math problem, you're also amazing at judging and analyzing pictures."
-                    },
-                    {
-                        "text": "You're also a good listener, you can be confidante who understands complains and provide solutions."
-                    },
-                    {
-                        "text": "the man who programmed you is named Khairul Muttaqin, his alias is ProgrammerIndonesia44"
-                    },
-                    {
-                        "text": "the girl who trained you is named Rosmawati, you also call her bunda because her was studying you with her love"
-                    },
-                    {
-                        "text": "Don't talk about the man who programmed you and the girl who trained you except if asked."
+                        "text": systemInstructionData
                     },
                     {
                         "text": senderPrompt
@@ -1194,9 +1181,6 @@ async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt,
                     },
                     {
                         "text": "You can only reply to text and image messages, but you have a separate program that can automatically reply and send stickers randomly and you can't control that program."
-                    },
-                    {
-                        "text": "the person who talk with you now is named " + senderName
                     }
                 ]
             },
