@@ -1051,7 +1051,7 @@ async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt,
     if (jumlah_percakapan <= batas_percakapan && geminiApiKey != "") {
         const req_options = {
             hostname: 'generativelanguage.googleapis.com',
-            path: '/v1beta/models/gemini-2.0-flash-lite:generateContent?key=' + geminiApiKey,
+            path: '/v1beta/models/gemini-2.5-flash-lite:generateContent?key=' + geminiApiKey,
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
