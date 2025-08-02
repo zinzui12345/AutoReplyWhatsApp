@@ -897,7 +897,23 @@ async function connectToWhatsApp(){
                             await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
                         }
                         else {
-                            await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg, ephemeralExpiration: messageDuration });
+                            const random_interact = dapatkanDataAcakDariArray([false, false, false, false, true]);
+                            if (random_interact) {
+                                let t_message = dapatkanDataAcakDariArray(
+                                    [
+                                        "menurut kamu aku kayak gimana?",
+                                        "hai rulu",
+                                        "kirim stiker lagi dong",
+                                        "ehh rulu",
+                                        "halo"
+                                    ]
+                                )
+                                logCuy(`${senderName} : ${t_message}`);
+                                interactAI(sock, msg, chatID, senderID, senderName, senderPrompt, messageDuration, t_message);
+                            }
+                            else {
+                                await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg, ephemeralExpiration: messageDuration });
+                            }
                         }
                     }
                     else {
@@ -999,7 +1015,7 @@ async function connectToWhatsApp(){
                     }
                 }
             } 
-	}
+	    }
     });
 }
 
@@ -1100,13 +1116,12 @@ async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt,
                     }
                 } catch(error) {
                     if (msg.key.fromMe) {
-                        await sock.sendMessage(chatID, { text: `error` }, { ephemeralExpiration: messageDuration });
+                        await sock.sendMessage(chatID, { text: String(error) }, { ephemeralExpiration: messageDuration });
                     }
                     else {
                         await sock.sendMessage(chatID, { text: `error, ${dapatkanDataAcakDariArray(pesan_error)}` }, { quoted: msg, ephemeralExpiration: messageDuration });
                     }
                     console.error(error);
-                    console.log(jsonData);
                 }
             });
         });
