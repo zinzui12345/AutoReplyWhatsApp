@@ -138,6 +138,7 @@ const updateConfig = (key, value) => {
 };
 
 let welcomeMessage = false;
+var isSendLastMessage = false;
 
 async function connectToWhatsApp(){
     const sessionPath = path.join(__dirname, 'sessions');
@@ -633,18 +634,22 @@ async function connectToWhatsApp(){
                 if (message == "🗿") {
                     const stickerFile = await downloadFile(`${stickerURL}${dapatkanDataAcakDariArray(["15", "16", "17"])}.webp`);
                     await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: true }, { ephemeralExpiration: messageDuration });
+                    isSendLastMessage = true;
                 }
                 else if (message == "😈" || message == "👿") {
                     const stickerFile = await downloadFile(`${stickerURL}${dapatkanDataAcakDariArray(["59", "60", "61", "62", "63", "64", "65", "66", "67", "68", "69", "70", "71", "72", "73"])}.webp`);
                     await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: true }, { ephemeralExpiration: messageDuration });
+                    isSendLastMessage = true;
                 }
                 else if (message == "😢" || message == "😭") {
                     const stickerFile = await downloadFile(`${stickerURL}13.webp`);
                     await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: true }, { ephemeralExpiration: messageDuration });
+                    isSendLastMessage = true;
                 }
                 else if (message == "🥹") {
                     const stickerFile = await downloadFile(`${stickerURL}14.webp`);
                     await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: true }, { ephemeralExpiration: messageDuration });
+                    isSendLastMessage = true;
                 }
                 else if (message.match("^(bagi|kirim|send) (stiker|sticker)$")) {
                     const randomSticker = dapatkanDataAcakDariArray(reply_stickers);
@@ -656,18 +661,24 @@ async function connectToWhatsApp(){
                     else {
                         await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg, ephemeralExpiration: messageDuration });
                     }
+
+                    isSendLastMessage = true;
                 }
                 else if (message == "Assalamualaikum" || message == "assalamualaikum") {
                     await sock.sendMessage(msg.key.remoteJid, { text: `Waalaikumsalam` }, { quoted: msg, ephemeralExpiration: messageDuration });
+                    isSendLastMessage = true;
                 }
                 else if (message == "Assalamu'alaikum" || message == "assalamu'alaikum") {
                     await sock.sendMessage(msg.key.remoteJid, { text: `Wa'alaikumussalam` }, { quoted: msg, ephemeralExpiration: messageDuration });
+                    isSendLastMessage = true;
                 }
                 else if (message == "woy" || message == "oii" || message == "oiii") {
                     await sock.sendMessage(msg.key.remoteJid, { text: `hai` }, { quoted: msg, ephemeralExpiration: messageDuration });
+                    isSendLastMessage = true;
                 }
                 else if (message == "woi" || message == "Woi" || message == "oi") {
                     await sock.sendMessage(msg.key.remoteJid, { text: `hay` }, { quoted: msg, ephemeralExpiration: messageDuration });
+                    isSendLastMessage = true;
                 }
                 else if (msg.message.extendedTextMessage && msg.message.extendedTextMessage.hasOwnProperty("contextInfo")) {
                     if (msg.message.extendedTextMessage.contextInfo.hasOwnProperty("participant")) {
@@ -676,6 +687,7 @@ async function connectToWhatsApp(){
                         if (participantNumber == loggedInNumber) {
                             logCuy(`${senderName} : ${message}`);
                             interactAI(sock, msg, chatID, `${loggedInNumber}@s.whatsapp.net`, senderName, senderPrompt, messageDuration, message);
+                            isSendLastMessage = true;
                         }
                         else if (!blackList.includes(participantNumber)) {
                             let t_message = message;
@@ -724,6 +736,7 @@ async function connectToWhatsApp(){
                             }
 
                             console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[reply]".yellow, t_message.yellow);
+                            isSendLastMessage = false;
                         }
                     }
                     else if (message.match(`(\@${loggedInNumber})`)) {
@@ -759,6 +772,7 @@ async function connectToWhatsApp(){
 
                         logCuy(`${senderName} : ${modifiedMessage}`);
                         interactAI(sock, msg, chatID, senderID, senderName, senderPrompt, messageDuration, modifiedMessage);
+                        isSendLastMessage = true;
                     }
                     else if (message.match(`(\@[0-9]+)`)) {
                         let t_message = message;
@@ -792,6 +806,7 @@ async function connectToWhatsApp(){
                         });
 
                         console.log(groupName.cyan, ` → `, senderName.green, ` : `, t_message.yellow);
+                        isSendLastMessage = false;
                     }
                     else if (message.match(`^(rulu|Rulu|RULU) *`)) {
                         let t_message = message;
@@ -807,6 +822,7 @@ async function connectToWhatsApp(){
 
                         logCuy(`${senderName} : ${t_message}`);
                         interactAI(sock, msg, chatID, senderID, senderName, senderPrompt, messageDuration, t_message);
+                        isSendLastMessage = true;
                     }
                     else {
                         if (!daftar_percakapan.hasOwnProperty(chatID)) {
@@ -835,12 +851,14 @@ async function connectToWhatsApp(){
                             lastTimestamp = daftar_waktu_percakapan[chatID];
                         }
 
+                        let giveResponse = false;
                         if ((currentTimestamp - lastTimestamp) > (60 * 3)) {
                             const randomSticker = dapatkanDataAcakDariArray(stickers);
                             const stickerFile = await downloadFile(`${stickerURL}${randomSticker[0]}.webp`);
                             
                             await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
                             daftar_waktu_percakapan[chatID] = msg.messageTimestamp;
+                            giveResponse = true;
                         }
                         else if (senderProfile.hasOwnProperty("lastInteract")) {
                             if ((currentTimestamp - senderProfile.lastInteract) > (60 * 180)) {
@@ -858,12 +876,20 @@ async function connectToWhatsApp(){
                 
                                     if (!msg.key.fromMe) {
                                         await sock.sendMessage(chatID, { text: randomgreeting }, { quoted: msg, ephemeralExpiration: messageDuration });
+                                        giveResponse = true;
                                     }
                                 }
                             }
                         }
 
-                        console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.yellow);
+                        if (isSendLastMessage && !giveResponse) {
+                            logCuy(`${senderName} : ${message}`);
+                            interactAI(sock, msg, chatID, senderID, senderName, senderPrompt, messageDuration, message);
+                            if (senderName == "Tidak diketahui") isSendLastMessage = false;
+                        }
+                        else {
+                            console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.yellow);
+                        }
                     }
                 }
                 else if (msg.message.imageMessage) {
@@ -887,6 +913,7 @@ async function connectToWhatsApp(){
                     }
                     // await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: JSON.stringify(msg.message.imageMessage, null, 2) }, { quoted: msg });
                     console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Citra] ".yellow, caption.yellow);
+                    isSendLastMessage = true;
                 }
                 else if (msg.message.stickerMessage && msg.message.stickerMessage.hasOwnProperty("contextInfo")) {
                     if (msg.message.stickerMessage.contextInfo.hasOwnProperty("participant") && msg.message.stickerMessage.contextInfo.participant == `${loggedInNumber}@s.whatsapp.net`) {
@@ -895,6 +922,7 @@ async function connectToWhatsApp(){
                         
                         if (msg.key.fromMe) {
                             await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
+                            isSendLastMessage = true;
                         }
                         else {
                             const random_interact = dapatkanDataAcakDariArray([false, false, false, false, true]);
@@ -914,10 +942,12 @@ async function connectToWhatsApp(){
                             else {
                                 await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg, ephemeralExpiration: messageDuration });
                             }
+                            isSendLastMessage = true;
                         }
                     }
                     else {
                         console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Stiker]".yellow);
+                        isSendLastMessage = false;
                     }
                 }
             }
