@@ -1071,6 +1071,12 @@ async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt,
                     const jsonData = JSON.parse(data);
                     let teks_hasil = "";
 
+                    if (!jsonData.hasOwnProperty("candidates")) {
+                        console.log("invalid response");
+                        await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: JSON.stringify(jsonData, null, 2) }, { quoted: msg, ephemeralExpiration: messageDuration });
+                        return;
+                    }
+
                     for(c=0;c < jsonData.candidates.length;c++){
                         for(p=0;p < jsonData.candidates[c].content.parts.length;p++){
                             teks_hasil += jsonData.candidates[c].content.parts[p].text;
@@ -1116,7 +1122,7 @@ async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt,
                     }
                 } catch(error) {
                     if (msg.key.fromMe) {
-                        await sock.sendMessage(chatID, { text: String(error) }, { ephemeralExpiration: messageDuration });
+                        await sock.sendMessage(chatID, { text: "```" + String(error) + "```" }, { ephemeralExpiration: messageDuration });
                     }
                     else {
                         await sock.sendMessage(chatID, { text: `error, ${dapatkanDataAcakDariArray(pesan_error)}` }, { quoted: msg, ephemeralExpiration: messageDuration });
