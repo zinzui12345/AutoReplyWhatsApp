@@ -9,6 +9,7 @@ const moment = require('moment-timezone');
 const { hostname } = require('os');
 const { error } = require('console');
 const { buffer } = require('stream/consumers');
+const qrcode = require('qrcode-terminal');
 
 const stickerURL = "https://cdn.glitch.com/15e03e71-102f-4056-a602-fd237811c6aa/";
 const reply_stickers = [
@@ -147,15 +148,15 @@ async function connectToWhatsApp(){
     const { state, saveCreds } = await useMultiFileAuthState('sessions');
 
     const sock = makeWASocket({
-        logger: pino({ level: 'silent' }),
+        logger: pino({ level: 'silent' }), // untuk kenyamanan, set ke 'silent' | 'debug' untuk merinci jika ada kesalahan koneksi
         auth: state,
-        printQRInTerminal: !useCode,
+        // printQRInTerminal: !useCode, // The printQRInTerminal option is no longer valid
         defaultQueryTimeoutMs: undefined,
         keepAliveIntervalMs: 30000,
         browser: Browsers.macOS('Chrome'),
         shouldSyncHistoryMessage: () => true,
         markOnlineOnConnect: true,
-        syncFullHistory: true,
+        syncFullHistory: false, // set ke true biar bisa cek riwayat pesan
         generateHighQualityLinkPreview: true
     });
 
@@ -165,9 +166,9 @@ async function connectToWhatsApp(){
             input: process.stdin,
             output: process.stdout
         });
-
+        
         logCuy('Halo sepertinya kamu belum login, Mau login wangsaf pakai pairing code?\nSilahkan balas dengan (y/n)\nketik y untuk setuju atau ketik n untuk login menggunakan qrcode', 'cyan'); // pesan untuk yang menggunakan panel
-
+        
         const askPairingCode = () => {
             rl.question('\nApakah kamu ingin menggunakan pairing code untuk login ke wangsaf? (y/n): '.yellow.bold, async (answer) => {
                 if (answer.toLowerCase() === 'y' || answer.trim() === '') {
@@ -204,18 +205,29 @@ async function connectToWhatsApp(){
     }
     
     sock.ev.on('connection.update', async (update) => {
-        const { connection, lastDisconnect } = update;
+        const { connection, lastDisconnect, qr } = update;
+        if (qr && !useCode) {
+            qrcode.generate(qr, { small: true });
+        }
         if(connection === 'close') {
             const shouldReconnect = lastDisconnect.error?.output.statusCode !== DisconnectReason.loggedOut;
             if(shouldReconnect) {
-                logCuy('Mencoba menghubungkan ke wangsaf...\n', 'cyan');
-                connectToWhatsApp();
-            } else {
+                if (lastDisconnect.error?.output.statusCode == 405) {
+                    logCuy('Metode tidak di-izinkan!', 'red');
+                    logCuy(JSON.stringify(update), 'yellow');
+                }
+                else {
+                    logCuy("[" + String(lastDisconnect.error?.output.statusCode) + "] Mencoba menghubungkan ke wangsaf...\n", 'cyan');
+                    connectToWhatsApp();
+                }
+            }
+            else {
                 logCuy('Nampaknya kamu telah logout dari wangsaf, silahkan login ke wangsaf kembali!', 'red');
                 fs.rmdirSync(sessionPath, { recursive: true, force: true });
                 connectToWhatsApp();
             }
-        } else if(connection === 'open') {
+        }
+        else if(connection === 'open') {
             logCuy('Berhasil Terhubung ke wangsaf');
             loggedInNumber = sock.user.id.split('@')[0].split(':')[0];
             let displayedLoggedInNumber = loggedInNumber;
