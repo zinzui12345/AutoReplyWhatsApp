@@ -1,4 +1,4 @@
-const { makeWASocket, DisconnectReason, useMultiFileAuthState, Browsers, jidNormalizedUser, downloadMediaMessage, WA_DEFAULT_EPHEMERAL} = require('@whiskeysockets/baileys');
+const { makeWASocket, DisconnectReason, useMultiFileAuthState, Browsers, jidNormalizedUser, downloadMediaMessage, WA_DEFAULT_EPHEMERAL, fetchLatestWaWebVersion} = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const readline = require('readline');
 const https = require('https');
@@ -113,6 +113,7 @@ let daftar_waktu_percakapan = {};
 let riwayat_percakapan = 22;
 let jumlah_percakapan = 0;
 let batas_percakapan = 1200;
+let telah_login = false;
 
 function logCuy(message, type = 'green') {
     moment.locale('id');
@@ -146,14 +147,16 @@ async function connectToWhatsApp(){
     const sessionExists = fs.existsSync(sessionPath) && fs.readdirSync(sessionPath).length > 0;
     
     const { state, saveCreds } = await useMultiFileAuthState('sessions');
+    const { version, isLatest } = await fetchLatestWaWebVersion();
 
     const sock = makeWASocket({
+        version,
         logger: pino({ level: 'silent' }), // untuk kenyamanan, set ke 'silent' | 'debug' untuk merinci jika ada kesalahan koneksi
         auth: state,
         // printQRInTerminal: !useCode, // The printQRInTerminal option is no longer valid
         defaultQueryTimeoutMs: undefined,
         keepAliveIntervalMs: 30000,
-        browser: Browsers.macOS('Chrome'),
+        browser: Browsers.macOS('Safari'),
         shouldSyncHistoryMessage: () => true,
         markOnlineOnConnect: true,
         syncFullHistory: false, // set ke true biar bisa cek riwayat pesan
@@ -206,15 +209,18 @@ async function connectToWhatsApp(){
     
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
-        if (qr && !useCode) {
+        if (qr && !useCode && !telah_login) {
             qrcode.generate(qr, { small: true });
         }
-        if(connection === 'close') {
+        else if(connection === 'close') {
             const shouldReconnect = lastDisconnect.error?.output.statusCode !== DisconnectReason.loggedOut;
             if(shouldReconnect) {
                 if (lastDisconnect.error?.output.statusCode == 405) {
                     logCuy('Metode tidak di-izinkan!', 'red');
                     logCuy(JSON.stringify(update), 'yellow');
+                    if (sessionExists) {
+                        connectToWhatsApp();
+                    }
                 }
                 else {
                     logCuy("[" + String(lastDisconnect.error?.output.statusCode) + "] Mencoba menghubungkan ke wangsaf...\n", 'cyan');
@@ -230,6 +236,7 @@ async function connectToWhatsApp(){
         else if(connection === 'open') {
             logCuy('Berhasil Terhubung ke wangsaf');
             loggedInNumber = sock.user.id.split('@')[0].split(':')[0];
+            telah_login = true;
             let displayedLoggedInNumber = loggedInNumber;
             if (sensorNomor) {
                 displayedLoggedInNumber = displayedLoggedInNumber.slice(0, 3) + '****' + displayedLoggedInNumber.slice(-2);
@@ -242,7 +249,7 @@ async function connectToWhatsApp(){
                                 `- Sensor Nomor: ${sensorNomor ? "*Aktif*" : "*Nonaktif*"}\n`+
                                 `- Anti Telpon: ${antiTelpon ? "*Aktif*" : "*Nonaktif*"}\n\n`+
                                 `Ketik *#menu* untuk melihat menu perintah yang tersedia.\n\n`+
-                                `SC : https://github.com/jauhariel/AutoReadStoryWhatsapp`;
+                                `SC : https://github.com/zinzui12345/AutoReplyWhatsApp`;
             console.log(`kamu berhasil login dengan nomor:`.green.bold, displayedLoggedInNumber.yellow.bold);
             console.log("Bot sudah aktif!\n\nSelamat menikmati fitur auto read story whatsapp by".green.bold, "github.com/Jauhariel\n".red.bold);
 
