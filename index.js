@@ -238,7 +238,7 @@ async function connectToWhatsApp(){
             }
             else {
                 logCuy('Nampaknya kamu telah logout dari wangsaf, silahkan login ke wangsaf kembali!', 'red');
-                fs.rmdirSync(sessionPath, { recursive: true, force: true });
+                fs.rm(sessionPath, { recursive: true, force: true });
                 connectToWhatsApp();
             }
         }
@@ -971,33 +971,37 @@ async function connectToWhatsApp(){
                     isSendLastMessage = true;
                 }
                 else if (msg.message.stickerMessage && msg.message.stickerMessage.hasOwnProperty("contextInfo")) {
-                    if (msg.message.stickerMessage.contextInfo.hasOwnProperty("participant") && msg.message.stickerMessage.contextInfo.participant == `${loggedInNumber}@s.whatsapp.net`) {
-                        const randomSticker = dapatkanDataAcakDariArray(reply_stickers);
-                        const stickerFile = await buatSticker(`${stickerURL}${randomSticker[0]}.webp`);
-                        
-                        if (msg.key.fromMe) {
-                            await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
-                            isSendLastMessage = true;
-                        }
-                        else {
-                            const random_interact = dapatkanDataAcakDariArray([false, false, false, false, true]);
-                            if (random_interact) {
-                                let t_message = dapatkanDataAcakDariArray(
-                                    [
-                                        "menurut kamu aku kayak gimana?",
-                                        "hai rulu",
-                                        "kirim stiker lagi dong",
-                                        "ehh rulu",
-                                        "halo"
-                                    ]
-                                )
-                                logCuy(`${senderName} : ${t_message}`);
-                                interactAI(sock, msg, chatID, senderID, senderName, senderPrompt, messageDuration, t_message);
+                    if (msg.message.stickerMessage.contextInfo.hasOwnProperty("participant")) {
+                        const participantNumber = msg.message.stickerMessage.contextInfo.participant ? msg.message.stickerMessage.contextInfo.participant.split('@')[0] : 'Tidak diketahui';
+
+                        if (participantNumber == loggedInNumber || participantNumber == loggedInID) {
+                            const randomSticker = dapatkanDataAcakDariArray(reply_stickers);
+                            const stickerFile = await buatSticker(`${stickerURL}${randomSticker[0]}.webp`);
+
+                            if (msg.key.fromMe) {
+                                await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
+                                isSendLastMessage = true;
                             }
                             else {
-                                await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg, ephemeralExpiration: messageDuration });
+                                const random_interact = dapatkanDataAcakDariArray([false, false, false, false, true]);
+                                if (random_interact) {
+                                    let t_message = dapatkanDataAcakDariArray(
+                                        [
+                                            "menurut kamu aku kayak gimana?",
+                                            "hai rulu",
+                                            "kirim stiker lagi dong",
+                                            "ehh rulu",
+                                            "halo"
+                                        ]
+                                    )
+                                    logCuy(`${senderName} : ${t_message}`);
+                                    interactAI(sock, msg, chatID, senderID, senderName, senderPrompt, messageDuration, t_message);
+                                }
+                                else {
+                                    await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg, ephemeralExpiration: messageDuration });
+                                }
+                                isSendLastMessage = true;
                             }
-                            isSendLastMessage = true;
                         }
                     }
                     else {
@@ -1168,7 +1172,7 @@ async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt,
     if (jumlah_percakapan <= batas_percakapan && geminiApiKey != "") {
         const req_options = {
             hostname: 'generativelanguage.googleapis.com',
-            path: '/v1beta/models/gemini-2.5-flash-lite:generateContent?key=' + geminiApiKey,
+            path: '/v1beta/models/gemini-2.5-flash:generateContent?key=' + geminiApiKey,
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
