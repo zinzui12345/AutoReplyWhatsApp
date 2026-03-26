@@ -10,49 +10,90 @@ const { hostname } = require('os');
 const { error } = require('console');
 const { buffer } = require('stream/consumers');
 const qrcode = require('qrcode-terminal');
+const { Sticker } = require('wa-sticker-formatter');
 
 const stickerURL = "./stickers/"; // "https://cdn.glitch.com/15e03e71-102f-4056-a602-fd237811c6aa/";
 const reply_stickers = [
-    ["reply/1", false],
-    ["reply/2", true],
-    ["reply/3", false],
-    ["reply/4", true],
+    ["reply/1", true],
+    ["reply/2", false],
+    ["reply/3", true],
+    ["reply/4", false],
     ["reply/5", false],
     ["reply/6", false],
-    ["reply/7", false],
-    ["reply/8", false]
+    ["reply/7", false]
+];
+const sad_stickers = [
+    ["sad/1", false],
+    ["sad/2", false],
+    ["sad/3", false],
+    ["sad/4", true],
+    ["sad/5", false],
+    ["sad/6", true],
+    ["sad/7", false],
+    ["sad/8", false],
+    ["sad/9", false]
 ];
 const stickers = [
-    ["74", false],
-    ["75", true],
-    ["76", true],
-    ["77", false],
-    ["78", false],
-    ["79", true],
-    ["80", true],
-    ["81", false],
-    ["82", false],
-    ["83", true],
-    ["84", false],
-    ["85", false],
-    ["86", true],
-    ["87", false],
-    ["88", false],
-    ["89", false],
-    ["90", false],
-    ["91", false],
-    ["92", false],
-    ["93", false],
-    ["94", true],
-    ["95", true],
-    ["96", true],
-    ["97", false],
-    ["98", false],
-    ["99", false],
-    ["100", false],
-    ["101", false],
-    ["102", false],
-    ["103", false]
+    ["random/1", true],
+    ["random/2", true],
+    ["random/3", true],
+    ["random/4", true],
+    ["random/5", true],
+    ["random/6", true],
+    ["random/7", true],
+    ["random/8", true],
+    ["random/9", true],
+    ["random/10", true],
+    ["random/11", true],
+    ["random/12", true],
+    ["random/13", true],
+    ["random/14", true],
+    ["random/15", true],
+    ["random/16", true],
+    ["random/17", true],
+    ["random/18", true],
+    ["random/19", true],
+    ["random/20", true],
+    ["random/21", true],
+    ["random/22", true],
+    ["random/23", true],
+    ["random/24", true],
+    ["random/25", true],
+    ["random/26", true],
+    ["random/27", true],
+    ["random/28", true],
+    ["random/29", true],
+    ["random/30", true],
+    ["random/31", true],
+    ["random/32", true],
+    ["random/33", true],
+    ["random/34", true],
+    ["random/35", true],
+    ["random/36", true],
+    ["random/37", true],
+    ["random/38", true],
+    ["random/39", true],
+    ["random/40", true],
+    ["random/41", true],
+    ["random/42", true],
+    ["random/43", true],
+    ["random/44", true],
+    ["random/45", true],
+    ["random/46", true],
+    ["random/47", true],
+    ["random/48", true],
+    ["random/49", true],
+    ["random/50", true],
+    ["random/51", true],
+    ["random/52", true],
+    ["random/53", true],
+    ["random/54", true],
+    ["random/55", true],
+    ["random/56", true],
+    ["random/57", true],
+    ["random/58", true],
+    ["random/59", true],
+    ["random/60", true]
 ];
 const pesan_sapa = [
     "hay",
@@ -635,29 +676,26 @@ async function connectToWhatsApp(){
             const messageDuration = groupInfo.ephemeralDuration || 0;
             
             if (!blackList.includes(senderNumber)) {
-                if (message == "🗿") {
-                    const stickerFile = await downloadFile(`${stickerURL}${dapatkanDataAcakDariArray(["15", "16", "17"])}.webp`);
+                // if (message == "🗿") {
+                //     const stickerFile = await buatSticker(`${stickerURL}${dapatkanDataAcakDariArray(["15", "16", "17"])}.webp`);
+                //     await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: true }, { ephemeralExpiration: messageDuration });
+                //     isSendLastMessage = true;
+                // }
+                // else
+                if (message == "😈" || message == "👿") {
+                    const stickerFile = await buatSticker(`${stickerURL}${dapatkanDataAcakDariArray(["random/9", "random/12", "random/17", "random/23", "random/30", "random/32", "random/34"])}.webp`);
                     await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: true }, { ephemeralExpiration: messageDuration });
                     isSendLastMessage = true;
                 }
-                else if (message == "😈" || message == "👿") {
-                    const stickerFile = await downloadFile(`${stickerURL}${dapatkanDataAcakDariArray(["59", "60", "61", "62", "63", "64", "65", "66", "67", "68", "69", "70", "71", "72", "73"])}.webp`);
-                    await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: true }, { ephemeralExpiration: messageDuration });
-                    isSendLastMessage = true;
-                }
-                else if (message == "😢" || message == "😭") {
-                    const stickerFile = await downloadFile(`${stickerURL}13.webp`);
-                    await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: true }, { ephemeralExpiration: messageDuration });
-                    isSendLastMessage = true;
-                }
-                else if (message == "🥹") {
-                    const stickerFile = await downloadFile(`${stickerURL}14.webp`);
+                else if (message == "😢" || message == "😭" || message == "🥹" || message == "🥺") {
+                    const randomSticker = dapatkanDataAcakDariArray(sad_stickers);
+                    const stickerFile = await buatSticker(`${stickerURL}${randomSticker[0]}.webp`, ["😢", "😭", "🥹", "🥺"]);
                     await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: true }, { ephemeralExpiration: messageDuration });
                     isSendLastMessage = true;
                 }
                 else if (message.match("^(bagi|kirim|send) (stiker|sticker)$")) {
                     const randomSticker = dapatkanDataAcakDariArray(reply_stickers);
-                    const stickerFile = await downloadFile(`${stickerURL}${randomSticker[0]}.webp`);
+                    const stickerFile = await buatSticker(`${stickerURL}${randomSticker[0]}.webp`);
                     
                     if (msg.key.fromMe) {
                         await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
@@ -733,13 +771,13 @@ async function connectToWhatsApp(){
 
                             if ((currentTimestamp - lastTimestamp) > (60 * 5)) {
                                 const randomSticker = dapatkanDataAcakDariArray(stickers);
-                                const stickerFile = await downloadFile(`${stickerURL}${randomSticker[0]}.webp`);
+                                const stickerFile = await buatSticker(`${stickerURL}${randomSticker[0]}.webp`);
                                 
                                 await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
                                 daftar_waktu_percakapan[chatID] = msg.messageTimestamp;
                             }
 
-                            console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[reply]".yellow, t_message.yellow);
+                            console.log(groupName.cyan, ` → `, senderName.green, ` : `, `[reply @${participantNumber}]`.yellow, t_message.yellow);
                             isSendLastMessage = false;
                         }
                     }
@@ -812,7 +850,7 @@ async function connectToWhatsApp(){
                         console.log(groupName.cyan, ` → `, senderName.green, ` : `, t_message.yellow);
                         isSendLastMessage = false;
                     }
-                    else if (message.match(`^(rulu|Rulu|RULU) *`)) {
+                    else if (message.toLowerCase().match(`^(rulu|asmi) *`)) {
                         let t_message = message;
                         
                         while(t_message.match(`(\@[0-9]+)`)) {
@@ -858,7 +896,7 @@ async function connectToWhatsApp(){
                         let giveResponse = false;
                         if ((currentTimestamp - lastTimestamp) > (60 * 3)) {
                             const randomSticker = dapatkanDataAcakDariArray(stickers);
-                            const stickerFile = await downloadFile(`${stickerURL}${randomSticker[0]}.webp`);
+                            const stickerFile = await buatSticker(`${stickerURL}${randomSticker[0]}.webp`);
                             
                             await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
                             daftar_waktu_percakapan[chatID] = msg.messageTimestamp;
@@ -922,7 +960,7 @@ async function connectToWhatsApp(){
                 else if (msg.message.stickerMessage && msg.message.stickerMessage.hasOwnProperty("contextInfo")) {
                     if (msg.message.stickerMessage.contextInfo.hasOwnProperty("participant") && msg.message.stickerMessage.contextInfo.participant == `${loggedInNumber}@s.whatsapp.net`) {
                         const randomSticker = dapatkanDataAcakDariArray(reply_stickers);
-                        const stickerFile = await downloadFile(`${stickerURL}${randomSticker[0]}.webp`);
+                        const stickerFile = await buatSticker(`${stickerURL}${randomSticker[0]}.webp`);
                         
                         if (msg.key.fromMe) {
                             await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
@@ -1290,6 +1328,22 @@ async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt,
     else {
         console.log(`${geminiApiKey} : ${jumlah_percakapan} / ${batas_percakapan}`);
     }
+}
+async function buatSticker(url_stiker, emoji = ["😎","☺️", "😇", "🙂‍↕️", "😄"]) {
+    const fileBuffer = await downloadFile(url_stiker);
+
+    if (!fileBuffer) {
+        throw new Error("Gagal download file");
+    }
+
+    const sticker = new Sticker(fileBuffer, {
+        pack: "rulu",
+        author: "ProgrammerIndonesia44",
+        categories: emoji
+    });
+
+    const buffer = await sticker.toBuffer();
+    return buffer;
 }
 
 function bufferToBase64(buffer) {

@@ -1,6 +1,6 @@
 {
     "autoLikeStatus": true,
-    "autoReplyGroup": false,
+    "autoReplyGroup": true,
     "downloadMediaStatus": false,
     "sensorNomor": false,
     "antiTelpon": false,
@@ -17,12 +17,7 @@
         "👍",
         "🙏"
     ],
-    "groupList": [
-        "120363406988914043@g.us",
-        "120363301700764553@g.us",
-        "120363417124626798@g.us",
-        "994404279075-1606100007@g.us"
-    ],
+    "groupList": [],
     "appsScriptApiKey": "AKfycbwwnviRqp2Fq84KHTScqfUtBw-J7bdvVdLzbzUOAt1fmuONWIXf9772e9IE9uigNFtC",
     "geminiApiKey": ""
 }
