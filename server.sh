@@ -1,6 +1,6 @@
 #!/bin/bash
 while :
 do
-	npm start
+	systemd-inhibit npm start
 	sleep 1
 done

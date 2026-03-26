@@ -1,4 +1,4 @@
-const { makeWASocket, DisconnectReason, useMultiFileAuthState, Browsers, jidNormalizedUser, downloadMediaMessage, WA_DEFAULT_EPHEMERAL, fetchLatestWaWebVersion} = require('@whiskeysockets/baileys');
+const { makeWASocket, DisconnectReason, useMultiFileAuthState, Browsers, jidNormalizedUser, downloadMediaMessage, WA_DEFAULT_EPHEMERAL, fetchLatestWaWebVersion} = require('@itsliaaa/baileys');
 const pino = require('pino');
 const readline = require('readline');
 const https = require('https');
@@ -115,6 +115,7 @@ const pesan_error = [
 
 let useCode = true;
 let loggedInNumber;
+let loggedInID;
 let log_timeout = 86400;
 let daftar_percakapan = {};
 let daftar_waktu_percakapan = {};
@@ -244,6 +245,7 @@ async function connectToWhatsApp(){
         else if(connection === 'open') {
             logCuy('Berhasil Terhubung ke wangsaf');
             loggedInNumber = sock.user.id.split('@')[0].split(':')[0];
+            loggedInID = sock.user.lid.split('@')[0].split(':')[0];
             telah_login = true;
             let displayedLoggedInNumber = loggedInNumber;
             if (sensorNomor) {
@@ -253,11 +255,12 @@ async function connectToWhatsApp(){
                                 `Kamu berhasil login dengan nomor: ${displayedLoggedInNumber}\n\n`+
                                 `info status fitur:\n`+
                                 `- Auto Like Status: ${autoLikeStatus ? "*Aktif*" : "*Nonaktif*"}\n`+
+                                `- Auto Reply Grup: ${autoReplyGroup ? "*Aktif*" : "*Nonaktif*"}\n`+
                                 `- Download Media Status: ${downloadMediaStatus ? "*Aktif*" : "*Nonaktif*"}\n`+
                                 `- Sensor Nomor: ${sensorNomor ? "*Aktif*" : "*Nonaktif*"}\n`+
                                 `- Anti Telpon: ${antiTelpon ? "*Aktif*" : "*Nonaktif*"}\n\n`+
                                 `Ketik *#menu* untuk melihat menu perintah yang tersedia.\n\n`+
-                                `SC : https://github.com/zinzui12345/AutoReplyWhatsApp`;
+                                `Source Code : https://github.com/zinzui12345/AutoReplyWhatsApp`;
             console.log(`kamu berhasil login dengan nomor:`.green.bold, displayedLoggedInNumber.yellow.bold);
             console.log("Bot sudah aktif!\n\nSelamat menikmati fitur auto read story whatsapp by".green.bold, "github.com/Jauhariel\n".red.bold);
 
@@ -655,7 +658,17 @@ async function connectToWhatsApp(){
                     logCuy(`${senderName} : test!`, 'yellow');
                     await sock.sendMessage(msg.key.remoteJid, { text: JSON.stringify(msg, null, 2) });
                     await sock.sendMessage(msg.key.remoteJid, { text: Object.prototype.toString.call(user) });
-                    
+                    await sock.sendMessage(msg.key.remoteJid, {
+                        text: '👆🏻 Tombol!',
+                        footer: '@itsliaaa/baileys',
+                        buttons: [{
+                            text: '👋🏻 Hai rulu',
+                            id: '#Test'
+                        }]
+                    }, {
+                        quoted: msg
+                    });
+
                     break;
             }
         }
@@ -714,7 +727,7 @@ async function connectToWhatsApp(){
                     await sock.sendMessage(msg.key.remoteJid, { text: `Wa'alaikumussalam` }, { quoted: msg, ephemeralExpiration: messageDuration });
                     isSendLastMessage = true;
                 }
-                else if (message == "woy" || message == "oii" || message == "oiii") {
+                else if (message == "woy" || message == "oii" || message == "oiii" || message == "@all") {
                     await sock.sendMessage(msg.key.remoteJid, { text: `hai` }, { quoted: msg, ephemeralExpiration: messageDuration });
                     isSendLastMessage = true;
                 }
@@ -726,7 +739,7 @@ async function connectToWhatsApp(){
                     if (msg.message.extendedTextMessage.contextInfo.hasOwnProperty("participant")) {
                         const participantNumber = msg.message.extendedTextMessage.contextInfo.participant ? msg.message.extendedTextMessage.contextInfo.participant.split('@')[0] : 'Tidak diketahui';
                        
-                        if (participantNumber == loggedInNumber) {
+                        if (participantNumber == loggedInNumber || participantNumber == loggedInID) {
                             logCuy(`${senderName} : ${message}`);
                             interactAI(sock, msg, chatID, `${loggedInNumber}@s.whatsapp.net`, senderName, senderPrompt, messageDuration, message);
                             isSendLastMessage = true;
