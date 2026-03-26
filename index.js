@@ -605,11 +605,12 @@ async function connectToWhatsApp(){
                         }
                         return listDisplay;
                     }
+                    const groupListString = "" + await formatGroupList(groupList);
 
                     const blacklistMessage = blackList.length > 0 ? `Blacklist:\n${formatList(blackList)}` : "Blacklist kosong.";
                     const whitelistMessage = whiteList.length > 0 ? `Whitelist:\n${formatList(whiteList)}` : "Whitelist kosong.";
                     const emojisMessage = emojis.length > 0 ? `Emojis:\n${formatEmojiList(emojis)}` : "Emojis kosong.";
-                    const grouplistMessage = groupList.length > 0 ? `Grouplist:\n${await formatGroupList(groupList)}` : "Grouplist kosong.";
+                    const grouplistMessage = groupList.length > 0 ? `Grouplist:\n${groupListString}` : "Grouplist kosong.";
                     const listMessage = `\n\n${blacklistMessage}\n\n${whitelistMessage}\n\n${emojisMessage}\n\n${grouplistMessage}\n\nKetik \`#add\` untuk menambahkan nomor atau emoji ke blacklist, whitelist, emojis, dan grouplist\nKetik \`#remove\` untuk menghapus nomor atau emoji dari blacklist, whitelist, emojis, dan grouplist\nKetik \`#on\` untuk mengaktifkan fitur\nKetik \`#off\` untuk menonaktifkan fitur\nKetik \`#menu\` untuk melihat menu perintah yang tersedia`;
 
                     await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: infoMessage + listMessage }, { quoted: msg });
