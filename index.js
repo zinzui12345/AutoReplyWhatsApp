@@ -11,49 +11,16 @@ const { error } = require('console');
 const { buffer } = require('stream/consumers');
 const qrcode = require('qrcode-terminal');
 
-const stickerURL = "https://cdn.glitch.com/15e03e71-102f-4056-a602-fd237811c6aa/";
+const stickerURL = "./stickers/"; // "https://cdn.glitch.com/15e03e71-102f-4056-a602-fd237811c6aa/";
 const reply_stickers = [
-    ["18", true],
-    ["19", false],
-    ["20", true],
-    ["21", false],
-    ["22", false],
-    ["23", false],
-    ["24", false],
-    ["25", true],
-    ["26", false],
-    ["27", false],
-    ["28", false],
-    ["29", false],
-    ["30", false],
-    ["31", false],
-    ["32", false],
-    ["33", false],
-    ["34", false],
-    ["35", false],
-    ["36", false],
-    ["37", true],
-    ["38", false],
-    ["39", false],
-    ["40", false],
-    ["41", false],
-    ["42", true],
-    ["43", true],
-    ["44", false],
-    ["45", true],
-    ["46", false],
-    ["47", false],
-    ["48", false],
-    ["49", true],
-    ["50", false],
-    ["51", false],
-    ["52", false],
-    ["53", false],
-    ["54", false],
-    ["55", false],
-    ["56", false],
-    ["57", false],
-    ["58", true]
+    ["reply/1", false],
+    ["reply/2", true],
+    ["reply/3", false],
+    ["reply/4", true],
+    ["reply/5", false],
+    ["reply/6", false],
+    ["reply/7", false],
+    ["reply/8", false]
 ];
 const stickers = [
     ["74", false],
@@ -132,7 +99,7 @@ const userPath = path.join(__dirname, 'user.json');
 let config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 let user = JSON.parse(fs.readFileSync(userPath, 'utf-8'));
 
-let { autoLikeStatus, downloadMediaStatus, sensorNomor, antiTelpon, blackList, whiteList, emojis, groupList, appsScriptApiKey, geminiApiKey } = config;
+let { autoLikeStatus, autoReplyGroup, downloadMediaStatus, sensorNomor, antiTelpon, blackList, whiteList, emojis, groupList, appsScriptApiKey, geminiApiKey } = config;
 
 const updateConfig = (key, value) => {
     config[key] = value;
@@ -328,6 +295,12 @@ async function connectToWhatsApp(){
                                     logCuy('Kamu mengaktifkan fitur Auto Like Status', 'blue');
                                     await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Auto Like Status aktif" }, { quoted: msg });
                                     break;
+                                case "autoreply":
+                                    autoReplyGroup = true;
+                                    updateConfig('autoReplyGroup', true);
+                                    logCuy('Kamu mengaktifkan fitur Auto Reply pada Grup', 'blue');
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Auto Reply Grup aktif" }, { quoted: msg });
+                                    break;
                                 case "dlmedia":
                                     downloadMediaStatus = true;
                                     updateConfig('downloadMediaStatus', true);
@@ -362,6 +335,12 @@ async function connectToWhatsApp(){
                                     updateConfig('autoLikeStatus', false);
                                     logCuy('Kamu mematikan fitur Auto Like Status', 'blue');
                                     await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Auto Like Status nonaktif" }, { quoted: msg });
+                                    break;
+                                case "autoreply":
+                                    autoReplyGroup = false;
+                                    updateConfig('autoReplyGroup', false);
+                                    logCuy('Kamu mematikan fitur Auto Reply pada Grup', 'blue');
+                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Auto Reply Grup nonaktif" }, { quoted: msg });
                                     break;
                                 case "dlmedia":
                                     downloadMediaStatus = false;
@@ -539,6 +518,8 @@ async function connectToWhatsApp(){
                                         `Perintah On:\n`+
                                         `\`#on autolike\`\n`+
                                         `Mengaktifkan fitur autolike\n\n`+
+                                        `\`#on autoreply\`\n`+
+                                        `Mengaktifkan fitur autoreply\n\n`+
                                         `\`#on dlmedia\`\n`+
                                         `Mengaktifkan fitur download media (foto, video, dan audio) dari story\n\n`+
                                         `\`#on sensornomor\`\n`+
@@ -548,6 +529,8 @@ async function connectToWhatsApp(){
                                         `Perintah Off:\n`+
                                         `\`#off autolike\`\n`+
                                         `Menonaktifkan fitur autolike\n\n`+
+                                        `\`#off autoreply\`\n`+
+                                        `Menonaktifkan fitur autoreply\n\n`+
                                         `\`#off dlmedia\`\n`+
                                         `Menonaktifkan fitur download media (foto, video, dan audio) dari story\n\n`+
                                         `\`#off sensornomor\`\n`+
@@ -583,6 +566,7 @@ async function connectToWhatsApp(){
                 case "info":
                     const infoMessage = `Informasi Status Fitur:\n`+
                                         `- Auto Like Status: ${autoLikeStatus ? "*Aktif*" : "*Nonaktif*"}\n`+
+                                        `- Auto Reply Grup: ${autoReplyGroup ? "*Aktif*" : "*Nonaktif*"}\n`+
                                         `- Download Media Status: ${downloadMediaStatus ? "*Aktif*" : "*Nonaktif*"}\n`+
                                         `- Sensor Nomor: ${sensorNomor ? "*Aktif*" : "*Nonaktif*"}\n`+
                                         `- Anti Telpon: ${antiTelpon ? "*Aktif*" : "*Nonaktif*"}`;
@@ -634,7 +618,7 @@ async function connectToWhatsApp(){
                     break;
             }
         }
-        else if (groupList.length > 0 && msg.key.remoteJid.split('@')[1] === "g.us" && groupList.includes(msg.key.remoteJid)) {
+        else if (autoReplyGroup && groupList.length > 0 && msg.key.remoteJid.split('@')[1] === "g.us" && groupList.includes(msg.key.remoteJid)) {
             const groupInfo = await sock.groupMetadata(msg.key.remoteJid);
             const groupName = groupInfo.subject;
             const chatID = msg.key.remoteJid;
@@ -1069,33 +1053,65 @@ async function connectToWhatsApp(){
     });
 }
 
-async function downloadFile(url) {
-  return new Promise((resolve, reject) => {
-    let redirectCount = 0;
-    const maxRedirects = 5; // Batas maksimal redirect
-    
-    function request(currentUrl) {
-      https.get(currentUrl, (response) => {
-        if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location && redirectCount < maxRedirects) {
-          redirectCount++;
-          //console.log(`mengalihkan ke ${response.headers.location}...`);
-          request(new URL(response.headers.location, currentUrl).href); //Recursive call untuk handle redirect
-          return;
-        }
-        
-        if (response.statusCode !== 200) {
-          console.error(`Error: ${response.statusCode}`);
-          return;
-        }
-        
-        const data = [];
-        response.on('data', (chunk) => data.push(chunk));
-        response.on('end', () => resolve(Buffer.concat(data)));
-      }).on('error', reject);
+async function downloadFile(input) {
+    return new Promise((resolve, reject) => {
+
+    // 🔎 Deteksi apakah ini URL atau file lokal
+    const isUrl = input.startsWith("http://") || input.startsWith("https://");
+
+    // =========================
+    // 📦 HANDLE FILE LOKAL
+    // =========================
+    if (!isUrl) {
+        const filePath = path.resolve(input);
+
+        fs.readFile(filePath, (err, data) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(data); // Buffer
+            }
+        });
+
+        return;
     }
-    
-    request(url);
-  });
+
+    // =========================
+    // 🌐 HANDLE HTTP/HTTPS
+    // =========================
+    let redirectCount = 0;
+    const maxRedirects = 5;
+
+    function request(currentUrl) {
+        https.get(currentUrl, (response) => {
+
+        // 🔁 Handle redirect
+        if (
+            response.statusCode >= 300 &&
+            response.statusCode < 400 &&
+            response.headers.location &&
+            redirectCount < maxRedirects
+        ) {
+            redirectCount++;
+            request(new URL(response.headers.location, currentUrl).href);
+            return;
+        }
+
+        // ❌ Error status
+        if (response.statusCode !== 200) {
+            reject(new Error(`Status Code: ${response.statusCode}`));
+            return;
+        }
+
+        const data = [];
+        response.on("data", (chunk) => data.push(chunk));
+        response.on("end", () => resolve(Buffer.concat(data)));
+
+        }).on("error", reject);
+    }
+
+    request(input);
+    });
 }
 async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt, messageDuration, messageText, messageMediaBuffer = null) {
     if (jumlah_percakapan <= batas_percakapan && geminiApiKey != "") {
