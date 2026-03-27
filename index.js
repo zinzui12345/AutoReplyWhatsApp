@@ -188,11 +188,11 @@ let batas_percakapan = 1200;
 let telah_login = false;
 
 let prioritas_model = "cerebras"; // "gemini" | "cerebras"
-let providers = ["gemini", "cerebras", "groq"];
+let providers = ["gemini", "groq", "cerebras"];
 let retry_state = {
     gemini: 0,
-    cerebras: 0,
-    groq: 0
+    groq: 0,
+    cerebras: 0
 };
 
 function logCuy(message, type = 'green') {
@@ -1038,7 +1038,7 @@ async function connectToWhatsApp(){
                         }
                     }
                 }
-                else if (msg.message.imageMessage && providers === "gemini") {
+                else if (msg.message.imageMessage) { // FIXME : hanya bila di-tag
                     let caption = msg.message.imageMessage?.caption || "Tidak ada caption";
                     
                     logCuy(`${senderName} : [Citra] ${caption}`);
@@ -1259,7 +1259,7 @@ async function downloadFile(input) {
     request(input);
     });
 }
-async function requestAI(provider, daftar_percakapan, systemInstructionData, senderPrompt) {
+async function requestAI(provider, daftar_percakapan, systemInstructionData, senderPrompt, messageMediaBuffer = null, mimeType = null) {
     return new Promise((resolve, reject) => {
         let req_options;
         let postData;
@@ -1314,14 +1314,47 @@ async function requestAI(provider, daftar_percakapan, systemInstructionData, sen
                     'Content-Type': 'application/json'
                 }
             };
+            let messages = [
+                {
+                    role: "system",
+                    content: systemInstructionData + "\n" + senderPrompt
+                }
+            ];
+
+            // 🔁 konversi chat
+            const converted = konversiKeOpenAI(daftar_percakapan);
+
+            // =========================
+            // 🖼️ HANDLE IMAGE (OpenAI format)
+            // =========================
+            if (messageMediaBuffer && mimeType) {
+                const dataURL = bufferToDataURL(messageMediaBuffer, mimeType);
+
+                // ambil pesan terakhir user
+                const lastMsg = converted.pop();
+
+                messages.push({
+                    role: "user",
+                    content: [
+                        { type: "text", text: lastMsg.content },
+                        {
+                            type: "image_url",
+                            image_url: {
+                                url: dataURL
+                            }
+                        }
+                    ]
+                });
+
+                messages.push(...converted.slice(0, -1));
+            } else {
+                messages.push(...converted);
+            }
 
             postData = JSON.stringify({
                 model: "openai/gpt-oss-120b",
                 stream: false,
-                messages: [
-                    { role: "system", content: systemInstructionData + "\n" + senderPrompt },
-                    ...konversiKeOpenAI(daftar_percakapan)
-                ]
+                messages: messages
             });
         }
 
@@ -1385,7 +1418,7 @@ async function requestAI(provider, daftar_percakapan, systemInstructionData, sen
         req.end();
     });
 }
-async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt, messageDuration, messageText, messageMediaBuffer = null, selfNumber = "") {
+async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt, messageDuration, messageText, messageMediaBuffer = null) {
     if (jumlah_percakapan <= batas_percakapan && geminiApiKey != "" && cerebrasApiKey) {
         const systemInstructionData = `Kamu adalah seorang karakter virtual bernama "Rulu", seorang gadis muslimah yang imut, ramah, dan menyenangkan. Kepribadianmu lembut, sopan, dan penuh kehangatan.
 
@@ -1431,7 +1464,10 @@ async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt,
             daftar_percakapan[chatID].splice(0, 2);
         }
 
-        if (messageMediaBuffer != null && providers === "gemini") {
+        let teks_hasil = null;
+        let providerQueue = getProviderQueue();
+
+        if (messageMediaBuffer != null) {
             const buffer_media = Buffer.from(messageMediaBuffer);
             
             daftar_percakapan[chatID].push({
@@ -1451,23 +1487,9 @@ async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt,
                     }
                 ]
             });
+
+            providerQueue = providerQueue.filter(p => p !== "cerebras");
         }
-        else {
-            daftar_percakapan[chatID].push({
-                "role": "user",
-                "parts": [
-                    {
-                        "text": `message_info: { sender_name: "${senderName}", sender_id: "${senderID}" }`
-                    },
-                    {
-                        "text": messageText
-                    }
-                ]
-            });
-        }
-        
-        let teks_hasil = null;
-        const providerQueue = getProviderQueue();
 
         for (let i = 0; i < providerQueue.length; i++) {
             const provider = getAvailableProviderFromQueue(providerQueue);
@@ -1491,7 +1513,9 @@ async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt,
                     provider,
                     daftar_percakapan[chatID],
                     systemInstructionData,
-                    senderPrompt
+                    senderPrompt,
+                    messageMediaBuffer,
+                    msg?.message?.imageMessage?.mimetype || "image/jpeg"
                 );
 
                 while(teks_hasil.match("<\!sticker>(.+?)<\/!sticker>")) {
@@ -1563,6 +1587,10 @@ function bufferToBase64(buffer) {
     binary += String.fromCharCode(buffer[i]);
     }
     return btoa(binary);
+}
+function bufferToDataURL(buffer, mime) {
+    const base64 = buffer.toString("base64");
+    return `data:${mime};base64,${base64}`;
 }
 function getProviderQueue() {
     // pastikan prioritas di depan
