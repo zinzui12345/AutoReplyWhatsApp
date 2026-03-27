@@ -1038,66 +1038,86 @@ async function connectToWhatsApp(){
                         }
                     }
                 }
-                else if (msg.message.imageMessage) { // FIXME : hanya bila di-tag
+                else if (msg.message.imageMessage) {
                     let caption = msg.message.imageMessage?.caption || "Tidak ada caption";
+                    let should_reply = false;
                     
                     logCuy(`${senderName} : [Citra] ${caption}`);
-                    
-                    try {
-                        const buffer = await downloadMediaMessage(msg, "buffer", {}, {
-                            logger: pino({ level: 'fatal' }),
-                        });
-                
-                        // await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { 
-                        //     image: Buffer.from(buffer),
-                        //     caption: `Citra dengan caption : "*${caption}*"` 
-                        // }, { quoted: msg });
 
-                        interactAI(sock, msg, chatID, senderID, senderName, senderPrompt, messageDuration, message, buffer);
-                    } catch (error) {
-                        await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Error : tidak dapat mendapatkan citra` }, { quoted: msg });
-                    }
-                    // await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: JSON.stringify(msg.message.imageMessage, null, 2) }, { quoted: msg });
-                    console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Citra] ".yellow, caption.yellow);
-                    isSendLastMessage = true;
-                }
-                else if (msg.message.stickerMessage && msg.message.stickerMessage.hasOwnProperty("contextInfo")) {
-                    if (msg.message.stickerMessage.contextInfo.hasOwnProperty("participant")) {
-                        const participantNumber = msg.message.stickerMessage.contextInfo.participant ? msg.message.stickerMessage.contextInfo.participant.split('@')[0] : 'Tidak diketahui';
-
+                    if (msg.message.imageMessage.contextInfo.hasOwnProperty("participant")) {
+                        const participantNumber = msg.message.imageMessage.contextInfo.participant ? msg.message.imageMessage.contextInfo.participant.split('@')[0] : 'Tidak diketahui';
+                       
                         if (participantNumber == loggedInNumber || participantNumber == loggedInID) {
-                            const randomSticker = dapatkanDataAcakDariArray(reply_stickers);
-                            const stickerFile = await buatSticker(`${stickerURL}${randomSticker[0]}.webp`);
-
-                            if (msg.key.fromMe) {
-                                await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
-                                isSendLastMessage = true;
-                            }
-                            else {
-                                const random_interact = dapatkanDataAcakDariArray([false, false, false, false, true]);
-                                if (random_interact) {
-                                    let t_message = dapatkanDataAcakDariArray(
-                                        [
-                                            "menurut kamu aku kayak gimana?",
-                                            "hai rulu",
-                                            "kasih kata-kata gokil dong",
-                                            "ehh rulu",
-                                            "halo"
-                                        ]
-                                    )
-                                    logCuy(`${senderName} : ${t_message}`);
-                                    interactAI(sock, msg, chatID, senderID, senderName, senderPrompt, messageDuration, t_message);
-                                }
-                                else {
-                                    await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg, ephemeralExpiration: messageDuration });
-                                }
-                                isSendLastMessage = true;
-                            }
+                            should_reply = true;
                         }
                     }
-                    else {
-                        console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Stiker]".yellow);
-                        isSendLastMessage = false;
+                    else if (caption.match(`(\@(${loggedInNumber}|${botName}))`)) {
+                        should_reply = true;
+                    }
+                    else if (message.toLowerCase().match(`^(rulu|asmi|@all|${botName}|\@${botName}) *`)) {
+                        should_reply = true;
+                    }
+                    else if (caption.match(`^(liat|lihat|apa ini|ini apa)`)) {
+                        should_reply = true;
+                    }
+                    
+                    if (should_reply) {
+                        try {
+                            const buffer = await downloadMediaMessage(msg, "buffer", {}, {
+                                logger: pino({ level: 'fatal' }),
+                            });
+                    
+                            // await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { 
+                            //     image: Buffer.from(buffer),
+                            //     caption: `Citra dengan caption : "*${caption}*"` 
+                            // }, { quoted: msg });
+
+                            interactAI(sock, msg, chatID, senderID, senderName, senderPrompt, messageDuration, message, buffer);
+                        } catch (error) {
+                            await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Error : tidak dapat mendapatkan citra` }, { quoted: msg });
+                        }
+                        
+                        console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Citra] ".yellow, caption.yellow);
+                        isSendLastMessage = true;
+                    }
+                    else if (msg.message.stickerMessage && msg.message.stickerMessage.hasOwnProperty("contextInfo")) {
+                        if (msg.message.stickerMessage.contextInfo.hasOwnProperty("participant")) {
+                            const participantNumber = msg.message.stickerMessage.contextInfo.participant ? msg.message.stickerMessage.contextInfo.participant.split('@')[0] : 'Tidak diketahui';
+
+                            if (participantNumber == loggedInNumber || participantNumber == loggedInID) {
+                                const randomSticker = dapatkanDataAcakDariArray(reply_stickers);
+                                const stickerFile = await buatSticker(`${stickerURL}${randomSticker[0]}.webp`);
+
+                                if (msg.key.fromMe) {
+                                    await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
+                                    isSendLastMessage = true;
+                                }
+                                else {
+                                    const random_interact = dapatkanDataAcakDariArray([false, false, false, false, true]);
+                                    if (random_interact) {
+                                        let t_message = dapatkanDataAcakDariArray(
+                                            [
+                                                "menurut kamu aku kayak gimana?",
+                                                "hai rulu",
+                                                "kasih kata-kata gokil dong",
+                                                "ehh rulu",
+                                                "halo"
+                                            ]
+                                        )
+                                        logCuy(`${senderName} : ${t_message}`);
+                                        interactAI(sock, msg, chatID, senderID, senderName, senderPrompt, messageDuration, t_message);
+                                    }
+                                    else {
+                                        await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg, ephemeralExpiration: messageDuration });
+                                    }
+                                    isSendLastMessage = true;
+                                }
+                            }
+                        }
+                        else {
+                            console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Stiker]".yellow);
+                            isSendLastMessage = false;
+                        }
                     }
                 }
             }
