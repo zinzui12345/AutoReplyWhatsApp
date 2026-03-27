@@ -729,7 +729,6 @@ async function connectToWhatsApp(){
 
                     logCuy(`${senderName} : test!`, 'yellow');
                     await sock.sendMessage(msg.key.remoteJid, { text: JSON.stringify(msg, null, 2) });
-                    await sock.sendMessage(msg.key.remoteJid, { text: Object.prototype.toString.call(user) });
                     await sock.sendMessage(msg.key.remoteJid, {
                         text: '👆🏻 Tombol!',
                         footer: '@itsliaaa/baileys',
@@ -750,7 +749,7 @@ async function connectToWhatsApp(){
             const chatID = msg.key.remoteJid;
             const senderID = msg.key.participant || 'Tidak diketahui';
             const senderProfile = (msg.key.participant && user.hasOwnProperty(msg.key.participant) ? user[msg.key.participant] : {} );
-            const senderName = senderProfile.displayName || msg.pushName || 'Tidak diketahui';
+            const senderName = senderProfile.displayName || msg.pushName || (msg.key.fromMe ? botName : 'Tidak diketahui' );
             const senderPrompt = senderProfile.customPrompt || "You're in a chat group with several different person talking each other. The chat group allow user to send stickers.";
             const senderNumber = msg.key.participant ? msg.key.participant.split('@')[0] : 'Tidak diketahui';
             const message = msg.type === "conversation"
@@ -868,9 +867,10 @@ async function connectToWhatsApp(){
                                 
                                 await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
                                 daftar_waktu_percakapan[chatID] = msg.messageTimestamp;
+                                
+                                console.log(groupName.cyan, ` → `, senderName.green, ` : `, `[reply @${participantNumber}]`.red, t_message.yellow);
                             }
 
-                            console.log(groupName.cyan, ` → `, senderName.green, ` : `, `[reply @${participantNumber}]`.yellow, t_message.yellow);
                             isSendLastMessage = false;
                         }
                     }
@@ -1025,8 +1025,13 @@ async function connectToWhatsApp(){
 
                         if (isSendLastMessage && !giveResponse) {
                             logCuy(`${senderName} : ${message}`);
-                            interactAI(sock, msg, chatID, senderID, senderName, senderPrompt, messageDuration, message);
-                            if (senderName == "Tidak diketahui") isSendLastMessage = false;
+                            if (senderName === botName) {
+                                console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Mengabaikan pesan dari diri sendiri]".red);
+                            }
+                            else {
+                                interactAI(sock, msg, chatID, senderID, senderName, senderPrompt, messageDuration, message);
+                            }
+                            isSendLastMessage = false;
                         }
                         else {
                             console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.yellow);
@@ -1075,7 +1080,7 @@ async function connectToWhatsApp(){
                                         [
                                             "menurut kamu aku kayak gimana?",
                                             "hai rulu",
-                                            "kirim stiker lagi dong",
+                                            "kasih kata-kata gokil dong",
                                             "ehh rulu",
                                             "halo"
                                         ]
