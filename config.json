@@ -17,8 +17,14 @@
         "👍",
         "🙏"
     ],
-    "groupList": [],
+    "groupList": [
+        "120363301700764553@g.us",
+        "120363417124626798@g.us",
+        "994404279075-1606100007@g.us",
+        "6283178351557-1587986130@g.us"
+    ],
     "appsScriptApiKey": "AKfycbwwnviRqp2Fq84KHTScqfUtBw-J7bdvVdLzbzUOAt1fmuONWIXf9772e9IE9uigNFtC",
     "geminiApiKey": "",
-    "cerebrasApiKey": ""
+    "cerebrasApiKey": "",
+    "groqApiKey": ""
 }

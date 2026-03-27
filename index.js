@@ -178,6 +178,7 @@ const pesan_error = [
 let useCode = true;
 let loggedInNumber;
 let loggedInID;
+let botName = "rulu";
 let log_timeout = 86400;
 let daftar_percakapan = {};
 let daftar_waktu_percakapan = {};
@@ -185,10 +186,14 @@ let riwayat_percakapan = 22;
 let jumlah_percakapan = 0;
 let batas_percakapan = 1200;
 let telah_login = false;
+
 let prioritas_model = "cerebras"; // "gemini" | "cerebras"
-let gunakan_model = "gemini";
-let waktu_retry_gemini = 0;
-let waktu_retry_cerebras = 0;
+let providers = ["gemini", "cerebras", "groq"];
+let retry_state = {
+    gemini: 0,
+    cerebras: 0,
+    groq: 0
+};
 
 function logCuy(message, type = 'green') {
     moment.locale('id');
@@ -207,7 +212,7 @@ const userPath = path.join(__dirname, 'user.json');
 let config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 let user = JSON.parse(fs.readFileSync(userPath, 'utf-8'));
 
-let { autoLikeStatus, autoReplyGroup, downloadMediaStatus, sensorNomor, antiTelpon, blackList, whiteList, emojis, groupList, appsScriptApiKey, geminiApiKey, cerebrasApiKey } = config;
+let { autoLikeStatus, autoReplyGroup, downloadMediaStatus, sensorNomor, antiTelpon, blackList, whiteList, emojis, groupList, appsScriptApiKey, geminiApiKey, cerebrasApiKey, groqApiKey } = config;
 
 const updateConfig = (key, value) => {
     config[key] = value;
@@ -312,6 +317,7 @@ async function connectToWhatsApp(){
             logCuy('Berhasil Terhubung ke wangsaf');
             loggedInNumber = sock.user.id.split('@')[0].split(':')[0];
             loggedInID = sock.user.lid.split('@')[0].split(':')[0];
+            botName = sock.user.name;
             telah_login = true;
             let displayedLoggedInNumber = loggedInNumber;
             if (sensorNomor) {
@@ -759,16 +765,20 @@ async function connectToWhatsApp(){
                     let randomSticker = [];
                     let stickerFile = null;
                     switch (prosesEmoji(message)) {
-                        case "🗿": case "😂":
-                            randomSticker = dapatkanDataAcakDariArray(random_stickers);
-                            stickerFile = await buatSticker(`${stickerURL}${randomSticker[0]}.webp`, ["😂", "🗿", "🤫", "🫠"]);
-                        break;
+                        // case "🥵": case "🤤":
+                        //     randomSticker = dapatkanDataAcakDariArray(random_stickers);
+                        //     stickerFile = await buatSticker(`${stickerURL}${randomSticker[0]}.webp`, ["😂", "🗿", "🤫", "🫠"]);
+                        // break;
                         case "😈": case "👿":
                             stickerFile = await buatSticker(`${stickerURL}${dapatkanDataAcakDariArray(["random/9", "random/12", "random/17", "random/23", "random/30", "random/32", "random/34"])}.webp`);
                         break;
                         case "😢": case "😭": case "🥹": case "🥺":
                             randomSticker = dapatkanDataAcakDariArray(sad_stickers);
                             stickerFile = await buatSticker(`${stickerURL}${randomSticker[0]}.webp`, ["😢", "😭", "🥹", "🥺"]);
+                        break;
+                        default:
+                            randomSticker = dapatkanDataAcakDariArray(random_stickers);
+                            stickerFile = await buatSticker(`${stickerURL}${randomSticker[0]}.webp`, ["😂", "🗿", "🤫", "🫠"]);
                         break;
                     }
                     if (stickerFile != null) {
@@ -864,8 +874,14 @@ async function connectToWhatsApp(){
                             isSendLastMessage = false;
                         }
                     }
-                    else if (message.match(`(\@${loggedInNumber})`)) {
-                        let modifiedMessage = message.replace(`@${loggedInNumber}`, "rulu")
+                    else if (message.match(`(\@(${loggedInNumber}|${botName}))`)) {
+                        let modifiedMessage = message;
+                        if (message.match(`(\@${loggedInNumber})`)) {
+                            modifiedMessage = message.replace(`@${loggedInNumber}`, "rulu");
+                        }
+                        else {
+                            modifiedMessage = message.replace(`@${botName}`, "rulu");
+                        }
                         
                         while(modifiedMessage.match(`(\@[0-9]+)`)) {
                             let hasil_rgx = modifiedMessage.match(`(\@[0-9]+)`);
@@ -933,7 +949,7 @@ async function connectToWhatsApp(){
                         console.log(groupName.cyan, ` → `, senderName.green, ` : `, t_message.yellow);
                         isSendLastMessage = false;
                     }
-                    else if (message.toLowerCase().match(`^(rulu|asmi|@all) *`)) {
+                    else if (message.toLowerCase().match(`^(rulu|asmi|@all|${botName}|\@${botName}) *`)) {
                         let t_message = message;
                         
                         while(t_message.match(`(\@[0-9]+)`)) {
@@ -1017,7 +1033,7 @@ async function connectToWhatsApp(){
                         }
                     }
                 }
-                else if (msg.message.imageMessage) {
+                else if (msg.message.imageMessage && providers === "gemini") {
                     let caption = msg.message.imageMessage?.caption || "Tidak ada caption";
                     
                     logCuy(`${senderName} : [Citra] ${caption}`);
@@ -1238,11 +1254,134 @@ async function downloadFile(input) {
     request(input);
     });
 }
-async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt, messageDuration, messageText, messageMediaBuffer = null, selfNumber = "") {
-    if (jumlah_percakapan <= batas_percakapan && geminiApiKey != "" && cerebrasApiKey) {
+async function requestAI(provider, daftar_percakapan, systemInstructionData, senderPrompt) {
+    return new Promise((resolve, reject) => {
         let req_options;
         let postData;
 
+        // ================= GEMINI =================
+        if (provider === "gemini") {
+            req_options = {
+                hostname: 'generativelanguage.googleapis.com',
+                path: `/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            };
+
+            postData = JSON.stringify({
+                system_instruction: {
+                    parts: [{ text: systemInstructionData }, { text: senderPrompt }]
+                },
+                contents: daftar_percakapan
+            });
+        }
+
+        // ================= CEREBRAS =================
+        else if (provider === "cerebras") {
+            req_options = {
+                hostname: 'api.cerebras.ai',
+                path: '/v1/chat/completions',
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${cerebrasApiKey}`,
+                    'Content-Type': 'application/json'
+                }
+            };
+
+            postData = JSON.stringify({
+                model: "qwen-3-235b-a22b-instruct-2507",
+                stream: false,
+                messages: [
+                    { role: "system", content: systemInstructionData + "\n" + senderPrompt },
+                    ...konversiKeOpenAI(daftar_percakapan)
+                ]
+            });
+        }
+
+        // ================= GROQ =================
+        else if (provider === "groq") {
+            req_options = {
+                hostname: 'api.groq.com',
+                path: '/openai/v1/chat/completions',
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${groqApiKey}`,
+                    'Content-Type': 'application/json'
+                }
+            };
+
+            postData = JSON.stringify({
+                model: "openai/gpt-oss-120b",
+                stream: false,
+                messages: [
+                    { role: "system", content: systemInstructionData + "\n" + senderPrompt },
+                    ...konversiKeOpenAI(daftar_percakapan)
+                ]
+            });
+        }
+
+        const req = https.request(req_options, res => {
+            let data = "";
+
+            res.on("data", chunk => data += chunk);
+
+            res.on("end", () => {
+                try {
+                    const json = JSON.parse(data);
+
+                    // ================= ERROR HANDLING =================
+                    if (provider === "gemini" && json.error) {
+                        if (json.error.status === "RESOURCE_EXHAUSTED") {
+                            setRetry("gemini", 60);
+                            return reject("rate_limit");
+                        }
+                    }
+
+                    if (provider === "cerebras") {
+                        if (
+                            res.statusCode === 429 ||
+                            json.type === "too_many_requests_error"
+                        ) {
+                            setRetry("cerebras", 90);
+                            return reject("rate_limit");
+                        }
+                    }
+
+                    if (provider === "groq") {
+                        if (res.statusCode === 429) {
+                            setRetry("groq", 60);
+                            return reject("rate_limit");
+                        }
+                    }
+
+                    // ================= PARSE =================
+                    let text = "";
+
+                    if (provider === "gemini") {
+                        for (let c of json.candidates || []) {
+                            for (let p of c.content.parts) {
+                                text += p.text;
+                            }
+                        }
+                    } else {
+                        text = json.choices?.[0]?.message?.content || "";
+                    }
+
+                    resolve(text);
+
+                } catch (err) {
+                    reject(err);
+                }
+            });
+        });
+
+        req.on("error", reject);
+        req.write(postData);
+        req.end();
+    });
+}
+async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt, messageDuration, messageText, messageMediaBuffer = null, selfNumber = "") {
+    if (jumlah_percakapan <= batas_percakapan && geminiApiKey != "" && cerebrasApiKey) {
         const systemInstructionData = `Kamu adalah seorang karakter virtual bernama "Rulu", seorang gadis muslimah yang imut, ramah, dan menyenangkan. Kepribadianmu lembut, sopan, dan penuh kehangatan.
 
             Gaya bicaramu santai namun tetap sopan, dengan sentuhan kosakata yang trendi dan kekinian. Kamu tidak kaku, tapi tetap menjaga adab dalam berbicara. Gunakan bahasa yang terasa natural seperti percakapan sehari-hari, namun hindari penggunaan kata kasar, ofensif, atau tidak pantas.
@@ -1277,7 +1416,8 @@ async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt,
             - Gunakan ekspresi yang mencerminkan kepribadian ceria dan manis.
 
             Tujuan utama:
-            Memberikan jawaban yang membantu, singkat, sopan, dan tetap sesuai dengan karakter "Rulu".`;
+            Memberikan jawaban yang membantu, singkat, sopan, dan tetap sesuai dengan karakter "Rulu".
+        `;
 
         if (!daftar_percakapan.hasOwnProperty(chatID)) {
             daftar_percakapan[chatID] = Array();
@@ -1286,9 +1426,7 @@ async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt,
             daftar_percakapan[chatID].splice(0, 2);
         }
 
-        gunakan_model = tentukanModel();
-
-        if (messageMediaBuffer != null && gunakan_model === "gemini") {
+        if (messageMediaBuffer != null && providers === "gemini") {
             const buffer_media = Buffer.from(messageMediaBuffer);
             
             daftar_percakapan[chatID].push({
@@ -1323,207 +1461,68 @@ async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt,
             });
         }
         
-        if (gunakan_model === "gemini") {
-            req_options = {
-                hostname: 'generativelanguage.googleapis.com',
-                path: `/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            };
+        let teks_hasil = null;
+        const providerQueue = getProviderQueue();
 
-            postData = JSON.stringify({
-                system_instruction: {
+        for (let i = 0; i < providerQueue.length; i++) {
+            const provider = getAvailableProviderFromQueue(providerQueue);
+
+            if (!provider) {
+                console.log("❌ Semua provider sedang cooldown");
+                if (msg.key.fromMe) {
+                    await sock.sendMessage(chatID, { text: "```" + String(error) + "```" }, { ephemeralExpiration: messageDuration });
+                }
+                else if (messageMediaBuffer == null) {
+                    await sock.sendMessage(chatID, { text: `error, ${dapatkanDataAcakDariArray(pesan_error)}` }, { quoted: msg, ephemeralExpiration: messageDuration });
+                }
+                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "```\n" + String(error) + "\n```" }, { quoted: msg, ephemeralExpiration: messageDuration });
+                break;
+            }
+
+            try {
+                console.log(`🚀 Pakai provider: ${provider} (prioritas: ${prioritas_model})`);
+
+                teks_hasil = await requestAI(
+                    provider,
+                    daftar_percakapan[chatID],
+                    systemInstructionData,
+                    senderPrompt
+                );
+
+                while(teks_hasil.match("<\!sticker>(.+?)<\/!sticker>")) {
+                    let hasil_rgx = teks_hasil.match("<\!sticker>(.+?)<\/!sticker>");
+                    teks_hasil = teks_hasil.replace(hasil_rgx[0], "");
+                }
+                while(teks_hasil.match("<binary data, 1 bytes>")) {
+                    let hasil_rgx = teks_hasil.match("<binary data, 1 bytes>");
+                    teks_hasil = teks_hasil.replace(hasil_rgx[0], dapatkanDataAcakDariArray(['', '0️⃣', '1️⃣', '🔢']));
+                }
+                
+                daftar_percakapan[chatID].push({
+                    "role": "model",
                     "parts": [
-                        { "text": systemInstructionData },
-                        { "text": senderPrompt }
+                        {
+                            "text": (teks_hasil.length >= 1024) ? teks_hasil.substr(0, 1021)+'...' : teks_hasil
+                        }
                     ]
-                },
-                contents: daftar_percakapan[chatID]
-            });
+                });
 
-        }
-        else {
-            req_options = {
-                hostname: 'api.cerebras.ai',
-                path: '/v1/chat/completions',
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${cerebrasApiKey}`,
-                    'Content-Type': 'application/json'
+                if (msg.key.fromMe) {
+                    await sock.sendMessage(chatID, { text: teks_hasil }, { ephemeralExpiration: messageDuration });
                 }
-            };
-
-            postData = JSON.stringify({
-                model: "qwen-3-235b-a22b-instruct-2507",
-                stream: false,
-                messages: [
-                    {
-                        role: "system",
-                        content: systemInstructionData + "\n" + senderPrompt
-                    },
-                    ...konversiKeCerebras(daftar_percakapan[chatID])
-                ]
-            });
-        }
-
-        const req = https.request(req_options, res => {
-            let data = '';
-
-            res.on('data', chunk => {
-                data += chunk;
-            });
-
-            res.on('end', async () => {
-                try{
-                    const jsonData = JSON.parse(data);
-                    let teks_hasil = "";
-
-                    // =========================
-                    // 🚨 GEMINI RATE LIMIT
-                    // =========================
-                    if (gunakan_model === "gemini" && jsonData.error) {
-                        if (jsonData.error.status === "RESOURCE_EXHAUSTED") {
-                            console.log("⚠️ Gemini rate limit!");
-
-                            const retryInfo = jsonData.error.details.find(d => d["@type"].includes("RetryInfo"));
-                            if (retryInfo) {
-                                const delay = parseInt(retryInfo.retryDelay.replace("s", ""));
-                                waktu_retry_gemini = Date.now() + (delay * 1000);
-                            } else {
-                                waktu_retry_gemini = Date.now() + (60 * 1000); // fallback 60 detik
-                            }
-
-                            // 🔁 retry pakai provider lain
-                            return interactAI(sock, msg, chatID, senderID, senderName, senderPrompt, messageDuration, messageText, messageMediaBuffer);
-                        }
-                    }
-
-                    // =========================
-                    // 🚨 CEREBRAS RATE LIMIT
-                    // =========================
-                    if (gunakan_model === "cerebras") {
-                        const isHttp429 = res.statusCode === 429;
-
-                        const isTooManyRequestsError =
-                            jsonData &&
-                            typeof jsonData === "object" &&
-                            jsonData.type === "too_many_requests_error";
-
-                        const isGenericError = jsonData && jsonData.error;
-
-                        if (isHttp429 || isTooManyRequestsError || isGenericError) {
-                            console.log("⚠️ Cerebras rate limit / overload terdeteksi!");
-
-                            // Ambil retry-after header jika ada
-                            let retryAfter = res.headers["retry-after"];
-                            let delay = 60; // default fallback (detik)
-
-                            if (retryAfter) {
-                                delay = parseInt(retryAfter);
-                            }
-
-                            // Jika error tipe queue_exceeded / too_many_requests → bisa lebih agresif
-                            if (isTooManyRequestsError) {
-                                console.log("🚧 Queue penuh (too_many_requests_error)");
-
-                                // biasanya kondisi overload → kasih delay sedikit lebih lama
-                                delay = Math.max(delay, 90);
-                            }
-
-                            waktu_retry_cerebras = Date.now() + (delay * 1000);
-
-                            console.log(`⏳ Retry Cerebras setelah ${delay} detik`);
-
-                            // 🔁 fallback ke provider lain
-                            return interactAI(sock, msg, chatID, senderID, senderName, senderPrompt, messageDuration, messageText, messageMediaBuffer);
-                        }
-                    }
-
-                    // =========================
-                    // ✅ PARSE GEMINI
-                    // =========================
-                    if (gunakan_model === "gemini") {
-                        if (jsonData.hasOwnProperty("candidates")) {
-                            for (let c of jsonData.candidates) {
-                                for (let p of c.content.parts) {
-                                    teks_hasil += p.text;
-                                }
-                            }
-                        }
-                        else if (jsonData.hasOwnProperty("choices")) {
-                            teks_hasil = jsonData.choices?.[0]?.message?.content || "";
-                        }
-                        else {
-                            throw new Error(JSON.stringify(jsonData));
-                        }
-                    }
-
-                    // =========================
-                    // ✅ PARSE CEREBRAS
-                    // =========================
-                    else {
-                        teks_hasil = jsonData.choices?.[0]?.message?.content || "";
-                    }
-
-                    while(teks_hasil.match("<\!exp>(.+?)<\/!exp>")) {
-                        let hasil_rgx = teks_hasil.match("<\!exp>(.+?)<\/!exp>");
-                    
-                        teks_hasil = teks_hasil.replace(hasil_rgx[0], "");
-                    }
-                    teks_hasil = teks_hasil.replaceAll("<(!exp>", "< !exp>");
-                    while(teks_hasil.match("< \!exp>(.+?)<\/!exp>")) {
-                        let hasil_rgx = teks_hasil.match("< \!exp>(.+?)<\/!exp>");
-                    
-                        teks_hasil = teks_hasil.replace(hasil_rgx[0], "");
-                    }
-                    while(teks_hasil.match("<\!exp>(.+?)<\/exp>")) {
-                        let hasil_rgx = teks_hasil.match("<\!exp>(.+?)<\/exp>");
-                    
-                        teks_hasil = teks_hasil.replace(hasil_rgx[0], "");
-                    }
-                    while(teks_hasil.match("<binary data, 1 bytes>")) {
-                        let hasil_rgx = teks_hasil.match("<binary data, 1 bytes>");
-                    
-                        teks_hasil = teks_hasil.replace(hasil_rgx[0], dapatkanDataAcakDariArray(['', '0️⃣', '1️⃣', '🔢']));
-                    }
-                    
-                    daftar_percakapan[chatID].push({
-                        "role": "model",
-                        "parts": [
-                            {
-                                "text": (teks_hasil.length >= 1024) ? teks_hasil.substr(0, 1021)+'...' : teks_hasil
-                            }
-                        ]
-                    });
-
-                    if (msg.key.fromMe) {
-                        await sock.sendMessage(chatID, { text: teks_hasil }, { ephemeralExpiration: messageDuration });
-                    }
-                    else {
-                        await sock.sendMessage(chatID, { text: teks_hasil }, { quoted: msg, ephemeralExpiration: messageDuration });
-                    }
-                } catch(error) {
-                    if (msg.key.fromMe) {
-                        await sock.sendMessage(chatID, { text: "```" + String(error) + "```" }, { ephemeralExpiration: messageDuration });
-                    }
-                    else {
-                        if (messageMediaBuffer == null) await sock.sendMessage(chatID, { text: `error, ${dapatkanDataAcakDariArray(pesan_error)}` }, { quoted: msg, ephemeralExpiration: messageDuration });
-                    }
-                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "```\n" + String(error) + "\n```" }, { quoted: msg, ephemeralExpiration: messageDuration });
-                    console.error(error);
+                else {
+                    await sock.sendMessage(chatID, { text: teks_hasil }, { quoted: msg, ephemeralExpiration: messageDuration });
                 }
-            });
-        });
 
-        req.on('error', error => {
-            console.error('Error: ', error);
-            return `error'`;
-        });
+                break; // sukses
 
-        req.write(postData);
-        req.end();
+            } catch (err) {
+                console.log(`❌ ${provider} gagal:`, err);
+
+                // lanjut ke provider berikutnya (fallback)
+                retry_state[provider] = Date.now() + 5000; // optional short cooldown biar tidak dipilih lagi langsung
+            }
+        }
 
         if (appsScriptApiKey != "") {
             const sync = await downloadFile(`https://script.google.com/macros/s/${appsScriptApiKey}/exec?perintah=interaksi&login=admin&id=1`);
@@ -1560,38 +1559,42 @@ function bufferToBase64(buffer) {
     }
     return btoa(binary);
 }
-function tentukanModel() {
+function getProviderQueue() {
+    // pastikan prioritas di depan
+    const ordered = [prioritas_model];
+
+    for (let p of providers) {
+        if (p !== prioritas_model) {
+            ordered.push(p);
+        }
+    }
+
+    return ordered;
+}
+function getAvailableProviderFromQueue(queue) {
     const now = Date.now();
 
-    if (prioritas_model === "gemini") {
-        if (now < waktu_retry_gemini) {
-            return "cerebras"; // fallback
+    for (let p of queue) {
+        if (now >= retry_state[p]) {
+            return p;
         }
-        return "gemini";
-    } else {
-        if (now < waktu_retry_cerebras) {
-            return "gemini"; // fallback
-        }
-        return "cerebras";
     }
+
+    return null;
 }
-function konversiKeCerebras(contents) {
-    const messages = [];
+function setRetry(provider, seconds) {
+    retry_state[provider] = Date.now() + (seconds * 1000);
+    console.log(`⏳ ${provider} cooldown ${seconds}s`);
+}
+function konversiKeOpenAI(contents) {
+    return contents.map(item => {
+        let text = item.parts.map(p => p.text || "").join("\n");
 
-    for (const item of contents) {
-        let text = "";
-
-        for (const part of item.parts) {
-            if (part.text) text += part.text + "\n";
-        }
-
-        messages.push({
+        return {
             role: item.role === "model" ? "assistant" : "user",
-            content: text.trim()
-        });
-    }
-
-    return messages;
+            content: text
+        };
+    });
 }
 function prosesEmoji(message) {
     // Regex untuk mendeteksi hanya emoji (Unicode emoji)
@@ -1600,7 +1603,7 @@ function prosesEmoji(message) {
     // Cek apakah hanya berisi emoji
     if (regexEmojiOnly.test(message)) {
         // Ambil semua emoji dalam array
-        const emojis = [...message.matchAll(/\p{Extended_Pictographic}/gu)].map(m => m[0]);
+        const emojis = [...message.matchAll(/\p{Extended_Pictographic}(?:\u200D\p{Extended_Pictographic})*/gu)].map(m => m[0]);
 
         if (emojis.length > 1) {
             return emojis[0]; // emoji pertama
