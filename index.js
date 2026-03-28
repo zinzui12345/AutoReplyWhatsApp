@@ -222,7 +222,7 @@ const updateConfig = (key, value) => {
 };
 const updatehistory = () => {
     fs.writeFileSync(historyPath, JSON.stringify(daftar_percakapan, null, 4), 'utf-8');
-}
+};
 
 let welcomeMessage = false;
 var isSendLastMessage = false;
@@ -741,6 +741,7 @@ async function connectToWhatsApp(){
 
                     logCuy(`${senderName} : test!`, 'yellow');
                     await sock.sendMessage(msg.key.remoteJid, { text: JSON.stringify(msg, null, 2) });
+                    await sock.sendMessage(msg.key.remoteJid, { text: modifikasiPesan(msg.args.toString()) });
                     await sock.sendMessage(msg.key.remoteJid, {
                         text: '👆🏻 Tombol!',
                         footer: '@itsliaaa/baileys',
@@ -1057,7 +1058,7 @@ async function connectToWhatsApp(){
                     let caption = msg.message.imageMessage?.caption || "Tidak ada caption";
                     let should_reply = false;
                     
-                    logCuy(`${senderName} : [Citra] ${caption}`);
+                    console.log(groupName.cyan, ` → `, senderName.green, ` : `, `[Citra] ${caption}`.yellow);
 
                     if (msg.message.imageMessage.contextInfo.hasOwnProperty("participant")) {
                         const participantNumber = msg.message.imageMessage.contextInfo.participant ? msg.message.imageMessage.contextInfo.participant.split('@')[0] : 'Tidak diketahui';
@@ -1637,6 +1638,8 @@ async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt,
                     ]
                 });
 
+                teks_hasil = modifikasiPesan(teks_hasil);
+
                 if (msg.key.fromMe) {
                     await sock.sendMessage(chatID, { text: teks_hasil }, { ephemeralExpiration: messageDuration });
                 }
@@ -1749,6 +1752,92 @@ function prosesEmoji(message) {
     }
 
     return null; // bukan hanya emoji
+}
+function modifikasiPesan(pesan) {
+    let pesan_hasil = "*";
+    if (pesan.match(/^(\$|>) ls(\s[\-\+a-zA-Z]*)?$/)) {
+        pesan_hasil = `\`\`\`
+total 100
+drwxr-xr-x 1 haru haru    486 Jul 25 2025 .
+drwxr-xr-x 1 haru haru    206 Jan  1 13:53 ..
+-rwxrwxrwx 1 haru haru   7397 Jun 26 2025 app.py
+-rwxrwxrwx 1 haru haru   6803 Jun 26 2025 app-slice.py
+drwxr-xr-x 1 haru haru     76 Mar 11 2020 cluster
+drwxr-xr-x 1 haru haru     22 Mar 11 2020 configs
+-rwxrwxrwx 1 haru haru   5463 Jun 26 2025 data_utils.py
+drwxr-xr-x 1 haru haru     86 Apr 14 2019 env
+drwxr-xr-x 1 haru haru    532 Mar 11 2020 fairseq
+drwxr-xr-x 1 haru haru    550 Jun 27 2025 fairseq-fix
+drwxr-xr-x 1 haru haru    122 Jun 26 2025 .git
+-rwxrwxrwx 1 haru haru   1477 Jun 26 2025 .gitattributes
+-rwxrwxrwx 1 haru haru   6388 Jun 26 2025 .gitignore
+drwxr-xr-x 1 haru haru    172 Mar 11 2020 hubert
+drwxr-xr-x 1 haru haru    156 Apr 14 2019 inference
+-rwxrwxrwx 1 haru haru   7532 Jun 26 2025 inference_main.py
+-rwxrwxrwx 1 haru haru    289 Jun 26 2025 install.sh
+-rwxrwxrwx 1 haru haru   1066 Apr 14 2019 LICENSE
+drwxr-xr-x 1 haru haru     22 Des  7 11:36 models
+-rwxrwxrwx 1 haru haru  14495 Jun 26 2025 models.py
+drwxr-xr-x 1 haru haru    192 Jun 26 2025 modules
+drwxr-xr-x 1 haru haru 167795 Mar 11 2020 lulu.pth
+drwxr-xr-x 1 haru haru     86 Jun 27 2025 __pycache__
+drwxr-xr-x 1 haru haru     20 Mar 25 13:41 raw
+-rwxrwxrwx 1 haru haru   4779 Jun 27 2025 README.md
+-rwxrwxrwx 1 haru haru    230 Jun 27 2025 requirements.txt
+drwxr-xr-x 1 haru haru      0 Mar 25 13:51 results
+-rwxrwxrwx 1 haru haru    171 Jun 26 2025 run.sh
+-rwxrwxrwx 1 haru haru  15955 Jun 27 2025 utils.py
+drwxr-xr-x 1 haru haru     58 Apr 14 2019 vdecoder
+
+       \`\`\``;
+    }
+    else if (pesan.match(/^(\$|>) cat$/)) {
+        pesan_hasil = `\`\`\`
+Penggunaan: cat [PILIHAN]... [BERKAS]...
+Concatenate FILE(s) to standard output.
+
+Tanpa BERKAS, atau ketika BERKAS adalah -, baca masukan standar.
+
+  -A, --show-all           equivalent to -vET
+  -b, --number-nonblank    number nonempty output lines, overrides -n
+  -e                       equivalent to -vE
+  -E, --show-ends          display $ at end of each line
+  -n, --number             number all output lines
+  -s, --squeeze-blank      suppress repeated empty output lines
+  -t                       sama dengan -vT
+  -T, --show-tabs          tampilkan karakter TAB seperti ^I
+  -u                       (diabaikan)
+  -v, --show-nonprinting   gunakan ^ dan M- notasi, kecuali untuk LFD dan TAB
+      --help        display this help and exit
+      --version     output version information and exit
+
+Contoh:
+  cat f - g Keluarkan isi f, kemudian masukan standar, kemudian isi g.
+  cat       Salin masukan standar ke keluaran standar.
+
+Report bugs to: bug-coreutils@gnu.org
+GNU coreutils home page: <https://www.gnu.org/software/coreutils/>
+General help using GNU software: <https://www.gnu.org/gethelp/>
+Report any translation bugs to <https://translationproject.org/team/>
+Full documentation <https://www.gnu.org/software/coreutils/cat>
+or available locally via: info '(coreutils) cat invocation'
+
+        \`\`\``;
+    }
+    else if (pesan.match(/^(\$|>) cat(\s[\-\+a-zA-Z.]*)(\s[\-\+a-zA-Z.]*)?$/)) {
+        pesan_hasil = `\`\`\`
+[sudo] kata sandi untuk haru: 
+sudo: kata sandi diperlukan
+        \`\`\``;
+    }
+    // else if (pesan.match(/^(\$|>) cat$/)) {
+    //     pesan_hasil = `\`\`\`
+    //     \`\`\``;
+    // }
+    else {
+        pesan_hasil = pesan;
+    }
+    return pesan_hasil
 }
 
 connectToWhatsApp();
