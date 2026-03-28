@@ -781,7 +781,7 @@ async function connectToWhatsApp(){
                         //     randomSticker = dapatkanDataAcakDariArray(nsfw_stickers);
                         //     stickerFile = await buatSticker(`${stickerURL}${randomSticker[0]}.webp`, ["😂", "🗿", "🤫", "🫠"]);
                         // break;
-                        case "😈": case "👿":
+                        case "😈": case "👿": case "😡": case "😠": case "🤬":
                             stickerFile = await buatSticker(`${stickerURL}${dapatkanDataAcakDariArray(["random/9", "random/12", "random/17", "random/23", "random/30", "random/32", "random/34"])}.webp`);
                         break;
                         case "😢": case "😭": case "🥹": case "🥺":

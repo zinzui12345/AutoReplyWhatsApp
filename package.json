@@ -1,20 +1,21 @@
 {
-  "name": "auto-read-story-wa-jauhariel",
-  "version": "3.0.0",
+  "name": "auto-reply-whatsapp-zinzui12345",
+  "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "start": "node index"
   },
   "keywords": [
+    "auto-reply",
     "auto-read-story",
     "whatsapp-bot",
     "whatsapp-status-viewer",
     "auto-view-whatsapp-story",
     "bot-whatsapp"
   ],
-  "author": "github.com/jauhariel",
+  "author": "github.com/zinzui12345",
   "license": "ISC",
-  "description": "Auto Read Story/Status WhatsApp adalah bot sederhana yang memungkinkan kamu untuk melihat status/story teman-teman WhatsApp secara otomatis, sehingga kamu menjadi orang pertama yang melihat story mereka.",
+  "description": "Auto Reply WhatsApp adalah bot yang berfungsi untuk membalas pesan grup secara otomatis dan memungkinkan kamu melihat, menyukai, dan mendownload status/story teman-teman WhatsAppmu secara otomatis, sehingga kamu menjadi orang pertamax yang melihat dan menyukai storynyaw.",
   "dependencies": {
     "@itsliaaa/baileys": "^0.1.15",
     "colors": "^1.4.0",
