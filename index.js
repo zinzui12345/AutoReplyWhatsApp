@@ -220,6 +220,9 @@ const updateConfig = (key, value) => {
     config[key] = value;
     fs.writeFileSync(configPath, JSON.stringify(config, null, 4), 'utf-8');
 };
+const updatehistory = () => {
+    fs.writeFileSync(historyPath, JSON.stringify(daftar_percakapan, null, 4), 'utf-8');
+}
 
 let welcomeMessage = false;
 var isSendLastMessage = false;
@@ -725,7 +728,7 @@ async function connectToWhatsApp(){
                 case "reset":
                     if (msg.key.remoteJid.split('@')[1] === "g.us" && groupList.includes(msg.key.remoteJid)) {
                         daftar_percakapan[msg.key.remoteJid] = Array();
-                        fs.writeFileSync(historyPath, JSON.stringify(daftar_percakapan, null, 4), 'utf-8');
+                        updatehistory();
                         await sock.sendMessage(msg.key.remoteJid, { text: "`clear_current_context()`" });
                     }
                     break;
@@ -1044,7 +1047,9 @@ async function connectToWhatsApp(){
                             isSendLastMessage = false;
                         }
                         else {
+                            logCuy("Percakapan dimulai");
                             console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.yellow);
+                            updatehistory();
                         }
                     }
                 }
@@ -1090,45 +1095,71 @@ async function connectToWhatsApp(){
                         console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Citra] ".yellow, caption.yellow);
                         isSendLastMessage = true;
                     }
-                    else if (msg.message.stickerMessage && msg.message.stickerMessage.hasOwnProperty("contextInfo")) {
-                        if (msg.message.stickerMessage.contextInfo.hasOwnProperty("participant")) {
-                            const participantNumber = msg.message.stickerMessage.contextInfo.participant ? msg.message.stickerMessage.contextInfo.participant.split('@')[0] : 'Tidak diketahui';
+                }
+                else if (msg.message.stickerMessage && msg.message.stickerMessage.hasOwnProperty("contextInfo")) {
+                    if (msg.message.stickerMessage.contextInfo.hasOwnProperty("participant")) {
+                        const participantNumber = msg.message.stickerMessage.contextInfo.participant ? msg.message.stickerMessage.contextInfo.participant.split('@')[0] : 'Tidak diketahui';
 
-                            if (participantNumber == loggedInNumber || participantNumber == loggedInID) {
-                                const randomSticker = dapatkanDataAcakDariArray(reply_stickers);
-                                const stickerFile = await buatSticker(`${stickerURL}${randomSticker[0]}.webp`);
+                        if (participantNumber == loggedInNumber || participantNumber == loggedInID) {
+                            const randomSticker = dapatkanDataAcakDariArray(reply_stickers);
+                            const stickerFile = await buatSticker(`${stickerURL}${randomSticker[0]}.webp`);
 
-                                if (msg.key.fromMe) {
-                                    await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
-                                    isSendLastMessage = true;
+                            if (msg.key.fromMe) {
+                                await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
+                                isSendLastMessage = true;
+                            }
+                            else {
+                                const random_interact = dapatkanDataAcakDariArray([false, false, false, false, true]);
+                                if (random_interact) {
+                                    let t_message = dapatkanDataAcakDariArray(
+                                        [
+                                            "menurut kamu aku kayak gimana?",
+                                            "hai rulu",
+                                            "kasih kata-kata gokil dong",
+                                            "ehh rulu",
+                                            "halo"
+                                        ]
+                                    );
+                                    daftar_percakapan[chatID].push({
+                                        "role": (msg.key.fromMe ? "model" : "user"),
+                                        "parts": [
+                                            {
+                                                "text": `message_info: { sender_name: "${(msg.key.fromMe ? "rulu" : senderName)}", sender_id: "${senderID}" }`
+                                            },
+                                            {
+                                                "text": t_message
+                                            }
+                                        ]
+                                    });
+                                    console.log(groupName.cyan, ` → `, senderName.green, ` : `, t_message.blue);
+                                    interactAI(sock, msg, chatID, senderID, senderName, senderPrompt, messageDuration, t_message);
                                 }
                                 else {
-                                    const random_interact = dapatkanDataAcakDariArray([false, false, false, false, true]);
-                                    if (random_interact) {
-                                        let t_message = dapatkanDataAcakDariArray(
-                                            [
-                                                "menurut kamu aku kayak gimana?",
-                                                "hai rulu",
-                                                "kasih kata-kata gokil dong",
-                                                "ehh rulu",
-                                                "halo"
-                                            ]
-                                        )
-                                        logCuy(`${senderName} : ${t_message}`);
-                                        interactAI(sock, msg, chatID, senderID, senderName, senderPrompt, messageDuration, t_message);
-                                    }
-                                    else {
-                                        await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg, ephemeralExpiration: messageDuration });
-                                    }
-                                    isSendLastMessage = true;
+                                    await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg, ephemeralExpiration: messageDuration });
                                 }
+                                isSendLastMessage = true;
                             }
                         }
-                        else {
-                            console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Stiker]".yellow);
-                            isSendLastMessage = false;
-                        }
                     }
+                    else {
+                        console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Stiker]".yellow);
+                        isSendLastMessage = false;
+                    }
+                }
+                else if (message != "") {
+                    daftar_percakapan[chatID].push({
+                        "role": (msg.key.fromMe ? "model" : "user"),
+                        "parts": [
+                            {
+                                "text": `message_info: { sender_name: "${(msg.key.fromMe ? "rulu" : senderName)}", sender_id: "${senderID}" }`
+                            },
+                            {
+                                "text": message
+                            }
+                        ]
+                    });
+                    console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.yellow);
+                    updatehistory();
                 }
             }
 
@@ -1627,7 +1658,7 @@ async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt,
             await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `jumlah : ${sync_results.batas.jumlah_interaksi}\nbatas : ${sync_results.batas.limit_interaksi}` }, { quoted: msg, ephemeralExpiration: log_timeout });
         }
 
-        fs.writeFileSync(historyPath, JSON.stringify(daftar_percakapan, null, 4), 'utf-8');
+        updatehistory();
     }
 }
 async function buatSticker(url_stiker, emoji = ["😎","☺️", "😇", "🙂‍↕️", "😄"]) {
