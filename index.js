@@ -725,7 +725,8 @@ async function connectToWhatsApp(){
                 case "reset":
                     if (msg.key.remoteJid.split('@')[1] === "g.us" && groupList.includes(msg.key.remoteJid)) {
                         daftar_percakapan[msg.key.remoteJid] = Array();
-                        await sock.sendMessage(msg.key.remoteJid, { text: JSON.stringify(daftar_percakapan[msg.key.remoteJid]) });
+                        fs.writeFileSync(historyPath, JSON.stringify(daftar_percakapan, null, 4), 'utf-8');
+                        await sock.sendMessage(msg.key.remoteJid, { text: "`clear_current_context()`" });
                     }
                     break;
                 case "history":
@@ -1539,6 +1540,19 @@ async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt,
             });
 
             providerQueue = providerQueue.filter(p => p !== "cerebras");
+        }
+        else {
+            daftar_percakapan[chatID].push({
+                "role": "user",
+                "parts": [
+                    {
+                        "text": `message_info: { sender_name: "${senderName}", sender_id: "${senderID}" }`
+                    },
+                    {
+                        "text": messageText
+                    }
+                ]
+            });
         }
 
         for (let i = 0; i < providerQueue.length; i++) {
