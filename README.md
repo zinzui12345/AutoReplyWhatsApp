@@ -14,13 +14,14 @@ Auto Reply WhatsApp adalah bot yang berfungsi untuk membalas pesan grup secara o
 
 ## Fitur:
 1. **Auto Like Status**: Menyukai status secara otomatis jika fitur ini diaktifkan.
+1. **Auto Reply Group**: Membalas pesan grup secara otomatis jika fitur ini diaktifkan.
 2. **Download Media**: Mendownload media (foto, video, audio) dari status secara otomatis jika fitur ini diaktifkan.
 3. **Sensor Nomor**: Menyensor nomor yang ada di dalam status jika fitur ini diaktifkan.
 4. **Anti-Telpon**: Menolak panggilan telepon secara otomatis jika fitur ini diaktifkan.
 5. **Blacklist**: Mengatur hanya nomor tertentu yang statusnya tidak akan dilihat.
 6. **Whitelist**: Mengatur hanya nomor tertentu yang statusnya akan dilihat.
 7. **Emojis**: Mengatur emoji yang digunakan untuk menyukai status.
-8. **Grouplist**: Mengatur grup tertentu yang akan dibalas pesan-nya.
+8. **Grouplist**: Mengatur grup tertentu yang akan dibalas otomatis pesan-nya.
 
 ## Instalasi :
 ### Windows
@@ -71,19 +72,23 @@ Auto Reply WhatsApp adalah bot yang berfungsi untuk membalas pesan grup secara o
 ```js
    {
     "autoLikeStatus": true, // ubah jadi false jika tidak ingin otomatis menyukai status
+    "autoreply": false,    // ubah jadi true jika ingin otomatis membalas pesan grup
     "downloadMediaStatus": false, // ubah jadi true jika ingin mendownload media(foto, video, audio) dari status
-    "sensorNomor": true, // ubah jadi false jika tidak ingin menyensor nomor yang ada di dalam status
-    "antiTelpon": false, // ubah jadi true jika ingin mengaktifkan fitur anti-telepon
-    "blackList": [ // nomor yang ada di dalam array ini tidak akan dilihat statusnya
+    "sensorNomor": true,   // ubah jadi false jika tidak ingin menyensor nomor yang ada di dalam status
+    "antiTelpon": false,   // ubah jadi true jika ingin mengaktifkan fitur anti-telepon
+    "blackList": [         // nomor yang ada di dalam array ini tidak akan dilihat statusnya
         "628987654321",
         "628123456789"
     ],
-    "whiteList": [], // jika array ini tidak kosong, hanya nomor yang ada di dalam array ini yang akan dilihat statusnya
-    "emojis": [ // mengatur emoji yang digunakan untuk menyukai status
+    "whiteList": [],       // jika array ini tidak kosong, hanya nomor yang ada di dalam array ini yang akan dilihat statusnya
+    "emojis": [            // mengatur emoji yang digunakan untuk menyukai status
         "💚",
         "❤️",
         "👍"
-    ]
+    ],
+    "geminiApiKey": "",    // isi dengan API key Google Gemini jika ingin menggunakan autoreply
+    "cerebrasApiKey": "",  // isi dengan API key Cerebras jika ingin menggunakan autoreply
+    "groqApiKey": ""       // isi dengan API key Groq jika ingin menggunakan autoreply
    }
 ```
 1. Kamu bisa menambahkan nomor yang tidak ingin kamu lihat story-nya secara otomatis di file <strong>config.json</strong> dengan menambahkan nomor pada array <strong>blackList</strong>.

@@ -179,13 +179,8 @@ let useCode = true;
 let loggedInNumber;
 let loggedInID;
 let botName = "rulu";
-let log_timeout = 86400;
-let daftar_percakapan = {};
-let daftar_waktu_percakapan = {};
-let riwayat_percakapan = 22;
-let jumlah_percakapan = 0;
-let batas_percakapan = 1200;
 let telah_login = false;
+let log_timeout = 86400;
 
 let prioritas_model = "cerebras"; // "gemini" | "cerebras"
 let providers = ["gemini", "groq", "cerebras"];
@@ -209,9 +204,16 @@ function dapatkanDataAcakDariArray(arr) {
 
 const configPath = path.join(__dirname, 'config.json');
 const userPath = path.join(__dirname, 'user.json');
+const historyPath = path.join(__dirname, 'history.json');
 let config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 let user = JSON.parse(fs.readFileSync(userPath, 'utf-8'));
+let history = JSON.parse(fs.readFileSync(historyPath, 'utf-8')) || {};
 
+let daftar_percakapan = history;
+let daftar_waktu_percakapan = {};
+let riwayat_percakapan = 22;
+let jumlah_percakapan = 0;
+let batas_percakapan = 1200;
 let { autoLikeStatus, autoReplyGroup, downloadMediaStatus, sensorNomor, antiTelpon, blackList, whiteList, emojis, groupList, appsScriptApiKey, geminiApiKey, cerebrasApiKey, groqApiKey } = config;
 
 const updateConfig = (key, value) => {
@@ -416,6 +418,7 @@ async function connectToWhatsApp(){
                                     updateConfig('autoReplyGroup', true);
                                     logCuy('Kamu mengaktifkan fitur Auto Reply pada Grup', 'blue');
                                     await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Auto Reply Grup aktif" }, { quoted: msg });
+                                    await sock.sendMessage(msg.key.remoteJid, { text: "`model_response: true`" }, { ephemeralExpiration: log_timeout });
                                     break;
                                 case "dlmedia":
                                     downloadMediaStatus = true;
@@ -457,6 +460,7 @@ async function connectToWhatsApp(){
                                     updateConfig('autoReplyGroup', false);
                                     logCuy('Kamu mematikan fitur Auto Reply pada Grup', 'blue');
                                     await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Auto Reply Grup nonaktif" }, { quoted: msg });
+                                    await sock.sendMessage(msg.key.remoteJid, { text: "`model_response: false`" }, { ephemeralExpiration: log_timeout });
                                     break;
                                 case "dlmedia":
                                     downloadMediaStatus = false;
@@ -724,6 +728,10 @@ async function connectToWhatsApp(){
                         await sock.sendMessage(msg.key.remoteJid, { text: JSON.stringify(daftar_percakapan[msg.key.remoteJid]) });
                     }
                     break;
+                case "history":
+                    // sendStringAsFile(sock, msg, msg.key.remoteJid, fileString, "chat_history.txt", 'text/plain')
+                    sendStringAsFile(sock, msg, msg.key.remoteJid, JSON.stringify(daftar_percakapan, null, 2), "chat_history.json", 'application/json');
+                    break;
                 case "test":
                     const senderName = msg.pushName || 'Tidak diketahui';
 
@@ -737,7 +745,8 @@ async function connectToWhatsApp(){
                             id: '#Test'
                         }]
                     }, {
-                        quoted: msg
+                        quoted: msg,
+                        ephemeralExpiration: log_timeout
                     });
 
                     break;
@@ -765,7 +774,7 @@ async function connectToWhatsApp(){
                     let stickerFile = null;
                     switch (prosesEmoji(message)) {
                         // case "🥵": case "🤤":
-                        //     randomSticker = dapatkanDataAcakDariArray(random_stickers);
+                        //     randomSticker = dapatkanDataAcakDariArray(nsfw_stickers);
                         //     stickerFile = await buatSticker(`${stickerURL}${randomSticker[0]}.webp`, ["😂", "🗿", "🤫", "🫠"]);
                         // break;
                         case "😈": case "👿":
@@ -1138,7 +1147,8 @@ async function connectToWhatsApp(){
 
             if (msg.message.protocolMessage) {
                 logCuy(`Status dari ${senderName} (${displaySendernumber}) telah dihapus.`, 'red');
-            } else if (!msg.message.reactionMessage) {
+            }
+            else if (!msg.message.reactionMessage) {
                 if (blackList.includes(senderNumber)) {
                     logCuy(`${senderName} (${displaySendernumber}) membuat status tapi karena ada di blacklist. Status tidak akan dilihat.`, 'yellow');
                     return;
@@ -1279,6 +1289,26 @@ async function downloadFile(input) {
     request(input);
     });
 }
+async function sendStringAsFile(sock, msg, jid, fileString, fileName, mimeType) {
+    // 1. Convert the string to a buffer
+    const buffer = Buffer.from(fileString, 'utf-8');
+
+    // 2. Prepare the message content as a document message
+    const messageContent = {
+        document: buffer, // The file data as a buffer or stream
+        mimetype: mimeType, // e.g., 'text/plain', 'application/json', 'application/pdf'
+        fileName: fileName, // The name of the file
+        //caption: `Here is your file: ${fileName}` // Optional caption
+    };
+
+    // 3. Send the message
+    try {
+        await sock.sendMessage(jid, messageContent, { quoted: msg, ephemeralExpiration: log_timeout });
+        console.log(`Mengirim berkas: ${fileName} ke: ${jid}`);
+    } catch (error) {
+        console.error('Gagal mengirim berkas:', error);
+    }
+};
 async function requestAI(provider, daftar_percakapan, systemInstructionData, senderPrompt, messageMediaBuffer = null, mimeType = null) {
     return new Promise((resolve, reject) => {
         let req_options;
@@ -1582,6 +1612,8 @@ async function interactAI(sock, msg, chatID, senderID, senderName, senderPrompt,
             
             await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `jumlah : ${sync_results.batas.jumlah_interaksi}\nbatas : ${sync_results.batas.limit_interaksi}` }, { quoted: msg, ephemeralExpiration: log_timeout });
         }
+
+        fs.writeFileSync(historyPath, JSON.stringify(daftar_percakapan, null, 4), 'utf-8');
     }
 }
 async function buatSticker(url_stiker, emoji = ["😎","☺️", "😇", "🙂‍↕️", "😄"]) {
