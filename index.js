@@ -228,6 +228,7 @@ const updatehistory = () => {
 let welcomeMessage = false;
 var isSendLastMessage = false;
 var lastSenderID = {};
+var groupInfoList = {};
 
 async function connectToWhatsApp(){
     const sessionPath = path.join(__dirname, 'sessions');
@@ -316,17 +317,17 @@ async function connectToWhatsApp(){
             }
             else {
                 logCuy('Nampaknya kamu telah logout dari wangsaf, silahkan login ke wangsaf kembali!', 'red');
-                fs.rm(sessionPath, { recursive: true, force: true });
+                fs.rmdirSync(sessionPath, { recursive: true, force: true });
                 connectToWhatsApp();
             }
         }
         else if(connection === 'open') {
             logCuy('Berhasil Terhubung ke wangsaf');
-            loggedInNumber = sock.user.id.split('@')[0].split(':')[0]; // FIXME : jangan dipotong per '@' nya!
-            loggedInID = sock.user.lid.split('@')[0].split(':')[0]; // FIXME : jangan dipotong per '@' nya!
+            loggedInNumber = sock.user.id.replace(/\:[0-9]+\@/, '@');
+            loggedInID = sock.user.lid.replace(/\:[0-9]+\@/, '@');
             botName = sock.user.name;
             telah_login = true;
-            let displayedLoggedInNumber = loggedInNumber;
+            let displayedLoggedInNumber = loggedInNumber.split('@')[0].split(':')[0];
             if (sensorNomor) {
                 displayedLoggedInNumber = displayedLoggedInNumber.slice(0, 3) + '****' + displayedLoggedInNumber.slice(-2);
             }
@@ -345,7 +346,7 @@ async function connectToWhatsApp(){
 
             if (!welcomeMessage) {
                 setTimeout(async () => {
-                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: messageInfo }, { ephemeralExpiration: log_timeout });
+                    await sock.sendMessage(loggedInNumber, { text: messageInfo }, { ephemeralExpiration: log_timeout });
                     welcomeMessage = true;
                 }, 5000);
             }
@@ -391,15 +392,15 @@ async function connectToWhatsApp(){
 
             async function validateNumber(commandname, type, sc, data) {
                 if (!data) {
-                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor harus diisi.\ncontoh ketik :\n\`${commandname} blacklist 628123456789\`\n\nArgumen yang tersedia:\n\n\`${commandname} blacklist nomornya\`\nuntuk ${type} nomor ${sc} blacklist\n\n\`${commandname} whitelist nomornya\`\nuntuk ${type} nomor ${sc} whitelist` }, { quoted: msg });
+                    await sock.sendMessage(loggedInNumber, { text: `Nomor harus diisi.\ncontoh ketik :\n\`${commandname} blacklist 628123456789\`\n\nArgumen yang tersedia:\n\n\`${commandname} blacklist nomornya\`\nuntuk ${type} nomor ${sc} blacklist\n\n\`${commandname} whitelist nomornya\`\nuntuk ${type} nomor ${sc} whitelist` }, { quoted: msg });
                     return false;
                 }
                 if (!/^\d+$/.test(data)) {
-                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor harus berupa angka.\ncontoh ketik :\n\`${commandname} blacklist 628123456789\`\n\nArgumen yang tersedia:\n\n\`${commandname} blacklist nomornya\`\nuntuk ${type} nomor ${sc} blacklist\n\n\`${commandname} whitelist nomornya\`\nuntuk ${type} nomor ${sc} whitelist` }, { quoted: msg });
+                    await sock.sendMessage(loggedInNumber, { text: `Nomor harus berupa angka.\ncontoh ketik :\n\`${commandname} blacklist 628123456789\`\n\nArgumen yang tersedia:\n\n\`${commandname} blacklist nomornya\`\nuntuk ${type} nomor ${sc} blacklist\n\n\`${commandname} whitelist nomornya\`\nuntuk ${type} nomor ${sc} whitelist` }, { quoted: msg });
                     return false;
                 }
                 if (!data.startsWith('62') && !data.startsWith('60')) {
-                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor harus diawali dengan 62.\ncontoh ketik :\n\`${commandname} blacklist 628123456789\`\n\nArgumen yang tersedia:\n\n\`${commandname} blacklist nomornya\`\nuntuk ${type} nomor ${sc} blacklist\n\n\`${commandname} whitelist nomornya\`\nuntuk ${type} nomor ${sc} whitelist` }, { quoted: msg });
+                    await sock.sendMessage(loggedInNumber, { text: `Nomor harus diawali dengan 62.\ncontoh ketik :\n\`${commandname} blacklist 628123456789\`\n\nArgumen yang tersedia:\n\n\`${commandname} blacklist nomornya\`\nuntuk ${type} nomor ${sc} blacklist\n\n\`${commandname} whitelist nomornya\`\nuntuk ${type} nomor ${sc} whitelist` }, { quoted: msg });
                     return false;
                 }
                 return true;
@@ -409,110 +410,110 @@ async function connectToWhatsApp(){
             switch (msg.cmd) {
                 case "on":
                     msg.args[0].trim() === ""
-                        ? await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `mana argumennya ?\ncontoh ketik : \`#on autolike\`\n\nArgumen yang tersedia:\n\n\`#on autolike\`\nuntuk mengaktifkan fitur autolike\n\n\`#on dlmedia\`\nuntuk mengaktifkan fitur download media(foto,video, dan audio) dari story\n\n\`#on sensornomor\`\nuntuk mengaktifkan sensor nomor\n\n\`#on antitelpon\`\nuntuk mengaktifkan anti-telpon` }, { quoted: msg })
+                        ? await sock.sendMessage(loggedInNumber, { text: `mana argumennya ?\ncontoh ketik : \`#on autolike\`\n\nArgumen yang tersedia:\n\n\`#on autolike\`\nuntuk mengaktifkan fitur autolike\n\n\`#on dlmedia\`\nuntuk mengaktifkan fitur download media(foto,video, dan audio) dari story\n\n\`#on sensornomor\`\nuntuk mengaktifkan sensor nomor\n\n\`#on antitelpon\`\nuntuk mengaktifkan anti-telpon` }, { quoted: msg })
                         : msg.args.forEach(async arg => {
                             switch (arg.trim().toLowerCase()) {
                                 case "autolike":
                                     autoLikeStatus = true;
                                     updateConfig('autoLikeStatus', true);
                                     logCuy('Kamu mengaktifkan fitur Auto Like Status', 'blue');
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Auto Like Status aktif" }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: "Auto Like Status aktif" }, { quoted: msg });
                                     break;
                                 case "autoreply":
                                     autoReplyGroup = true;
                                     updateConfig('autoReplyGroup', true);
                                     logCuy('Kamu mengaktifkan fitur Auto Reply pada Grup', 'blue');
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Auto Reply Grup aktif" }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: "Auto Reply Grup aktif" }, { quoted: msg });
                                     await sock.sendMessage(msg.key.remoteJid, { text: "`model_response: true`" }, { ephemeralExpiration: log_timeout });
                                     break;
                                 case "dlmedia":
                                     downloadMediaStatus = true;
                                     updateConfig('downloadMediaStatus', true);
                                     logCuy('Kamu mengaktifkan fitur Download Media Status', 'blue');
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Download Media Status aktif" }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: "Download Media Status aktif" }, { quoted: msg });
                                     break;
                                 case "sensornomor":
                                     sensorNomor = true;
                                     updateConfig('sensorNomor', true);
                                     logCuy('Kamu mengaktifkan fitur sensorNomor', 'blue');
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Sensor Nomor aktif" }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: "Sensor Nomor aktif" }, { quoted: msg });
                                     break;
                                 case "antitelpon":
                                     antiTelpon = true;
                                     updateConfig('antiTelpon', true);
                                     logCuy('Kamu mengaktifkan fitur Anti-telpon', 'blue');
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Anti-telpon aktif" }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: "Anti-telpon aktif" }, { quoted: msg });
                                     break;
                                 default:
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Argumen tidak valid: ${arg}. Pilihan yang tersedia: autolike, dlmedia, sensornomor, dan antitelpon` }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: `Argumen tidak valid: ${arg}. Pilihan yang tersedia: autolike, dlmedia, sensornomor, dan antitelpon` }, { quoted: msg });
                                     break;
                             }
                         });
                     break;
                 case "off":
                     msg.args[0].trim() === ""
-                        ? await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `mana argumennya ?\ncontoh ketik : \`#off autolike\`\n\nArgumen yang tersedia:\n\n\`#off autolike\`\nuntuk menonaktifkan fitur autolike\n\n\`#off dlmedia\`\nuntuk menonaktifkan fitur download media(foto,video, dan audio) dari story\n\n\`#off sensornomor\`\nuntuk menonaktifkan sensor nomor\n\n\`#off antitelpon\`\nuntuk menonaktifkan anti-telpon` }, { quoted: msg })
+                        ? await sock.sendMessage(loggedInNumber, { text: `mana argumennya ?\ncontoh ketik : \`#off autolike\`\n\nArgumen yang tersedia:\n\n\`#off autolike\`\nuntuk menonaktifkan fitur autolike\n\n\`#off dlmedia\`\nuntuk menonaktifkan fitur download media(foto,video, dan audio) dari story\n\n\`#off sensornomor\`\nuntuk menonaktifkan sensor nomor\n\n\`#off antitelpon\`\nuntuk menonaktifkan anti-telpon` }, { quoted: msg })
                         : msg.args.forEach(async arg => {
                             switch (arg.trim().toLowerCase()) {
                                 case "autolike":
                                     autoLikeStatus = false;
                                     updateConfig('autoLikeStatus', false);
                                     logCuy('Kamu mematikan fitur Auto Like Status', 'blue');
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Auto Like Status nonaktif" }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: "Auto Like Status nonaktif" }, { quoted: msg });
                                     break;
                                 case "autoreply":
                                     autoReplyGroup = false;
                                     updateConfig('autoReplyGroup', false);
                                     logCuy('Kamu mematikan fitur Auto Reply pada Grup', 'blue');
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Auto Reply Grup nonaktif" }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: "Auto Reply Grup nonaktif" }, { quoted: msg });
                                     await sock.sendMessage(msg.key.remoteJid, { text: "`model_response: false`" }, { ephemeralExpiration: log_timeout });
                                     break;
                                 case "dlmedia":
                                     downloadMediaStatus = false;
                                     updateConfig('downloadMediaStatus', false);
                                     logCuy('Kamu mematikan fitur Download Media Status', 'blue');
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Download Media Status nonaktif" }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: "Download Media Status nonaktif" }, { quoted: msg });
                                     break;
                                 case "sensornomor":
                                     sensorNomor = false;
                                     updateConfig('sensorNomor', false);
                                     logCuy('Kamu mematikan fitur Sensor Nomor', 'blue');
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Sensor Nomor nonaktif" }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: "Sensor Nomor nonaktif" }, { quoted: msg });
                                     break;
                                 case "antitelpon":
                                     antiTelpon = false;
                                     updateConfig('antiTelpon', false);
                                     logCuy('Kamu mematikan fitur Anti-telpon', 'blue');
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "Anti-telpon nonaktif" }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: "Anti-telpon nonaktif" }, { quoted: msg });
                                     break;
                                 default:
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Argumen tidak valid: ${arg}. Pilihan yang tersedia: autolike, dlmedia, sensornomor, dan antitelpon` }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: `Argumen tidak valid: ${arg}. Pilihan yang tersedia: autolike, dlmedia, sensornomor, dan antitelpon` }, { quoted: msg });
                                     break;
                             }
                         });
                     break;
                 case "add":
                     msg.args[0].trim() === ""
-                        ? await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `mana argumennya ?\ncontoh ketik :\n\`#add blacklist 628123456789\`\n\nArgumen yang tersedia:\n\n\`#add blacklist nomornya\`\nuntuk menambahkan nomor ke blacklist\n\n\`#add whitelist nomornya\`\nuntuk menambahkan nomor ke whitelist\n\n\`#add emojis emojinya\`\nuntuk menambahkan emoji ke emojis` }, { quoted: msg })
+                        ? await sock.sendMessage(loggedInNumber, { text: `mana argumennya ?\ncontoh ketik :\n\`#add blacklist 628123456789\`\n\nArgumen yang tersedia:\n\n\`#add blacklist nomornya\`\nuntuk menambahkan nomor ke blacklist\n\n\`#add whitelist nomornya\`\nuntuk menambahkan nomor ke whitelist\n\n\`#add emojis emojinya\`\nuntuk menambahkan emoji ke emojis` }, { quoted: msg })
                         : msg.args.forEach(async arg => {
                             const [list, data] = arg.trim().split(" ");
                             if (list === "emojis"){
                                 let emojiRegex = /^[\p{Emoji}\u200D\uFE0F]$/gu;
                                 if (!data) {
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `emoji harus diisi.\ncontoh ketik :\n\`#add emojis 👍\`` }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: `emoji harus diisi.\ncontoh ketik :\n\`#add emojis 👍\`` }, { quoted: msg });
                                     return;
                                 }
                                 if (!emojiRegex.test(data)) {
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `hanya boleh mengisi 1 emoji.\ncontoh ketik :\n\`#add emojis 👍\`` }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: `hanya boleh mengisi 1 emoji.\ncontoh ketik :\n\`#add emojis 👍\`` }, { quoted: msg });
                                     return;
                                 }
                                 if (!emojis.includes(data)) {
                                     emojis.push(data);
                                     updateConfig('emojis', emojis);
                                     logCuy(`Kamu menambahkan emoji ${data} ke daftar emojis`, 'blue');
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `emoji ${data} berhasil ditambahkan ke daftar emojis` }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: `emoji ${data} berhasil ditambahkan ke daftar emojis` }, { quoted: msg });
                                 } else {
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `emoji ${data} sudah ada di daftar emojis` }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: `emoji ${data} sudah ada di daftar emojis` }, { quoted: msg });
                                 }
                             } else if (list === "blacklist") {
                                 const isValid = await validateNumber("#add", "menambahkan", "ke", data);
@@ -525,9 +526,9 @@ async function connectToWhatsApp(){
                                     blackList.push(data);
                                     updateConfig('blackList', blackList);
                                     logCuy(`Kamu menambahkan nomor ${displayNumber} ke blacklist`, 'blue');
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor ${displayNumber} berhasil ditambahkan ke blacklist` }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: `Nomor ${displayNumber} berhasil ditambahkan ke blacklist` }, { quoted: msg });
                                 } else {
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor ${displayNumber} sudah ada di blacklist` }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: `Nomor ${displayNumber} sudah ada di blacklist` }, { quoted: msg });
                                 }
                             } else if (list === "whitelist") {
                                 const isValid = await validateNumber("#add", "menambahkan", "ke", data);
@@ -540,54 +541,54 @@ async function connectToWhatsApp(){
                                     whiteList.push(data);
                                     updateConfig('whiteList', whiteList);
                                     logCuy(`Kamu menambahkan nomor ${displayNumber} ke whitelist`, 'blue');
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor ${displayNumber} berhasil ditambahkan ke whitelist` }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: `Nomor ${displayNumber} berhasil ditambahkan ke whitelist` }, { quoted: msg });
                                 } else {
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor ${displayNumber} sudah ada di whitelist` }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: `Nomor ${displayNumber} sudah ada di whitelist` }, { quoted: msg });
                                 }
                             } else if (list === "grouplist"){
                                 if (!data) {
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `grup harus diisi.\ncontoh ketik :\n\`#add grouplist 6285342649510-1620558806@g.us\`` }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: `grup harus diisi.\ncontoh ketik :\n\`#add grouplist 6285342649510-1620558806@g.us\`` }, { quoted: msg });
                                     return;
                                 }
                                 if (!groupList.includes(data)) {
                                     groupList.push(data);
                                     updateConfig('groupList', groupList);
                                     logCuy(`Kamu menambahkan grup ${data} ke daftar groupList`, 'blue');
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `grup ${data} berhasil ditambahkan ke daftar grouplist` }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: `grup ${data} berhasil ditambahkan ke daftar grouplist` }, { quoted: msg });
                                 } else {
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `grup ${data} sudah ada di daftar grouplist` }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: `grup ${data} sudah ada di daftar grouplist` }, { quoted: msg });
                                 }
                             } else {
-                                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Argumen tidak valid: ${arg}. Pilihan yang tersedia: blacklist, whitelist, emojis, grouplist` }, { quoted: msg });
+                                await sock.sendMessage(loggedInNumber, { text: `Argumen tidak valid: ${arg}. Pilihan yang tersedia: blacklist, whitelist, emojis, grouplist` }, { quoted: msg });
                             }
                         });
                     break;
                 case "remove":
                     msg.args[0].trim() === ""
-                        ? await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `mana argumennya ?\ncontoh ketik :\n\`#remove blacklist 628123456789\`\n\nArgumen yang tersedia:\n\n\`#remove blacklist nomornya\`\nuntuk menghapus nomor dari blacklist\n\n\`#remove whitelist nomornya\`\nuntuk menghapus nomor dari whitelist\n\n\`#remove emojis emojinya\`\nuntuk menghapus emoji dari daftar emojis` }, { quoted: msg })
+                        ? await sock.sendMessage(loggedInNumber, { text: `mana argumennya ?\ncontoh ketik :\n\`#remove blacklist 628123456789\`\n\nArgumen yang tersedia:\n\n\`#remove blacklist nomornya\`\nuntuk menghapus nomor dari blacklist\n\n\`#remove whitelist nomornya\`\nuntuk menghapus nomor dari whitelist\n\n\`#remove emojis emojinya\`\nuntuk menghapus emoji dari daftar emojis` }, { quoted: msg })
                         : msg.args.forEach(async arg => {
                             const [list, data] = arg.trim().split(" ");
                             if (list === "emojis"){
                                 let emojiRegex = /^[\p{Emoji}\u200D\uFE0F]$/gu;
                                 if (!data) {
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `emoji harus diisi.\ncontoh ketik :\n\`#remove emojis 👍\`` }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: `emoji harus diisi.\ncontoh ketik :\n\`#remove emojis 👍\`` }, { quoted: msg });
                                     return;
                                 }
                                 if (!emojiRegex.test(data)) {
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `hanya boleh mengisi 1 emoji.\ncontoh ketik :\n\`#remove emojis 👍\`` }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: `hanya boleh mengisi 1 emoji.\ncontoh ketik :\n\`#remove emojis 👍\`` }, { quoted: msg });
                                     return;
                                 }
                                 if (emojis.length === 1) {
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Tidak bisa menghapus emoji terakhir. Harus ada minimal satu emoji.\n\nKetik \`#info\` untuk mengecek daftar emoji yang tersedia` }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: `Tidak bisa menghapus emoji terakhir. Harus ada minimal satu emoji.\n\nKetik \`#info\` untuk mengecek daftar emoji yang tersedia` }, { quoted: msg });
                                     return;
                                 }
                                 if (emojis.includes(data)) {
                                     emojis = emojis.filter(n => n !== data);
                                     updateConfig('emojis', emojis);
                                     logCuy(`Kamu menghapus emoji ${data} dari emojis`, 'blue');
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `emoji ${data} berhasil dihapus dari daftar emojis` }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: `emoji ${data} berhasil dihapus dari daftar emojis` }, { quoted: msg });
                                 } else {
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `emoji ${data} tidak ada di daftar emojis\n\nKetik \`#info\` untuk mengecek daftar emoji yang tersedia` }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: `emoji ${data} tidak ada di daftar emojis\n\nKetik \`#info\` untuk mengecek daftar emoji yang tersedia` }, { quoted: msg });
                                 }
                             } else if (list === "blacklist") {
                                 const isValid = await validateNumber("#remove", "menghapus", "dari", data);
@@ -600,9 +601,9 @@ async function connectToWhatsApp(){
                                     blackList = blackList.filter(n => n !== data);
                                     updateConfig('blackList', blackList);
                                     logCuy(`Kamu menghapus nomor ${displayNumber} dari blacklist`, 'blue');
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor ${displayNumber} berhasil dihapus dari blacklist` }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: `Nomor ${displayNumber} berhasil dihapus dari blacklist` }, { quoted: msg });
                                 } else {
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor ${displayNumber} tidak ada di blacklist\n\nKetik \`#info\` untuk mengecek daftar nomor yang tersedia` }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: `Nomor ${displayNumber} tidak ada di blacklist\n\nKetik \`#info\` untuk mengecek daftar nomor yang tersedia` }, { quoted: msg });
                                 }
                             } else if (list === "whitelist") {
                                 const isValid = await validateNumber("#remove", "menghapus", "dari", data);
@@ -615,25 +616,25 @@ async function connectToWhatsApp(){
                                     whiteList = whiteList.filter(n => n !== data);
                                     updateConfig('whiteList', whiteList);
                                     logCuy(`Kamu menghapus nomor ${displayNumber} dari whitelist`, 'blue');
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor ${displayNumber} berhasil dihapus dari whitelist` }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: `Nomor ${displayNumber} berhasil dihapus dari whitelist` }, { quoted: msg });
                                 } else {
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Nomor ${displayNumber} tidak ada di whitelist\n\nKetik \`#info\` untuk mengecek daftar nomor yang tersedia` }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: `Nomor ${displayNumber} tidak ada di whitelist\n\nKetik \`#info\` untuk mengecek daftar nomor yang tersedia` }, { quoted: msg });
                                 }
                             } else if (list === "grouplist"){
                                 if (!data) {
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `grup harus diisi.\ncontoh ketik :\n\`#remove grouplist 6285342649510-1620558806@g.us\`` }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: `grup harus diisi.\ncontoh ketik :\n\`#remove grouplist 6285342649510-1620558806@g.us\`` }, { quoted: msg });
                                     return;
                                 }
                                 if (groupList.includes(data)) {
                                     groupList = groupList.filter(n => n !== data);
                                     updateConfig('groupList', groupList);
                                     logCuy(`Kamu menghapus grup ${data} dari grouplist`, 'blue');
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `grup ${data} berhasil dihapus dari daftar grouplist` }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: `grup ${data} berhasil dihapus dari daftar grouplist` }, { quoted: msg });
                                 } else {
-                                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `grup ${data} tidak ada di daftar grouplist\n\nKetik \`#info\` untuk mengecek daftar grouplist yang tersedia` }, { quoted: msg });
+                                    await sock.sendMessage(loggedInNumber, { text: `grup ${data} tidak ada di daftar grouplist\n\nKetik \`#info\` untuk mengecek daftar grouplist yang tersedia` }, { quoted: msg });
                                 }
                             } else {
-                                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Argumen tidak valid: ${arg}. Pilihan yang tersedia: blacklist, whitelist, emojis, grouplist` }, { quoted: msg });
+                                await sock.sendMessage(loggedInNumber, { text: `Argumen tidak valid: ${arg}. Pilihan yang tersedia: blacklist, whitelist, emojis, grouplist` }, { quoted: msg });
                             }
                         });
                     break;
@@ -686,7 +687,7 @@ async function connectToWhatsApp(){
                                         `\`#info\`\n`+
                                         `Menampilkan informasi status fitur, daftar nomor/emoji yang ada di blacklist, whitelist, emojis dan grouplist`;
 
-                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: menuMessage }, { quoted: msg });
+                    await sock.sendMessage(loggedInNumber, { text: menuMessage }, { quoted: msg });
                     break;
                 case "info":
                     const infoMessage = `Informasi Status Fitur:\n`+
@@ -722,7 +723,7 @@ async function connectToWhatsApp(){
                     const grouplistMessage = groupList.length > 0 ? `Grouplist:\n${groupListString}` : "Grouplist kosong.";
                     const listMessage = `\n\n${blacklistMessage}\n\n${whitelistMessage}\n\n${emojisMessage}\n\n${grouplistMessage}\n\nKetik \`#add\` untuk menambahkan nomor atau emoji ke blacklist, whitelist, emojis, dan grouplist\nKetik \`#remove\` untuk menghapus nomor atau emoji dari blacklist, whitelist, emojis, dan grouplist\nKetik \`#on\` untuk mengaktifkan fitur\nKetik \`#off\` untuk menonaktifkan fitur\nKetik \`#menu\` untuk melihat menu perintah yang tersedia`;
 
-                    await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: infoMessage + listMessage }, { quoted: msg });
+                    await sock.sendMessage(loggedInNumber, { text: infoMessage + listMessage }, { quoted: msg });
                     break;
                 case "id":
                     await sock.sendMessage(msg.key.remoteJid, { text: msg.key.remoteJid }, { quoted: msg });
@@ -750,7 +751,7 @@ async function connectToWhatsApp(){
 
                     logCuy(`${senderName} : test!`, 'yellow');
                     await sock.sendMessage(msg.key.remoteJid, { text: JSON.stringify(msg, null, 2) },         { ephemeralExpiration: log_timeout });
-                    await sock.sendMessage(msg.key.remoteJid, { text: modifikasiPesan(msg.args.toString()) }, { ephemeralExpiration: log_timeout });
+                    // await sock.sendMessage(msg.key.remoteJid, { text: modifikasiPesan(msg.args.toString()) }, { ephemeralExpiration: log_timeout });
                     await sock.sendMessage(msg.key.remoteJid, {
                         text: '👆🏻 Tombol!',
                         footer: '@itsliaaa/baileys',
@@ -767,14 +768,19 @@ async function connectToWhatsApp(){
             }
         }
         else if (autoReplyGroup && groupList.length > 0 && msg.key.remoteJid.split('@')[1] === "g.us" && groupList.includes(msg.key.remoteJid)) {
-            const groupInfo = await sock.groupMetadata(msg.key.remoteJid);
-            const groupName = groupInfo.subject;
             const chatID = msg.key.remoteJid;
             const senderID = msg.key.participant || 'Tidak diketahui';
+
+            if (!groupInfoList.hasOwnProperty(chatID)) {
+                groupInfoList[chatID] = await sock.groupMetadata(chatID);
+            }
+
+            const groupInfo =  groupInfoList[chatID];
+            const groupName = groupInfo.subject;
             const senderProfile = (msg.key.participant && user.hasOwnProperty(msg.key.participant) ? user[msg.key.participant] : {} );
             const senderName = senderProfile.displayName || msg.pushName || (msg.key.fromMe ? botName : 'Tidak diketahui' );
             const senderPrompt = senderProfile.customPrompt || "You're in a chat group with several different person talking each other. The chat group allow user to send stickers.";
-            const senderNumber = msg.key.participant ? msg.key.participant.split('@')[0] : 'Tidak diketahui'; // FIXME : jangan dipotong per '@' nya!
+            const senderNumber = msg.key.participant ? msg.key.participant : 'Tidak diketahui';
             const message = msg.type === "conversation"
                         ? msg.message.conversation
                         : msg.type === "extendedTextMessage"
@@ -854,11 +860,11 @@ async function connectToWhatsApp(){
                 }
                 else if (msg.message.extendedTextMessage && msg.message.extendedTextMessage.hasOwnProperty("contextInfo")) {
                     if (msg.message.extendedTextMessage.contextInfo.hasOwnProperty("participant")) {
-                        const participantNumber = msg.message.extendedTextMessage.contextInfo.participant ? msg.message.extendedTextMessage.contextInfo.participant.split('@')[0] : 'Tidak diketahui';
+                        const participantNumber = msg.message.extendedTextMessage.contextInfo.participant ? msg.message.extendedTextMessage.contextInfo.participant : 'Tidak diketahui';
                        
                         if (participantNumber == loggedInNumber || participantNumber == loggedInID) {
                             console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.blue);
-                            interactAI(sock, msg, chatID, groupName, `${loggedInNumber}@s.whatsapp.net`, senderName, senderPrompt, messageDuration, message);
+                            interactAI(sock, msg, chatID, groupName, loggedInNumber, senderName, senderPrompt, messageDuration, message);
                             isSendLastMessage = true;
                             lastSenderID[chatID] = senderID;
                             jumlah_percakapan_dibaca = 0;
@@ -917,8 +923,9 @@ async function connectToWhatsApp(){
                             // updatehistory();
                         }
                     }
-                    else if (message.match(`(${loggedInID}\@s.whatsapp.net)`)) {
-                        let modifiedMessage = message.replace(`${loggedInID}@s.whatsapp.net`, "rulu");
+                    else if (message.match(`(${loggedInID}|${loggedInNumber})`)) {
+                        let modifiedMessage = message.replace(loggedInID, "rulu");
+                        modifiedMessage = message.replace(loggedInNumber, "rulu");
 
                         if (!daftar_percakapan.hasOwnProperty(chatID)) {
                             daftar_percakapan[chatID] = Array();
@@ -945,106 +952,89 @@ async function connectToWhatsApp(){
                         lastSenderID[chatID] = senderID;
                         jumlah_percakapan_dibaca = 0;
                     }
-                    else if (message.match(`(\@(${loggedInNumber}|${botName}))`)) {
-                        let modifiedMessage = message;
-                        if (message.match(`(\@${loggedInNumber})`)) {
-                            modifiedMessage = message.replace(`@${loggedInNumber}`, "rulu");
+                    else if (message.match(`(\@[0-9]+)`)) {
+                        let should_reply = false;
+                        let modifiedMessage = message.replace("@" + loggedInNumber.split('@')[0],   "rulu");
+                        modifiedMessage = modifiedMessage.replace("@" + loggedInID.split('@')[0],   "rulu");
+                        modifiedMessage = modifiedMessage.replace("@" + botName,                    "rulu");
+
+                        if (message.match(`(\@(${loggedInNumber}|${botName}|${loggedInID.split('@')[0]}))`)) {
+                            should_reply = true;
+                        }
+                        
+                        // FIXME : dapatkan data pengguna dari variabel / user
+                        // while(modifiedMessage.match(`(\@[0-9]+)`)) {
+                        //     let hasil_rgx = modifiedMessage.match(`(\@[0-9]+)`);
+                        //     let jid_regex = `${hasil_rgx[0].substr(1)}@s.whatsapp.net`;
+                        //     // FIXME : jika tidak match(), gunakan @lid
+                        //     let user_profile = (user.hasOwnProperty(jid_regex) ? user[jid_regex] : {} );
+                        //     let user_name = user_profile.displayName || jid_regex;
+                            
+                        //     modifiedMessage = modifiedMessage.replace(hasil_rgx[0], user_name);
+                        // }
+
+                        if (!daftar_percakapan.hasOwnProperty(chatID)) {
+                            daftar_percakapan[chatID] = Array();
+                        }
+                        if (daftar_percakapan[chatID].length > riwayat_percakapan) {
+                            daftar_percakapan[chatID].splice(0, 2);
+                        }
+
+                        if (lastSenderID[chatID] === senderID && daftar_percakapan[chatID].length > 2) {
+                            daftar_percakapan[chatID][daftar_percakapan[chatID].length - 1]["parts"][1]["text"] += "\n\n" + message;
                         }
                         else {
-                            modifiedMessage = message.replace(`@${botName}`, "rulu");
+                            daftar_percakapan[chatID].push({
+                                "role": (msg.key.fromMe ? "model" : "user"),
+                                "parts": [
+                                    {
+                                        "text": `message_info: { sender_name: "${(msg.key.fromMe ? "rulu" : senderName)}", sender_id: "${senderID}" }`
+                                    },
+                                    {
+                                        "text": modifiedMessage
+                                    }
+                                ]
+                            });
                         }
                         
-                        while(modifiedMessage.match(`(\@[0-9]+)`)) {
-                            let hasil_rgx = modifiedMessage.match(`(\@[0-9]+)`);
-                            let jid_regex = `${hasil_rgx[0].substr(1)}@s.whatsapp.net`;
-                            // FIXME : jika tidak match(), gunakan @lid
-                            let user_profile = (user.hasOwnProperty(jid_regex) ? user[jid_regex] : {} );
-                            let user_name = user_profile.displayName || jid_regex;
-                            
-                            modifiedMessage = modifiedMessage.replace(hasil_rgx[0], user_name);
+                        if (should_reply) {
+                            console.log(groupName.cyan, ` → `, senderName.green, ` : `, modifiedMessage.yellow);
+                            interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, modifiedMessage);
+                            isSendLastMessage = true;
+                            jumlah_percakapan_dibaca = 0;
                         }
-
-                        if (!daftar_percakapan.hasOwnProperty(chatID)) {
-                            daftar_percakapan[chatID] = Array();
+                        else {
+                            isSendLastMessage = false;
+                            jumlah_percakapan_dibaca += 1;
+                            updatehistory();
                         }
-                        if (daftar_percakapan[chatID].length > riwayat_percakapan) {
-                            daftar_percakapan[chatID].splice(0, 2);
-                        }
-
-                        daftar_percakapan[chatID].push({
-                            "role": (msg.key.fromMe ? "model" : "user"),
-                            "parts": [
-                                {
-                                    "text": `message_info: { sender_name: "${(msg.key.fromMe ? "rulu" : senderName)}", sender_id: "${senderID}" }`
-                                },
-                                {
-                                    "text": modifiedMessage
-                                }
-                            ]
-                        });
-
-                        console.log(groupName.cyan, ` → `, senderName.green, ` : `, modifiedMessage.yellow);
-                        interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, modifiedMessage);
-                        isSendLastMessage = true;
                         lastSenderID[chatID] = senderID;
-                        jumlah_percakapan_dibaca = 0;
                     }
-                    else if (message.match(`(\@[0-9]+)`)) {
+                    else if (message.toLowerCase().match(`(rulu|asmi|@all|${botName}|\@${botName})([?!.])?`)) {
                         let t_message = message;
                         
-                        while(t_message.match(`(\@[0-9]+)`)) {
-                            let hasil_rgx = t_message.match(`(\@[0-9]+)`);
-                            let jid_regex = `${hasil_rgx[0].substr(1)}@s.whatsapp.net`;
-                            // FIXME : jika tidak match(), gunakan @lid
-                            let user_profile = (user.hasOwnProperty(jid_regex) ? user[jid_regex] : {} );
-                            let user_name = user_profile.displayName || jid_regex;
+                        // FIXME : dapatkan data pengguna dari variabel / user
+                        // while(t_message.match(`(\@[0-9]+)`)) {
+                        //     let hasil_rgx = t_message.match(`(\@[0-9]+)`);
+                        //     let jid_regex = `${hasil_rgx[0].substr(1)}@s.whatsapp.net`;
+                        //     let user_profile = (user.hasOwnProperty(jid_regex) ? user[jid_regex] : {} );
+                        //     let user_name = user_profile.displayName || jid_regex;
                             
-                            t_message = t_message.replace(hasil_rgx[0], user_name);
-                        }
-
-                        if (!daftar_percakapan.hasOwnProperty(chatID)) {
-                            daftar_percakapan[chatID] = Array();
-                        }
-                        if (daftar_percakapan[chatID].length > riwayat_percakapan) {
-                            daftar_percakapan[chatID].splice(0, 2);
-                        }
-
-                        // TODO : kalau user sama dengan pengirim pesan terakhir di percakapan, cukup tambah ke bagian message saja dengan '\n'
-                        daftar_percakapan[chatID].push({
-                            "role": (msg.key.fromMe ? "model" : "user"),
-                            "parts": [
-                                {
-                                    "text": `message_info: { sender_name: "${(msg.key.fromMe ? "rulu" : senderName)}", sender_id: "${senderID}" }`
-                                },
-                                {
-                                    "text": t_message
-                                }
-                            ]
-                        });
+                        //     t_message = t_message.replace(hasil_rgx[0], user_name);
+                        // }
 
                         console.log(groupName.cyan, ` → `, senderName.green, ` : `, t_message.yellow);
-                        isSendLastMessage = false;
-                        lastSenderID[chatID] = "";
-                        jumlah_percakapan_dibaca += 1;
-                        updatehistory();
-                    }
-                    else if (message.toLowerCase().match(`^(rulu|asmi|@all|${botName}|\@${botName}) *`)) {
-                        let t_message = message;
-                        
-                        while(t_message.match(`(\@[0-9]+)`)) {
-                            let hasil_rgx = t_message.match(`(\@[0-9]+)`);
-                            let jid_regex = `${hasil_rgx[0].substr(1)}@s.whatsapp.net`;
-                            let user_profile = (user.hasOwnProperty(jid_regex) ? user[jid_regex] : {} );
-                            let user_name = user_profile.displayName || jid_regex;
-                            
-                            t_message = t_message.replace(hasil_rgx[0], user_name);
+                        if (!msg.key.fromMe) {
+                            interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, t_message);
+                            isSendLastMessage = true;
+                            lastSenderID[chatID] = senderID;
+                            jumlah_percakapan_dibaca = 0;
                         }
-
-                        console.log(groupName.cyan, ` → `, senderName.green, ` : `, t_message.yellow);
-                        interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, t_message);
-                        isSendLastMessage = true;
-                        lastSenderID[chatID] = senderID;
-                        jumlah_percakapan_dibaca = 0;
+                        else if (!isSendLastMessage) {
+                            interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, t_message);
+                            lastSenderID[chatID] = "";
+                            isSendLastMessage = true;
+                        }
                     }
                     else {
                         if (!daftar_percakapan.hasOwnProperty(chatID)) {
@@ -1055,17 +1045,22 @@ async function connectToWhatsApp(){
                         }
 
                         if (!msg.key.fromMe) {
-                            daftar_percakapan[chatID].push({
-                                "role": "user",
-                                "parts": [
-                                    {
-                                        "text": `message_info: { sender_name: "${senderName}", sender_id: "${senderID}" }`
-                                    },
-                                    {
-                                        "text": message
-                                    }
-                                ]
-                            });
+                            if (lastSenderID[chatID] === senderID && daftar_percakapan[chatID].length > 2) {
+                                daftar_percakapan[chatID][daftar_percakapan[chatID].length - 1]["parts"][1]["text"] += "\n\n" + message;
+                            }
+                            else {
+                                daftar_percakapan[chatID].push({
+                                    "role": "user",
+                                    "parts": [
+                                        {
+                                            "text": `message_info: { sender_name: "${senderName}", sender_id: "${senderID}" }`
+                                        },
+                                        {
+                                            "text": message
+                                        }
+                                    ]
+                                });
+                            }
                         }
 
                         let lastTimestamp = 0;
@@ -1081,6 +1076,7 @@ async function connectToWhatsApp(){
                             const stickerFile = await buatSticker(`${stickerURL}${randomSticker[0]}.webp`);
                             
                             await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
+                            console.log(groupName.cyan, ` → `, (botName ? botName.green : "rulu".green), ` : `, "[Stiker]".blue);
                             daftar_waktu_percakapan[chatID] = msg.messageTimestamp;
                             giveResponse = true;
                         }
@@ -1100,6 +1096,7 @@ async function connectToWhatsApp(){
                 
                                     if (!msg.key.fromMe) {
                                         await sock.sendMessage(chatID, { text: randomgreeting }, { quoted: msg, ephemeralExpiration: messageDuration });
+                                        isSendLastMessage = true;
                                         giveResponse = true;
                                     }
                                 }
@@ -1108,13 +1105,14 @@ async function connectToWhatsApp(){
 
                         if (isSendLastMessage && !giveResponse) {
                             if (msg.key.fromMe) {
-                                console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Mengabaikan pesan dari diri sendiri] ".red, message.yellow);
+                                console.log(groupName.cyan, ` → `, botName.green, ` : `, "[Mengabaikan pesan dari diri sendiri] ".red, message.yellow);
+                                isSendLastMessage = false;
                             }
                             else {
                                 console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.yellow);
                                 interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, message);
+                                isSendLastMessage = true;
                             }
-                            isSendLastMessage = false;
                             lastSenderID[chatID] = "";
                             jumlah_percakapan_dibaca += 1;
                         }
@@ -1123,7 +1121,7 @@ async function connectToWhatsApp(){
                                 logCuy("Percakapan dimulai");
                                 console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.yellow);
                                 isSendLastMessage = false;
-                                lastSenderID[chatID] = "";
+                                lastSenderID[chatID] = senderID;
                                 jumlah_percakapan_dibaca += 1;
                             }
                             updatehistory();
@@ -1159,14 +1157,14 @@ async function connectToWhatsApp(){
                                 logger: pino({ level: 'fatal' }),
                             });
                     
-                            // await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { 
+                            // await sock.sendMessage(loggedInNumber, { 
                             //     image: Buffer.from(buffer),
                             //     caption: `Citra dengan caption : "*${caption}*"` 
                             // }, { quoted: msg });
 
                             interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, message, buffer);
                         } catch (error) {
-                            await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `Error : tidak dapat mendapatkan citra` }, { quoted: msg });
+                            await sock.sendMessage(loggedInNumber, { text: `Error : tidak dapat mendapatkan citra` }, { quoted: msg });
                         }
                         
                         console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Citra] ".yellow, caption.yellow);
@@ -1177,7 +1175,7 @@ async function connectToWhatsApp(){
                 }
                 else if (msg.message.stickerMessage && msg.message.stickerMessage.hasOwnProperty("contextInfo")) {
                     if (msg.message.stickerMessage.contextInfo.hasOwnProperty("participant")) {
-                        const participantNumber = msg.message.stickerMessage.contextInfo.participant ? msg.message.stickerMessage.contextInfo.participant.split('@')[0] : 'Tidak diketahui';
+                        const participantNumber = msg.message.stickerMessage.contextInfo.participant ? msg.message.stickerMessage.contextInfo.participant : 'Tidak diketahui';
 
                         if (participantNumber == loggedInNumber || participantNumber == loggedInID) {
                             const randomSticker = dapatkanDataAcakDariArray(reply_stickers);
@@ -1195,6 +1193,7 @@ async function connectToWhatsApp(){
                                             "hai rulu",
                                             "kasih kata-kata gokil dong",
                                             "ehh rulu",
+                                            "apa kesimpulan dari percakapan ini?",
                                             "halo"
                                         ]
                                     );
@@ -1247,22 +1246,22 @@ async function connectToWhatsApp(){
                         daftar_percakapan[chatID].splice(0, 2);
                     }
 
-                    // if (lastSenderID[chatID] === senderID) {
-                    //     daftar_percakapan[chatID][-1]["parts"][1]["text"] += "\n" + message;
-                    // }
-                    // else {
-                    daftar_percakapan[chatID].push({
-                        "role": (msg.key.fromMe ? "model" : "user"),
-                        "parts": [
-                            {
-                                "text": `message_info: { sender_name: "${(msg.key.fromMe ? "rulu" : senderName)}", sender_id: "${senderID}" }`
-                            },
-                            {
-                                "text": message
-                            }
-                        ]
-                    });
-                    // }
+                    if (lastSenderID[chatID] === senderID && daftar_percakapan[chatID].length > 2) {
+                        daftar_percakapan[chatID][daftar_percakapan[chatID].length - 1]["parts"][1]["text"] += "\n\n" + message;
+                    }
+                    else {
+                        daftar_percakapan[chatID].push({
+                            "role": (msg.key.fromMe ? "model" : "user"),
+                            "parts": [
+                                {
+                                    "text": `message_info: { sender_name: "${(msg.key.fromMe ? "rulu" : senderName)}", sender_id: "${senderID}" }`
+                                },
+                                {
+                                    "text": message
+                                }
+                            ]
+                        });
+                    }
 
                     if (isSendLastMessage | (jumlah_percakapan_dibaca > (riwayat_percakapan * 2) && daftar_percakapan[chatID].length > (riwayat_percakapan / 2))) {
                         console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.yellow);
@@ -1283,8 +1282,8 @@ async function connectToWhatsApp(){
         }
 
         // status
-        if (msg.key.remoteJid === "status@broadcast" && msg.key.participant !== `${loggedInNumber}@s.whatsapp.net`) {
-            let senderNumber = msg.key.participant ? msg.key.participant.split('@')[0] : 'Tidak diketahui';
+        if (msg.key.remoteJid === "status@broadcast" && msg.key.participant !== loggedInNumber) {
+            let senderNumber = msg.key.participant ? msg.key.participant : 'Tidak diketahui';
             let displaySendernumber = senderNumber;
             const senderName = msg.pushName || 'Tidak diketahui';
 
@@ -1714,7 +1713,7 @@ async function interactAI(sock, msg, chatID, chatName, senderID, senderName, sen
                 else if (messageMediaBuffer == null) {
                     await sock.sendMessage(chatID, { text: `error, ${dapatkanDataAcakDariArray(pesan_error)}` }, { quoted: msg, ephemeralExpiration: messageDuration });
                 }
-                await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: "```\n" + String(error) + "\n```" }, { quoted: msg, ephemeralExpiration: messageDuration });
+                await sock.sendMessage(loggedInNumber, { text: "```\n" + String(error) + "\n```" }, { quoted: msg, ephemeralExpiration: messageDuration });
                 break;
             }
 
@@ -1757,7 +1756,10 @@ async function interactAI(sock, msg, chatID, chatName, senderID, senderName, sen
                     await sock.sendMessage(chatID, { text: teks_hasil }, { quoted: msg, ephemeralExpiration: messageDuration });
                 }
 
-                if (teks_hasil === "") console.log(chatName.cyan, ` → `, botName.green, ` : `, `[${provider}]`.blue, `Pesan Kosong!!`.red);
+                if (teks_hasil === "") {
+                    await sock.sendMessage(chatID, { text: "Pesan Kosong!!" }, { quoted: msg });
+                    console.log(chatName.cyan, ` → `, botName.green, ` : `, `[${provider}]`.blue, `Pesan Kosong!!`.red);
+                }
 
                 console.log(chatName.cyan, ` → `, botName.green, ` : `, `[${provider}]`.blue, teks_hasil.yellow);
                 break; // sukses
@@ -1777,7 +1779,7 @@ async function interactAI(sock, msg, chatID, chatName, senderID, senderName, sen
             jumlah_percakapan = sync_results.batas.jumlah_interaksi;
             batas_percakapan = sync_results.batas.limit_interaksi;
             
-            // await sock.sendMessage(`${loggedInNumber}@s.whatsapp.net`, { text: `jumlah : ${sync_results.batas.jumlah_interaksi}\nbatas : ${sync_results.batas.limit_interaksi}` }, { quoted: msg, ephemeralExpiration: log_timeout });
+            // await sock.sendMessage(loggedInNumber, { text: `jumlah : ${sync_results.batas.jumlah_interaksi}\nbatas : ${sync_results.batas.limit_interaksi}` }, { quoted: msg, ephemeralExpiration: log_timeout });
         }
 
         updatehistory();
