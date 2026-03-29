@@ -227,6 +227,7 @@ const updatehistory = () => {
 
 let welcomeMessage = false;
 var isSendLastMessage = false;
+var lastSenderID = {};
 
 async function connectToWhatsApp(){
     const sessionPath = path.join(__dirname, 'sessions');
@@ -321,8 +322,8 @@ async function connectToWhatsApp(){
         }
         else if(connection === 'open') {
             logCuy('Berhasil Terhubung ke wangsaf');
-            loggedInNumber = sock.user.id.split('@')[0].split(':')[0];
-            loggedInID = sock.user.lid.split('@')[0].split(':')[0];
+            loggedInNumber = sock.user.id.split('@')[0].split(':')[0]; // FIXME : jangan dipotong per '@' nya!
+            loggedInID = sock.user.lid.split('@')[0].split(':')[0]; // FIXME : jangan dipotong per '@' nya!
             botName = sock.user.name;
             telah_login = true;
             let displayedLoggedInNumber = loggedInNumber;
@@ -340,7 +341,7 @@ async function connectToWhatsApp(){
                                 `Ketik *#menu* untuk melihat menu perintah yang tersedia.\n\n`+
                                 `Source Code : https://github.com/zinzui12345/AutoReplyWhatsApp`;
             console.log(`kamu berhasil login dengan nomor:`.green.bold, displayedLoggedInNumber.yellow.bold);
-            console.log("Bot sudah aktif!\n\nSelamat menikmati fitur auto read story whatsapp by".green.bold, "github.com/Jauhariel\n".red.bold);
+            console.log("Bot sudah aktif!\n\nSelamat menikmati fitur auto read story & auto reply by".green.bold, "github.com/zinzui12345\n".red.bold);
 
             if (!welcomeMessage) {
                 setTimeout(async () => {
@@ -773,13 +774,15 @@ async function connectToWhatsApp(){
             const senderProfile = (msg.key.participant && user.hasOwnProperty(msg.key.participant) ? user[msg.key.participant] : {} );
             const senderName = senderProfile.displayName || msg.pushName || (msg.key.fromMe ? botName : 'Tidak diketahui' );
             const senderPrompt = senderProfile.customPrompt || "You're in a chat group with several different person talking each other. The chat group allow user to send stickers.";
-            const senderNumber = msg.key.participant ? msg.key.participant.split('@')[0] : 'Tidak diketahui';
+            const senderNumber = msg.key.participant ? msg.key.participant.split('@')[0] : 'Tidak diketahui'; // FIXME : jangan dipotong per '@' nya!
             const message = msg.type === "conversation"
                         ? msg.message.conversation
                         : msg.type === "extendedTextMessage"
                         ? msg.message.extendedTextMessage.text
                         : msg.message[msg.type]?.caption || "";
             const messageDuration = groupInfo.ephemeralDuration || 0;
+
+            if (!lastSenderID.hasOwnProperty(chatID)) { lastSenderID[chatID] = ""; }
             
             if (!blackList.includes(senderNumber)) {
                 if (prosesEmoji(message) != null) {
@@ -806,6 +809,7 @@ async function connectToWhatsApp(){
                         console.log(groupName.cyan, ` → `, botName.green, ` : `, "[Stiker]".yellow);
                         await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: true }, { ephemeralExpiration: messageDuration });
                         isSendLastMessage = true;
+                        lastSenderID[chatID] = senderID;
                         jumlah_percakapan_dibaca = 0;
                     }
                 }
@@ -821,26 +825,31 @@ async function connectToWhatsApp(){
                     }
 
                     isSendLastMessage = true;
+                    lastSenderID[chatID] = senderID;
                     jumlah_percakapan_dibaca = 0;
                 }
                 else if (message == "Assalamualaikum" || message == "assalamualaikum") {
                     await sock.sendMessage(msg.key.remoteJid, { text: `Waalaikumsalam` }, { quoted: msg, ephemeralExpiration: messageDuration });
                     isSendLastMessage = true;
+                    lastSenderID[chatID] = senderID;
                     jumlah_percakapan_dibaca = 0;
                 }
                 else if (message == "Assalamu'alaikum" || message == "assalamu'alaikum") {
                     await sock.sendMessage(msg.key.remoteJid, { text: `Wa'alaikumussalam` }, { quoted: msg, ephemeralExpiration: messageDuration });
                     isSendLastMessage = true;
+                    lastSenderID[chatID] = senderID;
                     jumlah_percakapan_dibaca = 0;
                 }
                 else if (message == "woy" || message == "oii" || message == "oiii" || message == "@all") {
                     await sock.sendMessage(msg.key.remoteJid, { text: `hai` }, { quoted: msg, ephemeralExpiration: messageDuration });
                     isSendLastMessage = true;
+                    lastSenderID[chatID] = senderID;
                     jumlah_percakapan_dibaca = 0;
                 }
                 else if (message == "woi" || message == "Woi" || message == "oi") {
                     await sock.sendMessage(msg.key.remoteJid, { text: `hay` }, { quoted: msg, ephemeralExpiration: messageDuration });
                     isSendLastMessage = true;
+                    lastSenderID[chatID] = senderID;
                     jumlah_percakapan_dibaca = 0;
                 }
                 else if (msg.message.extendedTextMessage && msg.message.extendedTextMessage.hasOwnProperty("contextInfo")) {
@@ -851,6 +860,7 @@ async function connectToWhatsApp(){
                             console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.blue);
                             interactAI(sock, msg, chatID, groupName, `${loggedInNumber}@s.whatsapp.net`, senderName, senderPrompt, messageDuration, message);
                             isSendLastMessage = true;
+                            lastSenderID[chatID] = senderID;
                             jumlah_percakapan_dibaca = 0;
                         }
                         else if (!blackList.includes(participantNumber)) {
@@ -902,6 +912,7 @@ async function connectToWhatsApp(){
                             }
 
                             isSendLastMessage = false;
+                            lastSenderID[chatID] = "";
                             jumlah_percakapan_dibaca += 1;
                             // updatehistory();
                         }
@@ -931,6 +942,7 @@ async function connectToWhatsApp(){
                         console.log(groupName.cyan, ` → `, senderName.green, ` : `, modifiedMessage.blue);
                         interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, modifiedMessage);
                         isSendLastMessage = true;
+                        lastSenderID[chatID] = senderID;
                         jumlah_percakapan_dibaca = 0;
                     }
                     else if (message.match(`(\@(${loggedInNumber}|${botName}))`)) {
@@ -974,6 +986,7 @@ async function connectToWhatsApp(){
                         console.log(groupName.cyan, ` → `, senderName.green, ` : `, modifiedMessage.yellow);
                         interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, modifiedMessage);
                         isSendLastMessage = true;
+                        lastSenderID[chatID] = senderID;
                         jumlah_percakapan_dibaca = 0;
                     }
                     else if (message.match(`(\@[0-9]+)`)) {
@@ -1011,6 +1024,7 @@ async function connectToWhatsApp(){
 
                         console.log(groupName.cyan, ` → `, senderName.green, ` : `, t_message.yellow);
                         isSendLastMessage = false;
+                        lastSenderID[chatID] = "";
                         jumlah_percakapan_dibaca += 1;
                         updatehistory();
                     }
@@ -1029,6 +1043,7 @@ async function connectToWhatsApp(){
                         console.log(groupName.cyan, ` → `, senderName.green, ` : `, t_message.yellow);
                         interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, t_message);
                         isSendLastMessage = true;
+                        lastSenderID[chatID] = senderID;
                         jumlah_percakapan_dibaca = 0;
                     }
                     else {
@@ -1100,6 +1115,7 @@ async function connectToWhatsApp(){
                                 interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, message);
                             }
                             isSendLastMessage = false;
+                            lastSenderID[chatID] = "";
                             jumlah_percakapan_dibaca += 1;
                         }
                         else {
@@ -1107,6 +1123,7 @@ async function connectToWhatsApp(){
                                 logCuy("Percakapan dimulai");
                                 console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.yellow);
                                 isSendLastMessage = false;
+                                lastSenderID[chatID] = "";
                                 jumlah_percakapan_dibaca += 1;
                             }
                             updatehistory();
@@ -1154,6 +1171,7 @@ async function connectToWhatsApp(){
                         
                         console.log(groupName.cyan, ` → `, senderName.green, ` : `, "[Citra] ".yellow, caption.yellow);
                         isSendLastMessage = true;
+                        lastSenderID[chatID] = senderID;
                         jumlah_percakapan_dibaca = 0;
                     }
                 }
@@ -1200,10 +1218,12 @@ async function connectToWhatsApp(){
                                 }
                             }
                             isSendLastMessage = true;
+                            lastSenderID[chatID] = senderID;
                             jumlah_percakapan_dibaca = 0;
                         }
                         else {
                             isSendLastMessage = false;
+                            lastSenderID[chatID] = "";
                             jumlah_percakapan_dibaca += 1;
                         }
                     }
@@ -1215,6 +1235,7 @@ async function connectToWhatsApp(){
                             console.log(groupName.cyan, ` → `, botName.green, ` : `, "[Stiker]".blue);
                         }
                         isSendLastMessage = false;
+                        lastSenderID[chatID] = "";
                         jumlah_percakapan_dibaca += 1;
                     }
                 }
@@ -1226,7 +1247,10 @@ async function connectToWhatsApp(){
                         daftar_percakapan[chatID].splice(0, 2);
                     }
 
-                    // TODO : kalau user sama dengan pengirim pesan terakhir di percakapan, cukup tambah ke bagian message saja dengan '\n'
+                    // if (lastSenderID[chatID] === senderID) {
+                    //     daftar_percakapan[chatID][-1]["parts"][1]["text"] += "\n" + message;
+                    // }
+                    // else {
                     daftar_percakapan[chatID].push({
                         "role": (msg.key.fromMe ? "model" : "user"),
                         "parts": [
@@ -1238,10 +1262,13 @@ async function connectToWhatsApp(){
                             }
                         ]
                     });
-                    if (isSendLastMessage | jumlah_percakapan_dibaca > riwayat_percakapan) {
+                    // }
+
+                    if (isSendLastMessage | (jumlah_percakapan_dibaca > (riwayat_percakapan * 2) && daftar_percakapan[chatID].length > (riwayat_percakapan / 2))) {
                         console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.yellow);
                         interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, message);
                         isSendLastMessage = false;
+                        lastSenderID[chatID] = "";
                         jumlah_percakapan_dibaca = 0;
                     }
                     else {
@@ -1729,6 +1756,8 @@ async function interactAI(sock, msg, chatID, chatName, senderID, senderName, sen
                 else {
                     await sock.sendMessage(chatID, { text: teks_hasil }, { quoted: msg, ephemeralExpiration: messageDuration });
                 }
+
+                if (teks_hasil === "") console.log(chatName.cyan, ` → `, botName.green, ` : `, `[${provider}]`.blue, `Pesan Kosong!!`.red);
 
                 console.log(chatName.cyan, ` → `, botName.green, ` : `, `[${provider}]`.blue, teks_hasil.yellow);
                 break; // sukses
