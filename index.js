@@ -1335,39 +1335,40 @@ async function connectToWhatsApp(){
                                     logger: pino({ level: 'fatal' }),
                                 });
                         
-                                await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { 
+                                await sock.sendMessage(targetNumber, { 
                                     [mediaType]: Buffer.from(buffer),
                                     caption: `${messageContent} dengan caption : "*${caption}*"` 
                                 });
                             } catch (error) {
                                 logCuy(`Error uploading media: ${error}`, 'red');
-                                await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: `${messageContent} namun Gagal mengunggah media dari status ${mediaType === "image" ? "gambar" : "video"} dari *${senderName}* (${displaySendernumber}).` });
+                                await sock.sendMessage(targetNumber, { text: `${messageContent} namun Gagal mengunggah media dari status ${mediaType === "image" ? "gambar" : "video"} dari *${senderName}* (${displaySendernumber}).` });
                             }
                         } else if (msg.type === "audioMessage") {
                             messageContent = `Status audio dari *${senderName}* (${displaySendernumber}) telah dilihat ${autoLikeStatus ? "dan disukai" : ""}. Berikut audionya.`;
     
-                            await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: messageContent });
+                            await sock.sendMessage(targetNumber, { text: messageContent });
     
                             try {
                                 const buffer = await downloadMediaMessage(msg, "buffer", {}, {
                                     logger: pino({ level: 'fatal' }),
                                 });
                     
-                                await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { 
+                                await sock.sendMessage(targetNumber, { 
                                     audio: Buffer.from(buffer),
                                     caption: "" 
                                 });
                             } catch (error) {
                                 logCuy(`Error uploading media: ${error}`, 'red');
-                                await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: `Gagal mengunggah audio dari status audio dari *${senderName}* (${displaySendernumber}).` });
+                                await sock.sendMessage(targetNumber, { text: `Gagal mengunggah audio dari status audio dari *${senderName}* (${displaySendernumber}).` });
                             }
                         } else {
                             messageContent = `Status teks dari *${senderName}* (${displaySendernumber}) telah dilihat ${autoLikeStatus ? "dan disukai" : ""} dengan caption: "*${caption}*"`;
     
-                            await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: messageContent }, { ephemeralExpiration: log_timeout });
+                            await sock.sendMessage(targetNumber, { text: messageContent }, { ephemeralExpiration: log_timeout });
                         }
-                    } else {
-                        await sock.sendMessage(`${targetNumber}@s.whatsapp.net`, { text: messageContent }, { ephemeralExpiration: log_timeout });
+                    }
+                    else {
+                        await sock.sendMessage(targetNumber, { text: messageContent }, { ephemeralExpiration: log_timeout });
                     }
                 }
             } 
