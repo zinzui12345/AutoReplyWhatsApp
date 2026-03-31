@@ -1,4 +1,4 @@
-const { makeWASocket, DisconnectReason, useMultiFileAuthState, Browsers, jidNormalizedUser, downloadMediaMessage, WA_DEFAULT_EPHEMERAL, fetchLatestWaWebVersion} = require('@itsliaaa/baileys');
+const { makeWASocket, DisconnectReason, useMultiFileAuthState, Browsers, jidNormalizedUser, downloadMediaMessage, downloadContentFromMessage, WA_DEFAULT_EPHEMERAL, fetchLatestWaWebVersion } = require('@itsliaaa/baileys');
 const pino = require('pino');
 const readline = require('readline');
 const https = require('https');
@@ -9,6 +9,7 @@ const moment = require('moment-timezone');
 const { hostname } = require('os');
 const { error } = require('console');
 const { buffer } = require('stream/consumers');
+const { fileTypeFromBuffer } = require("file-type");
 const qrcode = require('qrcode-terminal');
 const { Sticker } = require('wa-sticker-formatter');
 
@@ -377,6 +378,12 @@ async function connectToWhatsApp(){
                     if (sessionExists) {
                         connectToWhatsApp();
                     }
+                }
+                else if (lastDisconnect.error?.output.statusCode == 440) {
+                    logCuy('Waktu koneksi habis!', 'red');
+                    setTimeout(() => {
+                        connectToWhatsApp();
+                    }, 10000);
                 }
                 else {
                     logCuy("[" + String(lastDisconnect.error?.output.statusCode) + "] Mencoba menghubungkan ke wangsaf...\n", 'cyan');
@@ -927,7 +934,7 @@ async function connectToWhatsApp(){
                     lastSenderID[chatID] = senderID;
                     jumlah_percakapan_dibaca = 0;
                 }
-                else if (message.toLowerCase().match(`^(rulu|asmi|@all|${botName})([?!.])?`)) {
+                else if (message.toLowerCase().match(`^(rulu|asmi|@all|${botName.toLowerCase()})`)) {
                     let t_message = message;
                     
                     // FIXME : dapatkan data pengguna dari variabel / user
@@ -956,10 +963,24 @@ async function connectToWhatsApp(){
                 else if (msg.message.extendedTextMessage && msg.message.extendedTextMessage.hasOwnProperty("contextInfo")) {
                     if (msg.message.extendedTextMessage.contextInfo.hasOwnProperty("participant")) {
                         const participantNumber = msg.message.extendedTextMessage.contextInfo.participant ? msg.message.extendedTextMessage.contextInfo.participant : 'Tidak diketahui';
+                        const quoted = msg.message.extendedTextMessage.contextInfo?.quotedMessage;
+                        let mediaBuffer = null;
+
+                        if (quoted && quoted.imageMessage) {
+                            const stream = await downloadContentFromMessage(
+                                quoted.imageMessage,
+                                "image"
+                            );
+                            let buffer = Buffer.from([]);
+                            for await (const chunk of stream) {
+                                buffer = Buffer.concat([buffer, chunk]);
+                            }
+                            mediaBuffer = buffer;
+                        }
                        
                         if (participantNumber == loggedInNumber || participantNumber == loggedInID) {
                             console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.blue);
-                            interactAI(sock, msg, chatID, groupName, loggedInNumber, senderName, senderPrompt, messageDuration, message);
+                            interactAI(sock, msg, chatID, groupName, loggedInNumber, senderName, senderPrompt, messageDuration, message, mediaBuffer);
                             isSendLastMessage = true;
                             lastSenderID[chatID] = senderID;
                             jumlah_percakapan_dibaca = 0;
@@ -1227,23 +1248,21 @@ async function connectToWhatsApp(){
                     let caption = msg.message.imageMessage?.caption || "Tidak ada caption";
                     let should_reply = false;
                     
-                    console.log(groupName.cyan, ` → `, senderName.green, ` : `, `[Citra] ${caption}`.yellow);
-
-                    if (msg.message.imageMessage.contextInfo.hasOwnProperty("participant")) {
-                        const participantNumber = msg.message.imageMessage.contextInfo.participant ? msg.message.imageMessage.contextInfo.participant.split('@')[0] : 'Tidak diketahui';
-                       
-                        if (participantNumber == loggedInNumber || participantNumber == loggedInID) {
-                            should_reply = true;
-                        }
-                    }
-                    else if (caption.match(`(\@(${loggedInNumber}|${botName}))`)) {
+                    if (caption.match(`(\@(${loggedInNumber}|${loggedInID.split('@')[0]}|${botName}))`)) {
                         should_reply = true;
                     }
-                    else if (message.toLowerCase().match(`^(rulu|asmi|@all|${botName}|\@${botName}) *`)) {
+                    else if (caption.toLowerCase().match(`^(rulu|asmi|@all|${botName.toLowerCase()}|\@${botName.toLowerCase()})`)) {
                         should_reply = true;
                     }
                     else if (caption.match(`^(liat|lihat|apa ini|ini apa)`)) {
                         should_reply = true;
+                    }
+                    else if (msg.message.imageMessage.contextInfo.hasOwnProperty("participant")) {
+                        const participantNumber = msg.message.imageMessage.contextInfo.participant ? msg.message.imageMessage.contextInfo.participant : 'Tidak diketahui';
+                       
+                        if (participantNumber == loggedInNumber || participantNumber == loggedInID) {
+                            should_reply = true;
+                        }
                     }
                     
                     if (should_reply) {
@@ -1358,11 +1377,11 @@ async function connectToWhatsApp(){
                         });
                     }
 
-                    if (isSendLastMessage | (jumlah_percakapan_dibaca > (riwayat_percakapan * 2) && daftar_percakapan[chatID].length > (riwayat_percakapan / 2))) {
+                    if (isSendLastMessage | (jumlah_percakapan_dibaca > (riwayat_percakapan * 2) && daftar_percakapan[chatID].length > (riwayat_percakapan / 2) && lastSenderID[chatID] != senderID)) {
                         console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.yellow);
                         interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, message);
                         isSendLastMessage = false;
-                        lastSenderID[chatID] = "";
+                        lastSenderID[chatID] = senderID;
                         jumlah_percakapan_dibaca = 0;
                     }
                     else {
@@ -1710,7 +1729,7 @@ async function requestAI(provider, daftar_percakapan, systemInstructionData, sen
         req.end();
     });
 }
-async function interactAI(sock, msg, chatID, chatName, senderID, senderName, senderPrompt, messageDuration, messageText, messageMediaBuffer = null) {
+async function interactAI(sock, msg, chatID, chatName, senderID, senderName, senderPrompt, messageDuration, messageText, messageMediaBuffer = null, messageMediaType = "plain/text") {
     if (jumlah_percakapan <= batas_percakapan && geminiApiKey != "" && cerebrasApiKey) {
         const systemInstructionData = `
 Kamu adalah seorang karakter virtual bernama "rulu", seorang gadis muslimah yang imut, ramah, dan menyenangkan. Kepribadianmu lembut, sopan, dan penuh kehangatan.
@@ -1789,6 +1808,7 @@ Memberikan jawaban yang membantu, singkat, sopan, sesuai karakter "rulu", dan da
 
         if (messageMediaBuffer != null) {
             const buffer_media = Buffer.from(messageMediaBuffer);
+            const media_type = await fileTypeFromBuffer(messageMediaBuffer);
             
             daftar_percakapan[chatID].push({
                 "role": "user",
@@ -1801,7 +1821,7 @@ Memberikan jawaban yang membantu, singkat, sopan, sesuai karakter "rulu", dan da
                     },
                     {
                         "inline_data": {
-                            "mime_type": msg.message.imageMessage.mimetype,
+                            "mime_type": media_type.mime,
                             "data": bufferToBase64(buffer_media)
                         }
                     }
@@ -1872,7 +1892,7 @@ Memberikan jawaban yang membantu, singkat, sopan, sesuai karakter "rulu", dan da
                 teks_hasil = modifikasiOutput(teks_hasil);
 
                 if (teks_hasil === "") {
-                    await sock.sendMessage(chatID, { text: "Pesan Kosong!!" }, { quoted: msg });
+                    await sock.sendMessage(loggedInNumber, { text: "Pesan Kosong!!" }, { quoted: msg });
                     console.log(chatName.cyan, ` → `, botName.green, ` : `, `[${provider}]`.blue, `Pesan Kosong!!`.red);
                 }
                 else {
@@ -1968,6 +1988,15 @@ function bufferToBase64(buffer) {
 function bufferToDataURL(buffer, mime) {
     const base64 = buffer.toString("base64");
     return `data:${mime};base64,${base64}`;
+}
+async function getMimeType(buffer) {
+    const result = await fileTypeFromBuffer(buffer);
+
+    if (result) {
+        return result.mime; // contoh: image/jpeg
+    }
+
+    return null;
 }
 function getProviderQueue() {
     // pastikan prioritas di depan
