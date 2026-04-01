@@ -1895,11 +1895,22 @@ Memberikan jawaban yang membantu, singkat, sopan, sesuai karakter "rulu", dan da
 
                 if (teks_hasil === "") {
                     await sock.sendMessage(loggedInNumber, { text: "Pesan Kosong!!" }, { quoted: msg });
+                    await sock.sendMessage(
+                        chatID,
+                        {
+                            react: {
+                                text: '😵‍💫',
+                                key: msg.key
+                            }
+                        }
+                    );
                     console.log(chatName.cyan, ` → `, botName.green, ` : `, `[${provider}]`.blue, `Pesan Kosong!!`.red);
                     if (messageMediaBuffer != null) {
                         teks_hasil += "aduhh, maaf ya\naku gabisa liat gambarnya saat ini\n<stiker>sedih</stiker>";
                     }
-                    // TODO : tambah reaksi ke pesan user
+                    else {
+                        teks_hasil += "aduhh, maaf ya\n😖 aku belum bisa jawab\n🙏🏻 tunggu 1 menit\n<stiker>sedih</stiker>";
+                    }
                 }
                 else {
                     const regexStiker = /<stiker>(.*?)<\/stiker>/;
