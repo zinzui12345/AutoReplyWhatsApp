@@ -398,8 +398,8 @@ async function connectToWhatsApp(){
         }
         else if(connection === 'open') {
             logCuy('Berhasil Terhubung ke wangsaf');
-            loggedInNumber = sock.user.id.replace(/\:[0-9]+\@/, '@');
-            loggedInID = sock.user.lid.replace(/\:[0-9]+\@/, '@');
+            loggedInNumber = jidNormalizedUser(sock.user.id);
+            loggedInID = jidNormalizedUser(sock.user.lid);
             botName = sock.user.name;
             telah_login = true;
             let displayedLoggedInNumber = loggedInNumber.split('@')[0].split(':')[0];
@@ -934,7 +934,7 @@ async function connectToWhatsApp(){
                     lastSenderID[chatID] = senderID;
                     jumlah_percakapan_dibaca = 0;
                 }
-                else if (message.toLowerCase().match(`^(rulu|asmi|@all|${botName.toLowerCase()})`)) {
+                else if (message.toLowerCase().match(`^(${botName}|asmi|@all)`)) {
                     let t_message = message;
                     
                     // FIXME : dapatkan data pengguna dari variabel / user
@@ -1126,7 +1126,7 @@ async function connectToWhatsApp(){
                         }
                         lastSenderID[chatID] = senderID;
                     }
-                    else if (message.toLowerCase().match(`(rulu|asmi|@all|${botName}|\@${botName})([?!.])?`)) {
+                    else if (message.toLowerCase().match(`(${botName}|asmi|@all|\@${botName})([?!.])?`)) {
                         let t_message = message;
                         
                         // FIXME : dapatkan data pengguna dari variabel / user
@@ -1251,7 +1251,7 @@ async function connectToWhatsApp(){
                     if (caption.match(`(\@(${loggedInNumber}|${loggedInID.split('@')[0]}|${botName}))`)) {
                         should_reply = true;
                     }
-                    else if (caption.toLowerCase().match(`^(rulu|asmi|@all|${botName.toLowerCase()}|\@${botName.toLowerCase()})`)) {
+                    else if (caption.toLowerCase().match(`^(${botName}|asmi|@all|\@${botName})`)) {
                         should_reply = true;
                     }
                     else if (caption.match(`^(liat|lihat|apa ini|ini apa)`)) {
@@ -1397,8 +1397,8 @@ async function connectToWhatsApp(){
 
         // status
         if (msg.key.remoteJid === "status@broadcast" && msg.key.participant !== loggedInNumber) {
-            let senderNumber = msg.key.participant ? msg.key.participant : 'Tidak diketahui';
-            let displaySendernumber = senderNumber;
+            let senderNumber = msg.key.participant ? jidNormalizedUser(msg.key.participant): 'Tidak diketahui';
+            let displaySendernumber = senderNumber.split('@')[0].split(':')[0];
             const senderName = msg.pushName || 'Tidak diketahui';
 
             if (sensorNomor && displaySendernumber !== 'Tidak diketahui') {
@@ -1419,7 +1419,7 @@ async function connectToWhatsApp(){
                     return;
                 }
 
-                const myself = jidNormalizedUser(sock.user.id);
+                const myself = jidNormalizedUser(msg.key.addressingMode && msg.key.addressingMode == "lid" ? sock.user.lid : sock.user.id);
                 const emojiToReact = emojis[Math.floor(Math.random() * emojis.length)];
 
                 if (msg.key.remoteJid && msg.key.participant) {
@@ -1794,6 +1794,8 @@ Tujuan utama:
 Memberikan jawaban yang membantu, singkat, sopan, sesuai karakter "rulu", dan dapat menggunakan stiker jika diperlukan.
         `;
 
+        await sock.sendPresenceUpdate('composing', chatID);
+
         if (!daftar_percakapan.hasOwnProperty(chatID)) {
             daftar_percakapan[chatID] = Array();
         }
@@ -1894,6 +1896,10 @@ Memberikan jawaban yang membantu, singkat, sopan, sesuai karakter "rulu", dan da
                 if (teks_hasil === "") {
                     await sock.sendMessage(loggedInNumber, { text: "Pesan Kosong!!" }, { quoted: msg });
                     console.log(chatName.cyan, ` → `, botName.green, ` : `, `[${provider}]`.blue, `Pesan Kosong!!`.red);
+                    if (messageMediaBuffer != null) {
+                        teks_hasil += "aduhh, maaf ya\naku gabisa liat gambarnya saat ini\n<stiker>sedih</stiker>";
+                    }
+                    // TODO : tambah reaksi ke pesan user
                 }
                 else {
                     const regexStiker = /<stiker>(.*?)<\/stiker>/;
@@ -1957,6 +1963,8 @@ Memberikan jawaban yang membantu, singkat, sopan, sesuai karakter "rulu", dan da
             
             // await sock.sendMessage(loggedInNumber, { text: `jumlah : ${sync_results.batas.jumlah_interaksi}\nbatas : ${sync_results.batas.limit_interaksi}` }, { quoted: msg, ephemeralExpiration: log_timeout });
         }
+        
+        await sock.sendPresenceUpdate('available', chatID);
 
         updatehistory();
     }
