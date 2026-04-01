@@ -1003,7 +1003,7 @@ async function connectToWhatsApp(){
                             if (daftar_percakapan[chatID].length > riwayat_percakapan) {
                                 daftar_percakapan[chatID].splice(0, 2);
                             }
-
+                            
                             // daftar_percakapan[chatID].push({
                             //     "role": (msg.key.fromMe ? "model" : "user"),
                             //     "parts": [
@@ -1034,7 +1034,7 @@ async function connectToWhatsApp(){
                             }
 
                             isSendLastMessage = false;
-                            lastSenderID[chatID] = "";
+                            lastSenderID[chatID] = senderID;
                             jumlah_percakapan_dibaca += 1;
                             // updatehistory();
                         }
