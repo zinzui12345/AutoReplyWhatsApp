@@ -1536,7 +1536,7 @@ async function downloadFile(input) {
 
         // ❌ Error status
         if (response.statusCode !== 200) {
-            reject(new Error(`Status Code: ${response.statusCode}`));
+            reject(new Error(`Gagal mendapatkan data dengan kode: ${response.statusCode}\nKetika mengunduh: ${input}`));
             return;
         }
 
@@ -1906,10 +1906,10 @@ Memberikan jawaban yang membantu, singkat, sopan, sesuai karakter "rulu", dan da
                     );
                     console.log(chatName.cyan, ` → `, botName.green, ` : `, `[${provider}]`.blue, `Pesan Kosong!!`.red);
                     if (messageMediaBuffer != null) {
-                        teks_hasil += "aduhh, maaf ya\naku gabisa liat gambarnya saat ini\n<stiker>sedih</stiker>";
+                        teks_hasil += "aduhh, maaf ya\naku gabisa liat gambarnya saat ini <stiker>sedih</stiker>";
                     }
                     else {
-                        teks_hasil += "aduhh, maaf ya\n😖 aku belum bisa jawab\n🙏🏻 tunggu 1 menit\n<stiker>sedih</stiker>";
+                        teks_hasil += "aduhh, maaf ya\n😖 aku belum bisa jawab\n🙏🏻 tunggu 1 menit <stiker>sedih</stiker>";
                     }
                 }
                 else {
@@ -1932,6 +1932,8 @@ Memberikan jawaban yang membantu, singkat, sopan, sesuai karakter "rulu", dan da
                                 variasi_stiker = angry_stickers;
                             break;
                         }
+
+                        // FIXME : kadang masih bisa match, karena kesalahan tokenisasi bikin stikernya dobel
                         
                         const randomSticker = dapatkanDataAcakDariArray(variasi_stiker);
                         const stickerFile = await buatSticker(`${stickerURL}${randomSticker[0]}.webp`);
