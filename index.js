@@ -102,6 +102,28 @@ const smile_stickers = [
     ["smile/19", false],
     ["smile/20", false]
 ];
+const shy_stickers = [
+    ["shy/1", true],
+    ["shy/2", true],
+    ["shy/3", true],
+    ["shy/4", true],
+    ["shy/5", false],
+    ["shy/6", false],
+    ["shy/7", false],
+    ["shy/8", false],
+    ["shy/9", false],
+    ["shy/10", false],
+    ["shy/11", false],
+    ["shy/12", false],
+    ["shy/13", false],
+    ["shy/14", false]
+];
+const greetings_stickers = [
+    ["greetings/1", false],
+    ["greetings/2", false],
+    ["greetings/3", false],
+    ["greetings/4", false]
+];
 const stickers = [
     ["random/1", true],
     ["random/2", true],
@@ -1096,8 +1118,8 @@ async function connectToWhatsApp(){
                             daftar_percakapan[chatID].splice(0, 2);
                         }
 
-                        if (lastSenderID[chatID] === senderID && daftar_percakapan[chatID].length > 2) {
-                            daftar_percakapan[chatID][daftar_percakapan[chatID].length - 1]["parts"][0]["text"] += "\n\n" + message;
+                        if (lastSenderID[chatID] === senderID && daftar_percakapan[chatID].length > 2 && !msg.key.fromMe) {
+                            daftar_percakapan[chatID][daftar_percakapan[chatID].length - 1]["parts"][1]["text"] += "\n\n" + message;
                         }
                         else {
                             daftar_percakapan[chatID].push({
@@ -1161,8 +1183,8 @@ async function connectToWhatsApp(){
                         }
 
                         if (!msg.key.fromMe) {
-                            if (lastSenderID[chatID] === senderID && daftar_percakapan[chatID].length > 2) {
-                                daftar_percakapan[chatID][daftar_percakapan[chatID].length - 1]["parts"][0]["text"] += "\n\n" + message;
+                            if (lastSenderID[chatID] === senderID && daftar_percakapan[chatID].length > 2 && !msg.key.fromMe) {
+                                daftar_percakapan[chatID][daftar_percakapan[chatID].length - 1]["parts"][1]["text"] += "\n\n" + message;
                             }
                             else {
                                 daftar_percakapan[chatID].push({
@@ -1360,8 +1382,8 @@ async function connectToWhatsApp(){
                         daftar_percakapan[chatID].splice(0, 2);
                     }
 
-                    if (lastSenderID[chatID] === senderID && daftar_percakapan[chatID].length > 2) {
-                        daftar_percakapan[chatID][daftar_percakapan[chatID].length - 1]["parts"][0]["text"] += "\n\n" + message;
+                    if (lastSenderID[chatID] === senderID && daftar_percakapan[chatID].length > 2 && !msg.key.fromMe) {
+                        daftar_percakapan[chatID][daftar_percakapan[chatID].length - 1]["parts"][1]["text"] += "\n\n" + message;
                     }
                     else {
                         daftar_percakapan[chatID].push({
@@ -1766,7 +1788,9 @@ Contoh:
 
 Variasi stiker yang VALID:
 - netral
+- menyapa
 - senyum
+- malu
 - sedih
 - marah
 
@@ -1921,9 +1945,22 @@ Memberikan jawaban yang membantu, singkat, sopan, sesuai karakter "rulu", dan da
                         let variasi_stiker = stickers;
                         teks_hasil = teks_hasil.replace(regexStiker, "").trim();
 
+                        while (teks_hasil.match(regexStiker)) {
+                            const match_2 = teks_hasil.match(regexStiker);
+                            jenis = match_2[1];
+
+                            teks_hasil = teks_hasil.replace(regexStiker, "").trim();
+                        }
+
                         switch (jenis) {
+                            case "menyapa":
+                                variasi_stiker = greetings_stickers;
+                            break;
                             case "senyum":
                                 variasi_stiker = smile_stickers;
+                            break;
+                            case "malu":
+                                variasi_stiker = shy_stickers;
                             break;
                             case "sedih":
                                 variasi_stiker = sad_stickers;
@@ -1932,8 +1969,6 @@ Memberikan jawaban yang membantu, singkat, sopan, sesuai karakter "rulu", dan da
                                 variasi_stiker = angry_stickers;
                             break;
                         }
-
-                        // FIXME : kadang masih bisa match, karena kesalahan tokenisasi bikin stikernya dobel
                         
                         const randomSticker = dapatkanDataAcakDariArray(variasi_stiker);
                         const stickerFile = await buatSticker(`${stickerURL}${randomSticker[0]}.webp`);
