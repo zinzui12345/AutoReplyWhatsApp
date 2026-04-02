@@ -1118,8 +1118,14 @@ async function connectToWhatsApp(){
                             daftar_percakapan[chatID].splice(0, 2);
                         }
 
-                        if (lastSenderID[chatID] === senderID && daftar_percakapan[chatID].length > 2 && !msg.key.fromMe) {
-                            daftar_percakapan[chatID][daftar_percakapan[chatID].length - 1]["parts"][1]["text"] += "\n\n" + message;
+                        if (lastSenderID[chatID] === senderID && daftar_percakapan[chatID].length > 4 && !msg.key.fromMe) {
+                            let index_percakapan = daftar_percakapan[chatID].length - 1;
+                            if (daftar_percakapan[chatID][index_percakapan]["parts"].length > 1) {
+                                daftar_percakapan[chatID][index_percakapan]["parts"][1]["text"] += "\n\n" + message;
+                            }
+                            else if (daftar_percakapan[chatID][index_percakapan - 1]["parts"].length > 1) {
+                                daftar_percakapan[chatID][index_percakapan - 1]["parts"][1]["text"] += "\n\n" + message;
+                            }
                         }
                         else {
                             daftar_percakapan[chatID].push({
@@ -1183,8 +1189,14 @@ async function connectToWhatsApp(){
                         }
 
                         if (!msg.key.fromMe) {
-                            if (lastSenderID[chatID] === senderID && daftar_percakapan[chatID].length > 2 && !msg.key.fromMe) {
-                                daftar_percakapan[chatID][daftar_percakapan[chatID].length - 1]["parts"][1]["text"] += "\n\n" + message;
+                            if (lastSenderID[chatID] === senderID && daftar_percakapan[chatID].length > 4 && !msg.key.fromMe) {
+                                let index_percakapan = daftar_percakapan[chatID].length - 1;
+                                if (daftar_percakapan[chatID][index_percakapan]["parts"].length > 1) {
+                                    daftar_percakapan[chatID][index_percakapan]["parts"][1]["text"] += "\n\n" + message;
+                                }
+                                else if (daftar_percakapan[chatID][index_percakapan - 1]["parts"].length > 1) {
+                                    daftar_percakapan[chatID][index_percakapan - 1]["parts"][1]["text"] += "\n\n" + message;
+                                }
                             }
                             else {
                                 daftar_percakapan[chatID].push({
@@ -1382,8 +1394,14 @@ async function connectToWhatsApp(){
                         daftar_percakapan[chatID].splice(0, 2);
                     }
 
-                    if (lastSenderID[chatID] === senderID && daftar_percakapan[chatID].length > 2 && !msg.key.fromMe) {
-                        daftar_percakapan[chatID][daftar_percakapan[chatID].length - 1]["parts"][1]["text"] += "\n\n" + message;
+                    if (lastSenderID[chatID] === senderID && daftar_percakapan[chatID].length > 4 && !msg.key.fromMe) {
+                        let index_percakapan = daftar_percakapan[chatID].length - 1;
+                        if (daftar_percakapan[chatID][index_percakapan]["parts"].length > 1) {
+                            daftar_percakapan[chatID][index_percakapan]["parts"][1]["text"] += "\n\n" + message;
+                        }
+                        else if (daftar_percakapan[chatID][index_percakapan - 1]["parts"].length > 1) {
+                            daftar_percakapan[chatID][index_percakapan - 1]["parts"][1]["text"] += "\n\n" + message;
+                        }
                     }
                     else {
                         daftar_percakapan[chatID].push({
@@ -1930,11 +1948,15 @@ Memberikan jawaban yang membantu, singkat, sopan, sesuai karakter "rulu", dan da
                     );
                     console.log(chatName.cyan, ` → `, botName.green, ` : `, `[${provider}]`.blue, `Pesan Kosong!!`.red);
                     if (messageMediaBuffer != null) {
-                        teks_hasil += "aduhh, maaf ya\naku gabisa liat gambarnya saat ini <stiker>sedih</stiker>";
+                        teks_hasil += "aduhh, maaf ya\naku gabisa liat gambarnya saat ini";
                     }
                     else {
-                        teks_hasil += "aduhh, maaf ya\n😖 aku belum bisa jawab\n🙏🏻 tunggu 1 menit <stiker>sedih</stiker>";
+                        teks_hasil += "aduhh, maaf ya\n😖 aku belum bisa jawab\n🙏🏻 tunggu 1 menit";
                     }
+                    const randomSticker = dapatkanDataAcakDariArray(shy_stickers);
+                    const stickerFile = await buatSticker(`${stickerURL}${randomSticker[0]}.webp`);
+                    sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
+                    console.log(chatName.cyan, ` → `, (botName ? botName.green : "rulu".green), ` : `, "[Stiker]".blue);
                 }
                 else {
                     const regexStiker = /<stiker>(.*?)<\/stiker>/;
