@@ -288,9 +288,12 @@ function logCuy(message, type = 'green') {
     console.log(`${message.bold[type]}`);
 }
 function dapatkanDataAcakDariArray(arr) {
-  if (!arr || arr.length === 0) return null;
-  const randomIndex = Math.floor(Math.random() * arr.length);
-  return arr[randomIndex];
+    if (!arr || arr.length === 0) return null;
+    const buffer = new Uint32Array(arr.length);
+    crypto.getRandomValues(buffer);
+    const rand = buffer[0] / (0xffffffff + 1);
+    const randomIndex = Math.floor(rand * arr.length);
+    return arr[randomIndex];
 }
 
 const configPath = path.join(__dirname, 'config.json');
@@ -850,7 +853,7 @@ async function connectToWhatsApp(){
                     logCuy(`${senderName} : test!`, 'yellow');
                     await sock.sendMessage(msg.key.remoteJid, { text: JSON.stringify(msg, null, 2) },         { ephemeralExpiration: log_timeout });
                     // await sock.sendMessage(msg.key.remoteJid, { text: JSON.stringify(daftar_percakapan[msg.key.remoteJid][daftar_percakapan[msg.key.remoteJid].length - 1]["parts"][0], null, 2) },         { ephemeralExpiration: log_timeout });
-                    await sock.sendMessage(msg.key.remoteJid, { text: modifikasiInput(msg.args.toString()) }, { ephemeralExpiration: log_timeout });
+                    // await sock.sendMessage(msg.key.remoteJid, { text: modifikasiInput(msg.args.toString()) }, { ephemeralExpiration: log_timeout });
                     // await sock.sendMessage(msg.key.remoteJid, {
                     //     text: '👆🏻 Tombol!',
                     //     footer: '@itsliaaa/baileys',
@@ -1325,8 +1328,8 @@ async function connectToWhatsApp(){
                     else if (caption.match(`^(liat|lihat|apa ini|ini apa)`)) {
                         should_reply = true;
                     }
-                    else if (msg.message.imageMessage.contextInfo.hasOwnProperty("participant")) {
-                        const participantNumber = msg.message.imageMessage.contextInfo.participant ? msg.message.imageMessage.contextInfo.participant : 'Tidak diketahui';
+                    else if (msg.message.imageMessage.contextInfo && msg.message.imageMessage.contextInfo.participant) {
+                        const participantNumber = msg.message.imageMessage.contextInfo.participant;
                        
                         if (participantNumber == loggedInNumber || participantNumber == loggedInID) {
                             should_reply = true;
@@ -1937,7 +1940,7 @@ Memberikan jawaban yang membantu, singkat, sopan, sesuai karakter "rulu", dan da
                 else if (messageMediaBuffer == null) {
                     await sock.sendMessage(chatID, { text: `error, ${dapatkanDataAcakDariArray(pesan_error)}` }, { quoted: msg, ephemeralExpiration: messageDuration });
                 }
-                await sock.sendMessage(loggedInNumber, { text: "```\n" + String(error) + "\n```" }, { quoted: msg, ephemeralExpiration: messageDuration });
+                await sock.sendMessage(loggedInNumber, { text: "❌ Semua provider sedang cooldown" }, { quoted: msg, ephemeralExpiration: messageDuration });
                 break;
             }
 
