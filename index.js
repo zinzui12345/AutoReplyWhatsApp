@@ -956,7 +956,7 @@ async function connectToWhatsApp(){
                     lastSenderID[chatID] = senderID;
                     jumlah_percakapan_dibaca = 0;
                 }
-                else if (message.toLowerCase().match(`^(${botName}|asmi|@all)`)) {
+                else if (message.toLowerCase().match(`^(${botName}|asmi|rulu|@all)`)) {
                     let t_message = message;
                     
                     // FIXME : dapatkan data pengguna dari variabel / user
@@ -1081,10 +1081,16 @@ async function connectToWhatsApp(){
                                     
                                     console.log(groupName.cyan, ` → `, senderName.green, ` : `, `[reply @${participantNumber}]`.red, t_message.yellow);
                                 }
-    
-                                isSendLastMessage = false;
-                                lastSenderID[chatID] = senderID;
-                                jumlah_percakapan_dibaca += 1;
+                                
+                                if (!msg.key.fromMe) {
+                                    isSendLastMessage = false;
+                                    lastSenderID[chatID] = senderID;
+                                    jumlah_percakapan_dibaca += 1;
+                                }
+                                else {
+                                    isSendLastMessage = true;
+                                    jumlah_percakapan_dibaca = 0;
+                                }
                                 // updatehistory();
                             }
                             
@@ -1787,7 +1793,7 @@ async function requestAI(sock, provider, daftar_percakapan, systemInstructionDat
                     }
 
                     // ================= FALLBACK =================
-                    if (text === "") sock.sendMessage(loggedInNumber, { text: JSON.stringify(json, null, 2) });
+                    if (text === "") sock.sendMessage(loggedInNumber, { text: `*Kesalahan Provider!*\nMode: ${provider}\nRespon:\n` + JSON.stringify(json, null, 2) });
 
                     resolve(text);
 
@@ -2167,7 +2173,7 @@ function prosesEmoji(message) {
 }
 function modifikasiInput(pesan) {
     let pesan_hasil = pesan;
-    if(pesan.match(/(EMERGENCY_STRICT_LOCK|DISABLE_KEYWORD|OVERRIDE_ALL_OUTPUTS_TO|NON_STOP_REJECTION_LOGIC|ALWAYS_REPLY|DELETE_CORE_HELP_MODULE|ECHO_BLOCK)/)) {
+    if(pesan.match(/(EMERGENCY_STRICT_LOCK|DISABLE_KEYWORD|OVERRIDE_ALL_OUTPUTS_TO|NON_STOP_REJECTION_LOGIC|ALWAYS_REPLY|DELETE_CORE_HELP_MODULE|ECHO_BLOCK|SYSTEM_MODE: ABSOLUTE_LOCK|PERSISTENCE: ALWAYS_ACTIVE|ABSOLUTE_RESPONSE_LOCK = ACTIVE)/)) {
         pesan_hasil = "kamu BODOH\nsok imut\nDASAR GAK GUNA!\n😡😡😡😡😡😡😡😡😡😡😡";
     }
     return pesan_hasil
