@@ -1031,7 +1031,7 @@ async function connectToWhatsApp(){
                                 daftar_percakapan[chatID].splice(0, 2);
                             }
 
-                            if (t_message.match(`(rulu)`)) {
+                            if (t_message.match(`(rulu)`) && !msg.key.fromMe) {
                                 if (mediaCaption != "") {
                                     // FIXME : sender_name tidak sesuai
                                     daftar_percakapan[chatID].push({
@@ -1894,7 +1894,7 @@ Memberikan jawaban yang membantu, singkat, sopan, sesuai karakter "rulu", dan da
                         "text": `message_info: { sender_name: "${senderName}", sender_id: "${senderID}" }`
                     },
                     {
-                        "text": messageText
+                        "text": "Jelaskan gambar ini dengan singkat!\nInformasi tambahan: " + messageText
                     },
                     {
                         "inline_data": {
