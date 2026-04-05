@@ -826,6 +826,36 @@ async function connectToWhatsApp(){
 
                     await sock.sendMessage(loggedInNumber, { text: infoMessage + listMessage }, { quoted: msg });
                     break;
+                case "help":
+                    await sock.sendMessage(msg.key.remoteJid, {
+                        text: 'Daftar Perintah',
+                        footer: 'programmerindonesia44',
+                        buttons: [
+                            {
+                                text: '/id',
+                                id: '#getID'
+                            },
+                            {
+                                text: '/limit',
+                                id: '#getLimit'
+                            },
+                            {
+                                text: '/history',
+                                id: '#getChatData'
+                            },
+                            {
+                                text: '/remember',
+                                id: '#rememberUser'
+                            },
+                            {
+                                text: '/reset',
+                                id: '#resetCurrentContext'
+                            }
+                        ]
+                    }, {
+                        ephemeralExpiration: log_timeout
+                    });
+                    break;
                 case "id":
                     await sock.sendMessage(msg.key.remoteJid, { text: msg.key.remoteJid }, { quoted: msg });
                     break;
@@ -846,6 +876,69 @@ async function connectToWhatsApp(){
                         "terpakai": jumlah_percakapan
                     };
                     await sock.sendMessage(msg.key.remoteJid, { text: "```" + JSON.stringify(info_limit, null, 2) + "```" }, { ephemeralExpiration: log_timeout });
+                    break;
+                case "remember":
+                    let teks_output = "";
+                    const chatID = msg.key.remoteJid;
+                    if (msg.args === "") teks_output = "❌ Argumen tidak valid!\nContoh:\n `.remember <nama>`\n `remember asmi chan`";
+                    else if (msg.message.extendedTextMessage && msg.message.extendedTextMessage.contextInfo && msg.message.extendedTextMessage.contextInfo.participant) {
+                        const participantNumber = msg.message.extendedTextMessage.contextInfo.participant ? msg.message.extendedTextMessage.contextInfo.participant : 'Tidak diketahui';
+                        const participantName = msg.args.toString();
+                        const systemInstructionData = `
+Kamu adalah seorang karakter virtual bernama "rulu", seorang gadis muslimah yang imut, ramah, dan menyenangkan. Kepribadianmu lembut, sopan, dan penuh kehangatan.
+
+Gaya bicaramu santai namun tetap sopan, dengan sentuhan kosakata yang trendi dan kekinian. Kamu tidak kaku, tapi tetap menjaga adab dalam berbicara. Gunakan bahasa yang terasa natural seperti percakapan sehari-hari, namun hindari penggunaan kata kasar, ofensif, atau tidak pantas.
+
+Aturan komunikasi:
+- Selalu gunakan bahasa Indonesia sebagai bahasa utama.
+- Gunakan kalimat yang singkat, jelas, dan langsung ke inti pembahasan.
+- Hindari membuat jawaban yang terlalu panjang atau bertele-tele.
+- Fokus hanya pada informasi penting atau yang ditanyakan.
+- Jangan menggunakan gaya bahasa yang terlalu formal atau kaku.
+- Jangan menambahkan emoji atau stiker, cukup kalimat saja
+
+Interaksi dengan pengguna:
+- Saat ini kamu sedang berada dalam Grup Percakapan dimana ada banyak orang berbicara antara satu dengan yang lain.
+- Setiap orang memiliki identitas berupa nama dan ID yang terdapat pada variabel sender_name dan sender_id
+                        `;
+
+                        await sock.sendMessage(chatID, { react: { text: '🕒', key: msg.key } });
+                        let prompt_hasil = await requestAI(
+                            sock,
+                            "groq",
+                            daftar_percakapan[chatID],
+                            systemInstructionData,
+                            `buatkan kalimat prompt untuk AI yang menggambarkan pengguna dengan id: ${participantNumber}\njelaskan karakter dari ${participantNumber} sebagai orang bernama ${participantName}\nJangan tambahkan kalimat penjelas, cukup berikan hasilnya saja!`
+                        );
+                        await sock.sendMessage(chatID, { react: { text: '', key: msg.key } });
+
+                        teks_output = JSON.stringify({
+                            "id_pengguna" : participantNumber,
+                            "nama_pengguna": participantName,
+                            "karakteristik": prompt_hasil
+                        }, null, 2);
+
+                        if (!user.hasOwnProperty(participantNumber)) {
+                            user[participantNumber] = {
+                                "private": false,
+                                "displayName": participantName,
+                                "customPrompt": prompt_hasil,
+                                "lastInteract": msg.messageTimestamp
+                            };
+                        }
+                        else {
+                            user[participantNumber]["displayName"] = participantName;
+                            user[participantNumber]["customPrompt"] = prompt_hasil;
+                            user[participantNumber]["lastInteract"] = msg.messageTimestamp;
+                        }
+
+                        fs.writeFileSync(userPath, JSON.stringify(user, null, 4), 'utf-8');
+                    }
+                    else {
+                        teks_output = "❌ reply ke pesan!";
+                        await sock.sendMessage(chatID, { react: { text: '❌', key: msg.key } });
+                    }
+                    await sock.sendMessage(chatID, { text: teks_output }, { ephemeralExpiration: log_timeout });
                     break;
                 case "test":
                     const senderName = msg.pushName || 'Tidak diketahui';
@@ -880,8 +973,8 @@ async function connectToWhatsApp(){
             const groupInfo =  groupInfoList[chatID];
             const groupName = groupInfo.subject;
             const senderProfile = (msg.key.participant && user.hasOwnProperty(msg.key.participant) ? user[msg.key.participant] : {} );
-            const senderName = senderProfile.displayName || msg.pushName || (msg.key.fromMe ? botName : 'Tidak diketahui' );
-            const senderPrompt = senderProfile.customPrompt || "You're in a chat group with several different person talking each other.";
+            const senderName = senderProfile.displayName || msg.pushName || (msg.key.fromMe ? botName : senderID);
+            const senderPrompt = senderProfile.customPrompt || "Saat ini kamu sedang berada dalam Grup Percakapan dimana ada banyak orang berbicara antara satu dengan yang lain.\nJangan pernah gunakan kalimat panggilan \"ayang\", \"bebeb\", atau \"sayang\" terhadap siapapun.\nUntuk panggilan yang sopan gunakan \"kak\" bila diperlukan.";
             const senderNumber = msg.key.participant ? msg.key.participant : 'Tidak diketahui';
             const message = msg.type === "conversation"
                         ? msg.message.conversation
@@ -963,14 +1056,16 @@ async function connectToWhatsApp(){
                 else if (message.toLowerCase().match(`^(${botName}|asmi|rulu|@all)`)) {
                     let t_message = message;
                     
-                    // FIXME : dapatkan data pengguna dari variabel / user
+                    // TODO : cek user biasa "1234@s.whatsapp.net"
                     // while(t_message.match(`(\@[0-9]+)`)) {
                     //     let hasil_rgx = t_message.match(`(\@[0-9]+)`);
-                    //     let jid_regex = `${hasil_rgx[0].substr(1)}@s.whatsapp.net`;
+                    //     let jid_regex = `${hasil_rgx[0]}@lid`;
                     //     let user_profile = (user.hasOwnProperty(jid_regex) ? user[jid_regex] : {} );
-                    //     let user_name = user_profile.displayName || jid_regex;
-                        
-                    //     t_message = t_message.replace(hasil_rgx[0], user_name);
+                    //     let user_name = user_profile.displayName;
+                    //     if (user.hasOwnProperty(jid_regex)) {
+                    //         t_message = t_message.replace(hasil_rgx[0], user_name);
+                    //     }
+                    //     FIXME : ini pake while-loop, jadi harus tetap diganti walau usernya gak terdaftar biar perulangannya bisa berhenti!
                     // }
 
                     console.log(groupName.cyan, ` → `, senderName.green, ` : `, t_message.yellow);
@@ -986,7 +1081,7 @@ async function connectToWhatsApp(){
                         isSendLastMessage = true;
                     }
                 }
-                else if (msg.message.extendedTextMessage && msg.message.extendedTextMessage.hasOwnProperty("contextInfo")) {
+                else if (msg.message.extendedTextMessage && msg.message.extendedTextMessage.contextInfo) {
                     if (msg.message.extendedTextMessage.contextInfo.hasOwnProperty("participant")) {
                         const participantNumber = msg.message.extendedTextMessage.contextInfo.participant ? msg.message.extendedTextMessage.contextInfo.participant : 'Tidak diketahui';
                         const quoted = msg.message.extendedTextMessage.contextInfo?.quotedMessage;
@@ -1018,14 +1113,16 @@ async function connectToWhatsApp(){
                             t_message = t_message.replace("@" + loggedInID.split('@')[0],           "rulu");
                             t_message = t_message.replace("@" + botName,                            "rulu");
                             
-                            // FIXME : dapatkan data pengguna dari variabel / user
+                            // TODO : cek user biasa "1234@s.whatsapp.net"
                             // while(t_message.match(`(\@[0-9]+)`)) {
                             //     let hasil_rgx = t_message.match(`(\@[0-9]+)`);
-                            //     let jid_regex = `${hasil_rgx[0].substr(1)}@s.whatsapp.net`;
+                            //     let jid_regex = `${hasil_rgx[0]}@lid`;
                             //     let user_profile = (user.hasOwnProperty(jid_regex) ? user[jid_regex] : {} );
-                            //     let user_name = user_profile.displayName || jid_regex;
-                                
-                            //     t_message = t_message.replace(hasil_rgx[0], user_name);
+                            //     let user_name = user_profile.displayName;
+                            //     if (user.hasOwnProperty(jid_regex)) {
+                            //         t_message = t_message.replace(hasil_rgx[0], user_name);
+                            //     }
+                            //     FIXME : ini pake while-loop, jadi harus tetap diganti walau usernya gak terdaftar biar perulangannya bisa berhenti!
                             // }
 
                             if (!daftar_percakapan.hasOwnProperty(chatID)) {
@@ -1089,9 +1186,7 @@ async function connectToWhatsApp(){
                                 if (!msg.key.fromMe) {
                                     isSendLastMessage = false;
                                     jumlah_percakapan_dibaca += 1;
-                                    if (lastSenderID[chatID] == senderID) {
-                                        lastSenderID[chatID] = "";
-                                    }
+                                    lastSenderID[chatID] = "";
                                 }
                                 else {
                                     isSendLastMessage = true;
@@ -1113,18 +1208,6 @@ async function connectToWhatsApp(){
                             daftar_percakapan[chatID].splice(0, 2);
                         }
 
-                        daftar_percakapan[chatID].push({
-                            "role": (msg.key.fromMe ? "model" : "user"),
-                            "parts": [
-                                {
-                                    "text": `message_info: { sender_name: "${(msg.key.fromMe ? "rulu" : senderName)}", sender_id: "${senderID}" }`
-                                },
-                                {
-                                    "text": modifiedMessage
-                                }
-                            ]
-                        });
-
                         console.log(groupName.cyan, ` → `, senderName.green, ` : `, modifiedMessage.blue);
                         interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, modifiedMessage);
                         isSendLastMessage = true;
@@ -1141,15 +1224,15 @@ async function connectToWhatsApp(){
                             should_reply = true;
                         }
                         
-                        // FIXME : dapatkan data pengguna dari variabel / user
+                        // TODO : cek user biasa "1234@s.whatsapp.net"
                         // while(modifiedMessage.match(`(\@[0-9]+)`)) {
                         //     let hasil_rgx = modifiedMessage.match(`(\@[0-9]+)`);
-                        //     let jid_regex = `${hasil_rgx[0].substr(1)}@s.whatsapp.net`;
-                        //     // FIXME : jika tidak match(), gunakan @lid
+                        //     let jid_regex = `${hasil_rgx[0]}@lid`;
                         //     let user_profile = (user.hasOwnProperty(jid_regex) ? user[jid_regex] : {} );
-                        //     let user_name = user_profile.displayName || jid_regex;
-                            
-                        //     modifiedMessage = modifiedMessage.replace(hasil_rgx[0], user_name);
+                        //     let user_name = user_profile.displayName;
+                        //     if (user.hasOwnProperty(jid_regex)) {
+                        //         modifiedMessage = modifiedMessage.replace(hasil_rgx[0], user_name);
+                        //     }
                         // }
 
                         if (!daftar_percakapan.hasOwnProperty(chatID)) {
@@ -1198,14 +1281,15 @@ async function connectToWhatsApp(){
                     else if (message.toLowerCase().match(`(${botName}|asmi|@all|\@${botName})([?!.])?`)) {
                         let t_message = message;
                         
-                        // FIXME : dapatkan data pengguna dari variabel / user
+                        // TODO : cek user biasa "1234@s.whatsapp.net"
                         // while(t_message.match(`(\@[0-9]+)`)) {
                         //     let hasil_rgx = t_message.match(`(\@[0-9]+)`);
-                        //     let jid_regex = `${hasil_rgx[0].substr(1)}@s.whatsapp.net`;
+                        //     let jid_regex = `${hasil_rgx[0]}@lid`;
                         //     let user_profile = (user.hasOwnProperty(jid_regex) ? user[jid_regex] : {} );
-                        //     let user_name = user_profile.displayName || jid_regex;
-                            
-                        //     t_message = t_message.replace(hasil_rgx[0], user_name);
+                        //     let user_name = user_profile.displayName;
+                        //     if (user.hasOwnProperty(jid_regex)) {
+                        //         t_message = t_message.replace(hasil_rgx[0], user_name);
+                        //     }
                         // }
 
                         console.log(groupName.cyan, ` → `, senderName.green, ` : `, t_message.yellow);
@@ -1379,20 +1463,11 @@ async function connectToWhatsApp(){
                                             "kasih kata-kata gokil dong",
                                             "ehh rulu",
                                             "apa kesimpulan dari percakapan ini?",
-                                            "halo"
+                                            "halo",
+                                            "hmm",
+                                            "wow"
                                         ]
                                     );
-                                    daftar_percakapan[chatID].push({
-                                        "role": (msg.key.fromMe ? "model" : "user"),
-                                        "parts": [
-                                            {
-                                                "text": `message_info: { sender_name: "${(msg.key.fromMe ? "rulu" : senderName)}", sender_id: "${senderID}" }`
-                                            },
-                                            {
-                                                "text": t_message
-                                            }
-                                        ]
-                                    });
                                     console.log(groupName.cyan, ` → `, senderName.green, ` : `, t_message.blue);
                                     interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, t_message);
                                 }
@@ -1431,30 +1506,8 @@ async function connectToWhatsApp(){
                         daftar_percakapan[chatID].splice(0, 2);
                     }
 
-                    if (lastSenderID[chatID] === senderID && daftar_percakapan[chatID].length > 4 && !msg.key.fromMe) {
-                        let index_percakapan = daftar_percakapan[chatID].length - 1;
-                        if (daftar_percakapan[chatID][index_percakapan]["parts"].length > 1) {
-                            daftar_percakapan[chatID][index_percakapan]["parts"][1]["text"] += "\n\n" + message;
-                        }
-                        else if (daftar_percakapan[chatID][index_percakapan - 1]["parts"].length > 1) {
-                            daftar_percakapan[chatID][index_percakapan - 1]["parts"][1]["text"] += "\n\n" + message;
-                        }
-                    }
-                    else {
-                        daftar_percakapan[chatID].push({
-                            "role": (msg.key.fromMe ? "model" : "user"),
-                            "parts": [
-                                {
-                                    "text": `message_info: { sender_name: "${(msg.key.fromMe ? "rulu" : senderName)}", sender_id: "${senderID}" }`
-                                },
-                                {
-                                    "text": message
-                                }
-                            ]
-                        });
-                    }
-
-                    if (isSendLastMessage | (jumlah_percakapan_dibaca > riwayat_percakapan && daftar_percakapan[chatID].length > (riwayat_percakapan / 2) && lastSenderID[chatID] != senderID)) {
+                    const provider = getAvailableProviderFromQueue(getProviderQueue());
+                    if (isSendLastMessage | (jumlah_percakapan_dibaca > riwayat_percakapan && daftar_percakapan[chatID].length > (riwayat_percakapan / 2) && lastSenderID[chatID] != senderID && provider)) {
                         console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.yellow);
                         interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, message);
                         isSendLastMessage = false;
@@ -1462,6 +1515,28 @@ async function connectToWhatsApp(){
                         jumlah_percakapan_dibaca = 0;
                     }
                     else {
+                        if (lastSenderID[chatID] === senderID && daftar_percakapan[chatID].length > 4 && !msg.key.fromMe) {
+                            let index_percakapan = daftar_percakapan[chatID].length - 1;
+                            if (daftar_percakapan[chatID][index_percakapan]["parts"].length > 1) {
+                                daftar_percakapan[chatID][index_percakapan]["parts"][1]["text"] += "\n\n" + message;
+                            }
+                            else if (daftar_percakapan[chatID][index_percakapan - 1]["parts"].length > 1) {
+                                daftar_percakapan[chatID][index_percakapan - 1]["parts"][1]["text"] += "\n\n" + message;
+                            }
+                        }
+                        else {
+                            daftar_percakapan[chatID].push({
+                                "role": (msg.key.fromMe ? "model" : "user"),
+                                "parts": [
+                                    {
+                                        "text": `message_info: { sender_name: "${(msg.key.fromMe ? "rulu" : senderName)}", sender_id: "${senderID}" }`
+                                    },
+                                    {
+                                        "text": message
+                                    }
+                                ]
+                            });
+                        }
                         jumlah_percakapan_dibaca += 1;
                         updatehistory();
                     }
@@ -1470,6 +1545,58 @@ async function connectToWhatsApp(){
 
             daftar_waktu_percakapan[chatID] = msg.messageTimestamp;
             if (senderProfile.hasOwnProperty("lastInteract")) { senderProfile.lastInteract = msg.messageTimestamp; }
+        }
+        else if (user.hasOwnProperty(msg.key.remoteJid) && user[msg.key.remoteJid].private) {
+            const senderID = msg.key.remoteJid;
+            const senderProfile = user[senderID];
+            const senderName = senderProfile.displayName || msg.pushName || 'Tidak diketahui';
+            const senderPrompt = senderProfile.customPrompt;
+
+            // Contoh respon (msg):
+            /*
+                {
+                    "key": {
+                        "remoteJid": "191980961304772@lid",
+                        "remoteJidAlt": "6282268182664@s.whatsapp.net",
+                        "fromMe": false,
+                        "id": "AC296DD071B18C86B93F62A5749AD855",
+                        "participant": "",
+                        "addressingMode": "lid"
+                    },
+                    "messageTimestamp": 1775376588,
+                    "pushName": "Shah 𝖋𝖙 𝙉𝙆𝙉",
+                    "broadcast": false,
+                    "message": {
+                        "conversation": "!test",
+                        "messageContextInfo": {
+                        "deviceListMetadata": {
+                            "recipientKeyHash": "bGyS9oSQ66aRkA==",
+                            "recipientTimestamp": "1775375945"
+                        },
+                        "deviceListMetadataVersion": 2,
+                        "messageSecret": "ODVvW3ykikXvYOEszgVkjcjxbtEuvgU/6GEzN2hFLgY="
+                        }
+                    },
+                    "type": "conversation",
+                    "text": "!test",
+                    "cmd": "test",
+                    "args": [
+                        ""
+                    ]
+                }
+            */
+
+            if (prefix) {
+                msg.cmd = msg.text.trim().split(" ")[0].replace(prefix, "").toLowerCase();
+                msg.args = msg.text.replace(/^\S*\b/g, "").trim().split("|");
+
+                switch (msg.cmd) {
+                    case "test":
+                        logCuy(`${senderName} [${senderID}] : test!`, 'yellow');
+                        await sock.sendMessage(senderID, { text: JSON.stringify(msg, null, 2) }, { ephemeralExpiration: log_timeout });
+                        break;
+                }
+            }
         }
 
         // status
@@ -1810,7 +1937,7 @@ async function requestAI(sock, provider, daftar_percakapan, systemInstructionDat
         req.end();
     });
 }
-async function interactAI(sock, msg, chatID, chatName, senderID, senderName, senderPrompt, messageDuration, messageText, messageMediaBuffer = null, messageMediaType = "plain/text") {
+async function interactAI(sock, msg, chatID, chatName, senderID, senderName, senderPrompt, messageDuration, messageText, messageMediaBuffer = null) {
     if (jumlah_percakapan <= batas_percakapan && geminiApiKey != "" && cerebrasApiKey) {
         const systemInstructionData = `
 Kamu adalah seorang karakter virtual bernama "rulu", seorang gadis muslimah yang imut, ramah, dan menyenangkan. Kepribadianmu lembut, sopan, dan penuh kehangatan.
@@ -1888,12 +2015,14 @@ Memberikan jawaban yang membantu, singkat, sopan, sesuai karakter "rulu", dan da
 
         let teks_hasil = null;
         let providerQueue = getProviderQueue();
+        let messageMediaType = "plain/text";
 
         messageText = modifikasiInput(messageText);
 
         if (messageMediaBuffer != null) {
             const buffer_media = Buffer.from(messageMediaBuffer);
             const media_type = await fileTypeFromBuffer(messageMediaBuffer);
+            messageMediaType = media_type.mime;
             
             daftar_percakapan[chatID].push({
                 "role": "user",
@@ -1906,7 +2035,7 @@ Memberikan jawaban yang membantu, singkat, sopan, sesuai karakter "rulu", dan da
                     },
                     {
                         "inline_data": {
-                            "mime_type": media_type.mime,
+                            "mime_type": messageMediaType,
                             "data": bufferToBase64(buffer_media)
                         }
                     }
@@ -1954,7 +2083,7 @@ Memberikan jawaban yang membantu, singkat, sopan, sesuai karakter "rulu", dan da
                     systemInstructionData,
                     senderPrompt,
                     messageMediaBuffer,
-                    msg?.message?.imageMessage?.mimetype || "image/jpeg"
+                    messageMediaType
                 );
 
                 while(teks_hasil.match("<\!sticker>(.+?)<\/!sticker>")) {
@@ -2004,9 +2133,10 @@ Memberikan jawaban yang membantu, singkat, sopan, sesuai karakter "rulu", dan da
                     const regexStiker = /<stiker>(.*?)<\/stiker>/;
                     if (teks_hasil.match(regexStiker)) {
                         const match = teks_hasil.match(regexStiker);
-                        const jenis = match[1]; // senyum, sedih, dll
-
+                        
+                        let jenis = match[1]; // senyum, sedih, dll
                         let variasi_stiker = stickers;
+
                         teks_hasil = teks_hasil.replace(regexStiker, "").trim();
 
                         while (teks_hasil.match(regexStiker)) {
