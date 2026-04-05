@@ -2067,8 +2067,13 @@ Memberikan jawaban yang membantu, singkat, sopan, sesuai karakter "rulu", dan da
                 if (msg.key.fromMe) {
                     await sock.sendMessage(chatID, { text: "```" + String(error) + "```" }, { ephemeralExpiration: messageDuration });
                 }
-                else if (messageMediaBuffer == null && priority) {
-                    await sock.sendMessage(chatID, { text: `error, ${dapatkanDataAcakDariArray(pesan_error)}` }, { quoted: msg, ephemeralExpiration: messageDuration });
+                else if (messageMediaBuffer == null) {
+                    if (priority) {
+                        await sock.sendMessage(chatID, { text: `error, ${dapatkanDataAcakDariArray(pesan_error)}` }, { quoted: msg, ephemeralExpiration: messageDuration });
+                    }
+                    else {
+                        await sock.sendMessage(chatID, { react: { text: '😵‍💫', key: msg.key } });
+                    }
                 }
                 await sock.sendMessage(loggedInNumber, { text: "❌ Semua provider sedang cooldown" }, { quoted: msg, ephemeralExpiration: messageDuration });
                 break;
@@ -2084,7 +2089,7 @@ Memberikan jawaban yang membantu, singkat, sopan, sesuai karakter "rulu", dan da
                     systemInstructionData,
                     senderPrompt,
                     messageMediaBuffer,
-                    messageMediaType
+                    messageMediaBuffer ? messageMediaType : null
                 );
 
                 while(teks_hasil.match("<\!sticker>(.+?)<\/!sticker>")) {
@@ -2193,7 +2198,12 @@ Memberikan jawaban yang membantu, singkat, sopan, sesuai karakter "rulu", dan da
 
             }
             catch (err) {
-                console.log(`❌ ${provider} gagal:`, err);
+                if (i < providerQueue.length - 1) {
+                    console.log(`❌ [${provider}] gagal:`, err);
+                }
+                else if (priority) {
+                    await sock.sendMessage(chatID, { react: { text: dapatkanDataAcakDariArray(['😵‍💫', '❌', '⚠️', '🛑', '🚫', '🌀', '⛔']), key: msg.key } });
+                }
 
                 // lanjut ke provider berikutnya (fallback)
                 retry_state[provider] = Date.now() + 5000; // optional short cooldown biar tidak dipilih lagi langsung
