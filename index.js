@@ -942,10 +942,10 @@ Interaksi dengan pengguna:
                     break;
                 case "test":
                     const senderName = msg.pushName || 'Tidak diketahui';
-
+                    const provider = getAvailableProviderFromQueue(getProviderQueue());
                     logCuy(`${senderName} : test!`, 'yellow');
                     await sock.sendMessage(msg.key.remoteJid, { text: JSON.stringify(msg, null, 2) },         { ephemeralExpiration: log_timeout });
-                    await sock.sendMessage(msg.key.remoteJid, { text: `provider saat ini: ${getAvailableProviderFromQueue(getProviderQueue())}` },         { ephemeralExpiration: log_timeout });
+                    await sock.sendMessage(msg.key.remoteJid, { text: `provider saat ini: ${provider}\ndapat interaksi: ${(provider ? true : false)}` },         { ephemeralExpiration: log_timeout });
                     // await sock.sendMessage(msg.key.remoteJid, { text: modifikasiInput(msg.args.toString()) }, { ephemeralExpiration: log_timeout });
                     // await sock.sendMessage(msg.key.remoteJid, {
                     //     text: '👆🏻 Tombol!',
@@ -1103,7 +1103,7 @@ Interaksi dengan pengguna:
                        
                         if (participantNumber == loggedInNumber || participantNumber == loggedInID) {
                             console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.blue);
-                            interactAI(sock, msg, chatID, groupName, loggedInNumber, senderName, senderPrompt, messageDuration, message, mediaBuffer);
+                            interactAI(sock, msg, chatID, groupName, loggedInNumber, senderName, senderPrompt, messageDuration, message, true, mediaBuffer);
                             isSendLastMessage = true;
                             lastSenderID[chatID] = senderID;
                             jumlah_percakapan_dibaca = 0;
