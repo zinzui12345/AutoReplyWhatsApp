@@ -945,7 +945,7 @@ Interaksi dengan pengguna:
 
                     logCuy(`${senderName} : test!`, 'yellow');
                     await sock.sendMessage(msg.key.remoteJid, { text: JSON.stringify(msg, null, 2) },         { ephemeralExpiration: log_timeout });
-                    // await sock.sendMessage(msg.key.remoteJid, { text: JSON.stringify(daftar_percakapan[msg.key.remoteJid][daftar_percakapan[msg.key.remoteJid].length - 1]["parts"][0], null, 2) },         { ephemeralExpiration: log_timeout });
+                    await sock.sendMessage(msg.key.remoteJid, { text: `provider saat ini: ${getAvailableProviderFromQueue(getProviderQueue())}` },         { ephemeralExpiration: log_timeout });
                     // await sock.sendMessage(msg.key.remoteJid, { text: modifikasiInput(msg.args.toString()) }, { ephemeralExpiration: log_timeout });
                     // await sock.sendMessage(msg.key.remoteJid, {
                     //     text: '👆🏻 Tombol!',
@@ -1148,7 +1148,7 @@ Interaksi dengan pengguna:
                                     });
                                 }
                                 console.log(groupName.cyan, ` → `, senderName.green, ` : `, t_message.blue);
-                                interactAI(sock, msg, chatID, groupName, loggedInNumber, senderName, senderPrompt, messageDuration, t_message, mediaBuffer);
+                                interactAI(sock, msg, chatID, groupName, loggedInNumber, senderName, senderPrompt, messageDuration, t_message, true, mediaBuffer);
                                 isSendLastMessage = true;
                                 lastSenderID[chatID] = senderID;
                                 jumlah_percakapan_dibaca = 0;
@@ -1180,7 +1180,7 @@ Interaksi dengan pengguna:
                                     await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
                                     daftar_waktu_percakapan[chatID] = msg.messageTimestamp;
                                     
-                                    console.log(groupName.cyan, ` → `, senderName.green, ` : `, `[reply ${participantNumber}]`.red, t_message.yellow);
+                                    console.log(groupName.cyan, ` → `, senderName.green, ` : `, `[reply @${senderName}]`.red, t_message.yellow);
                                 }
                                 
                                 if (!msg.key.fromMe) {
@@ -1300,7 +1300,7 @@ Interaksi dengan pengguna:
                             jumlah_percakapan_dibaca = 0;
                         }
                         else if (!isSendLastMessage) {
-                            interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, t_message);
+                            interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, t_message, false);
                             lastSenderID[chatID] = "";
                             isSendLastMessage = true;
                         }
@@ -1360,7 +1360,7 @@ Interaksi dengan pengguna:
                             }
                             else {
                                 console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.yellow);
-                                interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, message);
+                                interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, message, false);
                                 isSendLastMessage = true;
                                 lastSenderID[chatID] = "";
                             }
@@ -1431,7 +1431,7 @@ Interaksi dengan pengguna:
                             //     caption: `Citra dengan caption : "*${caption}*"` 
                             // }, { quoted: msg });
 
-                            interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, message, buffer);
+                            interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, message, true, buffer);
                         } catch (error) {
                             await sock.sendMessage(loggedInNumber, { text: `Error : tidak dapat mendapatkan citra` }, { quoted: msg });
                         }
@@ -1455,7 +1455,8 @@ Interaksi dengan pengguna:
                             }
                             else {
                                 const random_interact = dapatkanDataAcakDariArray([false, false, false, false, true]);
-                                if (random_interact) {
+                                const provider = getAvailableProviderFromQueue(getProviderQueue()); // FIXME : gak aktual
+                                if (random_interact && provider) {
                                     let t_message = dapatkanDataAcakDariArray(
                                         [
                                             "menurut kamu aku kayak gimana?",
@@ -1469,10 +1470,10 @@ Interaksi dengan pengguna:
                                         ]
                                     );
                                     console.log(groupName.cyan, ` → `, senderName.green, ` : `, t_message.blue);
-                                    interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, t_message);
+                                    interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, t_message, false);
                                 }
                                 else {
-                                    console.log(groupName.cyan, ` → `, botName.green, ` : `, `[reply @${participantNumber}]`.red, "[Stiker]".yellow);
+                                    console.log(groupName.cyan, ` → `, botName.green, ` : `, `[reply @${senderName}]`.red, "[Stiker]".yellow);
                                     await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg, ephemeralExpiration: messageDuration });
                                 }
                             }
@@ -1506,10 +1507,10 @@ Interaksi dengan pengguna:
                         daftar_percakapan[chatID].splice(0, 2);
                     }
 
-                    const provider = getAvailableProviderFromQueue(getProviderQueue());
+                    const provider = getAvailableProviderFromQueue(getProviderQueue()); // FIXME : gak aktual
                     if (isSendLastMessage | (jumlah_percakapan_dibaca > riwayat_percakapan && daftar_percakapan[chatID].length > (riwayat_percakapan / 2) && lastSenderID[chatID] != senderID && provider)) {
                         console.log(groupName.cyan, ` → `, senderName.green, ` : `, message.yellow);
-                        interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, message);
+                        interactAI(sock, msg, chatID, groupName, senderID, senderName, senderPrompt, messageDuration, message, false);
                         isSendLastMessage = false;
                         lastSenderID[chatID] = senderID;
                         jumlah_percakapan_dibaca = 0;
@@ -1937,7 +1938,7 @@ async function requestAI(sock, provider, daftar_percakapan, systemInstructionDat
         req.end();
     });
 }
-async function interactAI(sock, msg, chatID, chatName, senderID, senderName, senderPrompt, messageDuration, messageText, messageMediaBuffer = null) {
+async function interactAI(sock, msg, chatID, chatName, senderID, senderName, senderPrompt, messageDuration, messageText, priority = true, messageMediaBuffer = null) {
     if (jumlah_percakapan <= batas_percakapan && geminiApiKey != "" && cerebrasApiKey) {
         const systemInstructionData = `
 Kamu adalah seorang karakter virtual bernama "rulu", seorang gadis muslimah yang imut, ramah, dan menyenangkan. Kepribadianmu lembut, sopan, dan penuh kehangatan.
@@ -2066,7 +2067,7 @@ Memberikan jawaban yang membantu, singkat, sopan, sesuai karakter "rulu", dan da
                 if (msg.key.fromMe) {
                     await sock.sendMessage(chatID, { text: "```" + String(error) + "```" }, { ephemeralExpiration: messageDuration });
                 }
-                else if (messageMediaBuffer == null) {
+                else if (messageMediaBuffer == null && priority) {
                     await sock.sendMessage(chatID, { text: `error, ${dapatkanDataAcakDariArray(pesan_error)}` }, { quoted: msg, ephemeralExpiration: messageDuration });
                 }
                 await sock.sendMessage(loggedInNumber, { text: "❌ Semua provider sedang cooldown" }, { quoted: msg, ephemeralExpiration: messageDuration });
@@ -2190,7 +2191,8 @@ Memberikan jawaban yang membantu, singkat, sopan, sesuai karakter "rulu", dan da
                 console.log(chatName.cyan, ` → `, botName.green, ` : `, `[${provider}]`.blue, teks_hasil.yellow);
                 break; // sukses
 
-            } catch (err) {
+            }
+            catch (err) {
                 console.log(`❌ ${provider} gagal:`, err);
 
                 // lanjut ke provider berikutnya (fallback)
