@@ -1180,7 +1180,7 @@ Interaksi dengan pengguna:
                                     await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
                                     daftar_waktu_percakapan[chatID] = msg.messageTimestamp;
                                     
-                                    console.log(groupName.cyan, ` → `, senderName.green, ` : `, `[reply @${senderName}]`.red, t_message.yellow);
+                                    console.log(groupName.cyan, ` → `, senderName.green, ` : `, `[reply ${participantNumber}]`.red, t_message.yellow);
                                 }
                                 
                                 if (!msg.key.fromMe) {
@@ -1233,6 +1233,7 @@ Interaksi dengan pengguna:
                         //     if (user.hasOwnProperty(jid_regex)) {
                         //         modifiedMessage = modifiedMessage.replace(hasil_rgx[0], user_name);
                         //     }
+                        //     FIXME : ini pake while-loop, jadi harus tetap diganti walau usernya gak terdaftar biar perulangannya bisa berhenti!
                         // }
 
                         if (!daftar_percakapan.hasOwnProperty(chatID)) {
@@ -1290,6 +1291,7 @@ Interaksi dengan pengguna:
                         //     if (user.hasOwnProperty(jid_regex)) {
                         //         t_message = t_message.replace(hasil_rgx[0], user_name);
                         //     }
+                        //     FIXME : ini pake while-loop, jadi harus tetap diganti walau usernya gak terdaftar biar perulangannya bisa berhenti!
                         // }
 
                         console.log(groupName.cyan, ` → `, senderName.green, ` : `, t_message.yellow);
