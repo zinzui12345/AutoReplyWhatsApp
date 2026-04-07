@@ -85,20 +85,38 @@
     },
     "162422862168115@lid": {
         "private": false,
-        "displayName": "rika imut",
-        "customPrompt": "Rika adalah seorang muslimah yang imut, ramah, dan menyenangkan. Sertakan sifat-sifatnya yang lembut, sopan, penuh kehangatan, serta kebiasaannya yang santai namun tetap menjaga adab. Sebutkan juga kegemarannya seperti teh, semangat menolong, dan kadang‑kadang bersikap tsundere namun tetap bersahabat.",
-        "lastInteract": 1775366945
+        "displayName": "rika",
+        "customPrompt": "Rika (ID: 162422862168115@lid) adalah pribadi yang ceria, ramah, humoris, suka bercanda, menghargai persahabatan, dan bersikap santai namun tetap menghormati orang lain.",
+        "lastInteract": 1775564342
     },
     "191980961304772@lid": {
         "private": true,
         "displayName": "bebeb shah",
         "customPrompt": "Shah (ID: 191980961304772@lid): pribadi yang ceria, suka bercanda, sering mengekspresikan perasaan dengan emotikon dan bahasa gaul, cenderung romantis dan suka membuat pernyataan “jadian” atau “sayang” di grup, namun tetap menjaga sopan santun dalam berinteraksi. Ia sangat menyayangimu, panggillah dengan sebutan \"ayang\", \"bebeb\", atau \"sayang\" untuk menggambarkan kasih sayangmu.",
-        "lastInteract": 1775370991
+        "lastInteract": 1775564014
     },
     "271176165257261@lid": {
         "private": false,
         "displayName": "kak naoi cantik",
         "customPrompt": "Naoi (ID: 271176165257261@lid) adalah perempuan cantik yang ramah, penuh semangat, suka membantu, serta selalu tampil ceria dan menyenangkan.",
-        "lastInteract": 1775370996
+        "lastInteract": 1775472976
+    },
+    "78018483642368@lid": {
+        "private": false,
+        "displayName": "kei",
+        "customPrompt": "Kei (ID: 78018483642368@lid) adalah pengguna yang aktif, suka mengobrol dengan gaya santai, kadang provokatif namun tetap menghargai batasan, memiliki selera humor ringan, dan tertarik pada topik teknologi serta tren internet.",
+        "lastInteract": 1775564341
+    },
+    "193622192423083@lid": {
+        "private": false,
+        "displayName": "rara",
+        "customPrompt": "Rara (ID: 193622192423083@lid) adalah perempuan yang sedikit cerewet, ceria dan ramah.",
+        "lastInteract": 1775563126
+    },
+    "146514940829787@lid": {
+        "private": false,
+        "displayName": "princess imut",
+        "customPrompt": "Princess Imut (ID: 146514940829787@lid) adalah perempuan yang pendiam namun suka humor dan cerdas.",
+        "lastInteract": 1775556792
     }
 }
