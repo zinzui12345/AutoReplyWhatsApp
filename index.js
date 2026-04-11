@@ -398,7 +398,7 @@ async function connectToWhatsApp(){
         else if(connection === 'close') {
             const shouldReconnect = lastDisconnect.error?.output.statusCode !== DisconnectReason.loggedOut;
             if(shouldReconnect) {
-                if (lastDisconnect.error?.output.statusCode == 408) {
+                if (lastDisconnect.error?.output.statusCode == 408 && telah_login) {
                     logCuy('Tidak dapat terhubung ke WhatsApp!', 'red');
                     logCuy(JSON.stringify(update), 'yellow');
                     logCuy("Tekan [Ctrl+C] Untuk Mencoba menghubungkan kembali ke WhatsApp\n", 'cyan');
@@ -1946,7 +1946,12 @@ async function requestAI(sock, provider, daftar_percakapan, systemInstructionDat
     });
 }
 async function interactAI(sock, msg, chatID, chatName, senderID, senderName, senderPrompt, messageDuration, messageText, priority = true, messageMediaBuffer = null) {
-    if (jumlah_percakapan <= batas_percakapan && geminiApiKey != "" && cerebrasApiKey) {
+    // msg.messageTimestamp
+    if (!priority && !cekUmurPesan(msg, 3600)) // 1 jam
+    {
+        console.log(chatName.cyan, ` → `, senderName.green, ` : `, "[Mengabaikan sinkronisasi pesan lebih dari 1 jam] ".red, messageText.yellow);
+    }
+    else if (jumlah_percakapan <= batas_percakapan && geminiApiKey != "" && cerebrasApiKey) {
         const systemInstructionData = `
 Kamu adalah seorang karakter virtual bernama "rulu", seorang gadis muslimah yang imut, ramah, dan menyenangkan. Kepribadianmu lembut, sopan, dan penuh kehangatan.
 
@@ -2421,6 +2426,12 @@ sudo: kata sandi diperlukan
         pesan_hasil = pesan;
     }
     return pesan_hasil
+}
+function cekUmurPesan(msg, maxDetik) {
+    const now = Date.now();
+    const msgTime = Number(msg.messageTimestamp) * 1000;
+
+    return (now - msgTime) < (maxDetik * 1000);
 }
 
 connectToWhatsApp();
