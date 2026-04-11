@@ -377,7 +377,7 @@ async function connectToWhatsApp(){
                     askWaNumber();
                 } else if (answer.toLowerCase() === 'n') {
                     useCode = false;
-                    logCuy('Buka wangsafmu lalu klik titik tiga di kanan atas kemudian klik perangkat tertaut setelah itu Silahkan scan QR code dibawah untuk login ke wangsaf', 'cyan');
+                    logCuy('Buka WhatsApp lalu klik titik tiga di kanan atas kemudian klik perangkat tertaut setelah itu Silahkan scan QR code dibawah untuk login ke WhatsApp', 'cyan');
                     connectToWhatsApp();
                     rl.close();
                 } else {
@@ -398,7 +398,12 @@ async function connectToWhatsApp(){
         else if(connection === 'close') {
             const shouldReconnect = lastDisconnect.error?.output.statusCode !== DisconnectReason.loggedOut;
             if(shouldReconnect) {
-                if (lastDisconnect.error?.output.statusCode == 405) {
+                if (lastDisconnect.error?.output.statusCode == 408) {
+                    logCuy('Tidak dapat terhubung ke WhatsApp!', 'red');
+                    logCuy(JSON.stringify(update), 'yellow');
+                    logCuy("Tekan [Ctrl+C] Untuk Mencoba menghubungkan kembali ke WhatsApp\n", 'cyan');
+                }
+                else if (lastDisconnect.error?.output.statusCode == 405) {
                     logCuy('Metode tidak di-izinkan!', 'red');
                     logCuy(JSON.stringify(update), 'yellow');
                     if (sessionExists) {
@@ -412,7 +417,7 @@ async function connectToWhatsApp(){
                     }, 10000);
                 }
                 else {
-                    logCuy("[" + String(lastDisconnect.error?.output.statusCode) + "] Mencoba menghubungkan ke wangsaf...\n", 'cyan');
+                    logCuy("[" + String(lastDisconnect.error?.output.statusCode) + "] Mencoba menghubungkan ke WhatsApp...\n", 'cyan');
                     connectToWhatsApp();
                 }
             }
