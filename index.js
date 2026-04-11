@@ -408,7 +408,7 @@ async function connectToWhatsApp(){
                 }
                 else if (lastDisconnect.error?.output.statusCode == 405) {
                     logCuy('Metode tidak di-izinkan!', 'red');
-                    logCuy(JSON.stringify(update), 'yellow');
+                    logCuy(JSON.stringify(update, null, 2), 'yellow');
                     if (sessionExists) {
                         connectToWhatsApp();
                     }
@@ -953,7 +953,7 @@ Interaksi dengan pengguna:
                     const provider = getAvailableProviderFromQueue(getProviderQueue());
                     logCuy(`${senderName} : test!`, 'yellow');
                     await sock.sendMessage(msg.key.remoteJid, { text: JSON.stringify(msg, null, 2) },         { ephemeralExpiration: log_timeout });
-                    await sock.sendMessage(msg.key.remoteJid, { text: `provider saat ini: ${provider}\ndapat interaksi: ${(provider ? true : false)}` },         { ephemeralExpiration: log_timeout });
+                    // await sock.sendMessage(msg.key.remoteJid, { text: `provider saat ini: ${provider}\ndapat interaksi: ${(provider ? true : false)}` },         { ephemeralExpiration: log_timeout });
                     // await sock.sendMessage(msg.key.remoteJid, { text: modifikasiInput(msg.args.toString()) }, { ephemeralExpiration: log_timeout });
                     // await sock.sendMessage(msg.key.remoteJid, {
                     //     text: '👆🏻 Tombol!',
@@ -1648,7 +1648,7 @@ Interaksi dengan pengguna:
                         );
                     }
 
-                    logCuy(`Berhasil melihat ${autoLikeStatus ? "dan menyukai " : ""}status dari: ${senderName} (${displaySendernumber})`, 'green');
+                    logCuy(`Berhasil melihat ${autoLikeStatus ? "dan menyukai " : ""}status dari: ${senderName} (${displaySendernumber})\n`, 'green');
 
                     const targetNumber = loggedInNumber;
                     let messageContent = `Status dari *${senderName}* (${displaySendernumber}) telah dilihat ${autoLikeStatus ? "dan disukai" : ""}`;
