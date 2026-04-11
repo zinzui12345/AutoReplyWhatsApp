@@ -400,8 +400,11 @@ async function connectToWhatsApp(){
             if(shouldReconnect) {
                 if (lastDisconnect.error?.output.statusCode == 408 && telah_login) {
                     logCuy('Tidak dapat terhubung ke WhatsApp!', 'red');
-                    logCuy(JSON.stringify(update), 'yellow');
+                    console.log(`Respon yang diterima:\n${JSON.stringify(update, null, 2)}`.gray, "\n\nMenghubungkan kembali dalam 6 detik...".yellow);
                     logCuy("Tekan [Ctrl+C] Untuk Mencoba menghubungkan kembali ke WhatsApp\n", 'cyan');
+                    await delay(5000);
+                    logCuy("[" + String(lastDisconnect.error?.output.statusCode) + "] Mencoba menghubungkan ke WhatsApp...\n", 'cyan');
+                    connectToWhatsApp();
                 }
                 else if (lastDisconnect.error?.output.statusCode == 405) {
                     logCuy('Metode tidak di-izinkan!', 'red');
@@ -1946,7 +1949,6 @@ async function requestAI(sock, provider, daftar_percakapan, systemInstructionDat
     });
 }
 async function interactAI(sock, msg, chatID, chatName, senderID, senderName, senderPrompt, messageDuration, messageText, priority = true, messageMediaBuffer = null) {
-    // msg.messageTimestamp
     if (!priority && !cekUmurPesan(msg, 3600)) // 1 jam
     {
         console.log(chatName.cyan, ` → `, senderName.green, ` : `, "[Mengabaikan sinkronisasi pesan lebih dari 1 jam] ".red, messageText.yellow);
