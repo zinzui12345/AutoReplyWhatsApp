@@ -1014,7 +1014,7 @@ Interaksi dengan pengguna:
                             stickerFile = await buatSticker(`${stickerURL}${randomSticker[0]}.webp`, ["😂", "🗿", "🤫", "🫠"]);
                         break;
                     }
-                    if (stickerFile != null) {
+                    if (stickerFile != null && cekUmurPesan(msg, 120)) {
                         console.log(groupName.cyan, ` → `, botName.green, ` : `, "[Stiker]".yellow);
                         await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: true }, { ephemeralExpiration: messageDuration });
                         isSendLastMessage = true;
@@ -1185,8 +1185,14 @@ Interaksi dengan pengguna:
                                     const randomSticker = dapatkanDataAcakDariArray(stickers);
                                     const stickerFile = await buatSticker(`${stickerURL}${randomSticker[0]}.webp`);
                                     
-                                    await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
-                                    daftar_waktu_percakapan[chatID] = msg.messageTimestamp;
+                                    if (!cekUmurPesan(msg, 120)) // 2 menit
+                                    {
+                                        console.log(chatName.cyan, ` → `, botName.green, ` : `, "[Mengabaikan sinkronisasi pesan lebih dari 2 menit] ".red, messageText.yellow);
+                                    }
+                                    else {
+                                        await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
+                                        daftar_waktu_percakapan[chatID] = msg.messageTimestamp;
+                                    }
                                     
                                     console.log(groupName.cyan, ` → `, senderName.green, ` : `, `[reply ${participantNumber}]`.red, t_message.yellow);
                                 }
@@ -1335,7 +1341,13 @@ Interaksi dengan pengguna:
                             const randomSticker = dapatkanDataAcakDariArray(stickers);
                             const stickerFile = await buatSticker(`${stickerURL}${randomSticker[0]}.webp`);
                             logCuy("Percakapan dimulai");
-                            await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
+                            if (!cekUmurPesan(msg, 120)) // 2 menit
+                            {
+                                console.log(chatName.cyan, ` → `, botName.green, ` : `, "[Mengabaikan sinkronisasi pesan lebih dari 2 menit] ".red, messageText.yellow);
+                            }
+                            else {
+                                await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
+                            }
                             console.log(groupName.cyan, ` → `, (botName ? botName.green : "rulu".green), ` : `, "[Stiker]".blue);
                             daftar_waktu_percakapan[chatID] = msg.messageTimestamp;
                             giveResponse = true;
@@ -1484,7 +1496,13 @@ Interaksi dengan pengguna:
                                 }
                                 else {
                                     console.log(groupName.cyan, ` → `, botName.green, ` : `, `[reply @${senderName}]`.red, "[Stiker]".yellow);
-                                    await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg, ephemeralExpiration: messageDuration });
+                                    if (!cekUmurPesan(msg, 120)) // 2 menit
+                                    {
+                                        console.log(chatName.cyan, ` → `, botName.green, ` : `, "[Mengabaikan sinkronisasi pesan lebih dari 2 menit] ".red, messageText.yellow);
+                                    }
+                                    else {
+                                        await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg, ephemeralExpiration: messageDuration });
+                                    }
                                 }
                             }
                             isSendLastMessage = true;
@@ -1621,7 +1639,7 @@ Interaksi dengan pengguna:
             }
 
             if (msg.message.protocolMessage) {
-                logCuy(`Status dari ${senderName} (${displaySendernumber}) telah dihapus.`, 'red');
+                logCuy(`Status dari ${senderName} (${displaySendernumber}) telah dihapus.\n`, 'red');
             }
             else if (!msg.message.reactionMessage) {
                 if (blackList.includes(senderNumber)) {
@@ -1949,9 +1967,9 @@ async function requestAI(sock, provider, daftar_percakapan, systemInstructionDat
     });
 }
 async function interactAI(sock, msg, chatID, chatName, senderID, senderName, senderPrompt, messageDuration, messageText, priority = true, messageMediaBuffer = null) {
-    if (!priority && !cekUmurPesan(msg, 3600)) // 1 jam
+    if (!priority && !cekUmurPesan(msg, 120)) // 2 menit
     {
-        console.log(chatName.cyan, ` → `, senderName.green, ` : `, "[Mengabaikan sinkronisasi pesan lebih dari 1 jam] ".red, messageText.yellow);
+        console.log(chatName.cyan, ` → `, senderName.green, ` : `, "[Mengabaikan sinkronisasi pesan lebih dari 2 menit] ".red, messageText.yellow);
     }
     else if (jumlah_percakapan <= batas_percakapan && geminiApiKey != "" && cerebrasApiKey) {
         const systemInstructionData = `
