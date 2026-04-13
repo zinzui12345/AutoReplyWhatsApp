@@ -1498,7 +1498,7 @@ Interaksi dengan pengguna:
                                     console.log(groupName.cyan, ` → `, botName.green, ` : `, `[reply @${senderName}]`.red, "[Stiker]".yellow);
                                     if (!cekUmurPesan(msg, 120)) // 2 menit
                                     {
-                                        console.log(groupName.cyan, ` → `, botName.green, ` : `, "[Mengabaikan sinkronisasi pesan lebih dari 2 menit] ".red, t_message.yellow);
+                                        console.log(groupName.cyan, ` → `, botName.green, ` : `, "[Mengabaikan sinkronisasi pesan lebih dari 2 menit] ".red, "[Stiker]".yellow);
                                     }
                                     else {
                                         await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg, ephemeralExpiration: messageDuration });
