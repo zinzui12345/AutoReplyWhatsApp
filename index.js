@@ -1187,7 +1187,7 @@ Interaksi dengan pengguna:
                                     
                                     if (!cekUmurPesan(msg, 120)) // 2 menit
                                     {
-                                        console.log(groupName.cyan, ` → `, botName.green, ` : `, "[Mengabaikan sinkronisasi pesan lebih dari 2 menit] ".red, messageText.yellow);
+                                        console.log(groupName.cyan, ` → `, botName.green, ` : `, "[Mengabaikan sinkronisasi pesan lebih dari 2 menit] ".red, t_message.yellow);
                                     }
                                     else {
                                         await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
@@ -1343,7 +1343,7 @@ Interaksi dengan pengguna:
                             logCuy("Percakapan dimulai");
                             if (!cekUmurPesan(msg, 120)) // 2 menit
                             {
-                                console.log(groupName.cyan, ` → `, botName.green, ` : `, "[Mengabaikan sinkronisasi pesan lebih dari 2 menit] ".red, messageText.yellow);
+                                console.log(groupName.cyan, ` → `, botName.green, ` : `, "[Mengabaikan sinkronisasi pesan lebih dari 2 menit] ".red, t_message.yellow);
                             }
                             else {
                                 await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
@@ -1498,7 +1498,7 @@ Interaksi dengan pengguna:
                                     console.log(groupName.cyan, ` → `, botName.green, ` : `, `[reply @${senderName}]`.red, "[Stiker]".yellow);
                                     if (!cekUmurPesan(msg, 120)) // 2 menit
                                     {
-                                        console.log(groupName.cyan, ` → `, botName.green, ` : `, "[Mengabaikan sinkronisasi pesan lebih dari 2 menit] ".red, messageText.yellow);
+                                        console.log(groupName.cyan, ` → `, botName.green, ` : `, "[Mengabaikan sinkronisasi pesan lebih dari 2 menit] ".red, t_message.yellow);
                                     }
                                     else {
                                         await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { quoted: msg, ephemeralExpiration: messageDuration });
