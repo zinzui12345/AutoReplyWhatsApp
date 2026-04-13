@@ -1343,7 +1343,7 @@ Interaksi dengan pengguna:
                             logCuy("Percakapan dimulai");
                             if (!cekUmurPesan(msg, 120)) // 2 menit
                             {
-                                console.log(groupName.cyan, ` → `, botName.green, ` : `, "[Mengabaikan sinkronisasi pesan lebih dari 2 menit] ".red, t_message.yellow);
+                                console.log(groupName.cyan, ` → `, botName.green, ` : `, "[Mengabaikan sinkronisasi pesan lebih dari 2 menit] ".red, message.yellow);
                             }
                             else {
                                 await sock.sendMessage(chatID, { sticker: stickerFile, isAnimated: randomSticker[1] }, { ephemeralExpiration: messageDuration });
