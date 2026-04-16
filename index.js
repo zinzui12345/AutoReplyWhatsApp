@@ -2235,7 +2235,12 @@ Memberikan jawaban yang membantu, singkat, sopan, sesuai karakter "rulu", dan da
                     await sock.sendMessage(chatID, { text: teks_hasil }, { ephemeralExpiration: messageDuration });
                 }
                 else {
-                    await sock.sendMessage(chatID, { text: teks_hasil }, { quoted: msg, ephemeralExpiration: messageDuration });
+                    if (teks_hasil === "") {
+                        console.log(chatName.cyan, ` → `, botName.green, ` : `, "[Mengabaikan membalas dengan pesan kosong dari: ".red, senderName.blue, "] ".red);
+                    }
+                    else {
+                        await sock.sendMessage(chatID, { text: teks_hasil }, { quoted: msg, ephemeralExpiration: messageDuration });
+                    }
                 }
 
                 console.log(chatName.cyan, ` → `, botName.green, ` : `, `[${provider}]`.blue, teks_hasil.yellow);
