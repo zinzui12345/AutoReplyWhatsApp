@@ -21,7 +21,20 @@ const reply_stickers = [
     ["reply/4", false],
     ["reply/5", false],
     ["reply/6", false],
-    ["reply/7", false]
+    ["reply/7", false],
+    ["reply/8", false],
+    ["reply/9", true],
+    ["reply/10", false],
+    ["reply/11", false],
+    ["reply/12", true],
+    ["reply/13", false],
+    ["reply/14", false],
+    ["reply/15", false],
+    ["reply/16", false],
+    ["reply/17", false],
+    ["reply/18", false],
+    ["reply/19", true],
+    ["reply/20", false]
 ];
 const angry_stickers = [
     ["angry/1", true],
@@ -2159,7 +2172,7 @@ Memberikan jawaban yang membantu, singkat, sopan, sesuai karakter "rulu", dan da
                     if (messageMediaBuffer != null) {
                         teks_hasil += "aduhh, maaf ya\naku gabisa liat gambarnya saat ini";
                     }
-                    else {
+                    else if (priority) {
                         teks_hasil += "aduhh, maaf ya\n😖 aku belum bisa jawab\n🙏🏻 tunggu 1 menit";
                     }
                     const randomSticker = dapatkanDataAcakDariArray(shy_stickers);
