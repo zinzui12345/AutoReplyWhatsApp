@@ -282,12 +282,13 @@ const pesan_error = [
 let useCode = true;
 let loggedInNumber;
 let loggedInID;
-let botName = "rulu";
-let telah_login = false;
-let log_timeout = 86400;
+
+var botName = "rulu";
+var telah_login = false;
+var log_timeout = 86400;
 
 let prioritas_model = "cerebras"; // "gemini" | "cerebras"
-let providers = ["gemini", "groq", "cerebras"];
+let providers = ["gemini", "gemini_alt", "groq", "cerebras"];
 let retry_state = {
     gemini: 0,
     groq: 0,
@@ -322,7 +323,7 @@ let riwayat_percakapan = 22;
 let jumlah_percakapan = 0;
 let batas_percakapan = 1200;
 let jumlah_percakapan_dibaca = 0;
-let { autoLikeStatus, autoReplyGroup, downloadMediaStatus, sensorNomor, antiTelpon, blackList, whiteList, emojis, groupList, appsScriptApiKey, geminiApiKey, cerebrasApiKey, groqApiKey } = config;
+let { autoLikeStatus, autoReplyGroup, downloadMediaStatus, sensorNomor, antiTelpon, blackList, whiteList, emojis, groupList, appsScriptApiKey, geminiApiKey, geminiLiteApiKey, cerebrasApiKey, groqApiKey } = config;
 
 const updateConfig = (key, value) => {
     config[key] = value;
@@ -1837,6 +1838,21 @@ async function requestAI(sock, provider, daftar_percakapan, systemInstructionDat
                 contents: daftar_percakapan
             });
         }
+        else if (provider === "gemini_alt") {
+            req_options = {
+                hostname: 'generativelanguage.googleapis.com',
+                path: `/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${geminiLiteApiKey}`,
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            };
+
+            postData = JSON.stringify({
+                system_instruction: {
+                    parts: [{ text: systemInstructionData }, { text: senderPrompt }]
+                },
+                contents: daftar_percakapan
+            });
+        }
 
         // ================= CEREBRAS =================
         else if (provider === "cerebras") {
@@ -1925,8 +1941,12 @@ async function requestAI(sock, provider, daftar_percakapan, systemInstructionDat
                     const json = JSON.parse(data);
 
                     // ================= ERROR HANDLING =================
-                    if (provider === "gemini" && json.error) {
+                    if ((provider === "gemini" || provider === "gemini_alt") && json.error) {
                         if (json.error.status === "RESOURCE_EXHAUSTED") {
+                            setRetry("gemini", 30);
+                            return reject("rate_limit");
+                        }
+                        else if (json.error.status === "UNAVAILABLE") {
                             setRetry("gemini", 60);
                             return reject("rate_limit");
                         }
@@ -1952,7 +1972,7 @@ async function requestAI(sock, provider, daftar_percakapan, systemInstructionDat
                     // ================= PARSE =================
                     let text = "";
 
-                    if (provider === "gemini") {
+                    if (provider === "gemini" || provider === "gemini_alt") {
                         for (let c of json.candidates || []) {
                             for (let p of c.content.parts) {
                                 text += p.text;

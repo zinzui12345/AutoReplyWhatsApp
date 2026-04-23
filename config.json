@@ -15,6 +15,7 @@
     "groupList": [],
     "appsScriptApiKey": "AKfycbwwnviRqp2Fq84KHTScqfUtBw-J7bdvVdLzbzUOAt1fmuONWIXf9772e9IE9uigNFtC",
     "geminiApiKey": "",
+    "geminiLiteApiKey": "",
     "cerebrasApiKey": "",
     "groqApiKey": ""
 }
