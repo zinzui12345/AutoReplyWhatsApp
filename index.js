@@ -291,6 +291,7 @@ let prioritas_model = "cerebras"; // "gemini" | "cerebras"
 let providers = ["gemini", "gemini_alt", "groq", "cerebras"];
 let retry_state = {
     gemini: 0,
+    gemini_alt: 0,
     groq: 0,
     cerebras: 0
 };
@@ -1941,13 +1942,23 @@ async function requestAI(sock, provider, daftar_percakapan, systemInstructionDat
                     const json = JSON.parse(data);
 
                     // ================= ERROR HANDLING =================
-                    if ((provider === "gemini" || provider === "gemini_alt") && json.error) {
+                    if (provider === "gemini" && json.error) {
                         if (json.error.status === "RESOURCE_EXHAUSTED") {
                             setRetry("gemini", 30);
                             return reject("rate_limit");
                         }
                         else if (json.error.status === "UNAVAILABLE") {
                             setRetry("gemini", 60);
+                            return reject("rate_limit");
+                        }
+                    }
+                    if (provider === "gemini_alt" && json.error) {
+                        if (json.error.status === "RESOURCE_EXHAUSTED") {
+                            setRetry("gemini_alt", 30);
+                            return reject("rate_limit");
+                        }
+                        else if (json.error.status === "UNAVAILABLE") {
+                            setRetry("gemini_alt", 60);
                             return reject("rate_limit");
                         }
                     }
