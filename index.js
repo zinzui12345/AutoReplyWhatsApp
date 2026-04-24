@@ -1741,7 +1741,7 @@ Interaksi dengan pengguna:
             } 
 	    }
 
-        lastActivity = Date.now();
+        // lastActivity = Date.now(); // gak perlu, karena kadang socket tetap menerima update tetapi tidak dapat mengirimkan pesan
         idlePrinted = false;
     });
 }
