@@ -282,8 +282,8 @@ const pesan_error = [
 let useCode = true;
 let loggedInNumber;
 let loggedInID;
-let lastActivity = Date.now();
-let idlePrinted = false;
+let lastConnected = Date.now();
+// let idlePrinted = false;
 
 var botName = "rulu";
 var telah_login = false;
@@ -477,8 +477,8 @@ async function connectToWhatsApp(){
                 }, 5000);
             }
 
-            lastActivity = Date.now();
-            idlePrinted = false;
+            lastConnected = Date.now();
+            // idlePrinted = false;
         }
     })
     sock.ev.on('creds.update', saveCreds);
@@ -1741,8 +1741,8 @@ Interaksi dengan pengguna:
             } 
 	    }
 
-        // lastActivity = Date.now(); // gak perlu, karena kadang socket tetap menerima update tetapi tidak dapat mengirimkan pesan
-        idlePrinted = false;
+        // lastConnected = Date.now(); // gak perlu, karena kadang socket tetap menerima update tetapi tidak dapat mengirimkan pesan
+        // idlePrinted = false;
     });
 }
 
@@ -2513,7 +2513,7 @@ function cekUmurPesan(msg, maxDetik) {
 
 setInterval(() => {
     const now = Date.now();
-    const selisih = now - lastActivity;
+    const selisih = now - lastConnected;
 
     const batasIdle = 5 * 60 * 1000; // 5 menit
 
@@ -2521,10 +2521,10 @@ setInterval(() => {
         console.log("🔄 Reconnect karena idle terlalu lama");
         process.exit();
     }    
-    else if (selisih >= batasIdle && !idlePrinted) {
-        console.log(`⚠️ Tidak ada aktivitas selama ${Math.floor(selisih / 1000)} detik`);
-        idlePrinted = true; // supaya tidak spam log
-    }
+    // else if (selisih >= batasIdle && !idlePrinted) {
+    //     console.log(`⚠️ Tidak ada aktivitas selama ${Math.floor(selisih / 1000)} detik`);
+    //     idlePrinted = true; // supaya tidak spam log
+    // }
 }, 5000); // cek tiap 5 detik
 
 connectToWhatsApp();
