@@ -290,12 +290,13 @@ var telah_login = false;
 var log_timeout = 86400;
 
 let prioritas_model = "cerebras"; // "gemini" | "cerebras"
-let providers = ["gemini", "gemini_alt", "groq", "cerebras"];
+let providers = ["gemini", "gemini_alt", "groq", "cerebras", "openrouter"];
 let retry_state = {
     gemini: 0,
     gemini_alt: 0,
     groq: 0,
-    cerebras: 0
+    cerebras: 0,
+    openrouter: 0
 };
 
 function logCuy(message, type = 'green') {
@@ -326,7 +327,7 @@ let riwayat_percakapan = 22;
 let jumlah_percakapan = 0;
 let batas_percakapan = 1200;
 let jumlah_percakapan_dibaca = 0;
-let { autoLikeStatus, autoReplyGroup, downloadMediaStatus, sensorNomor, antiTelpon, blackList, whiteList, emojis, groupList, appsScriptApiKey, geminiApiKey, geminiLiteApiKey, cerebrasApiKey, groqApiKey } = config;
+let { autoLikeStatus, autoReplyGroup, downloadMediaStatus, sensorNomor, antiTelpon, blackList, whiteList, emojis, groupList, appsScriptApiKey, geminiApiKey, geminiLiteApiKey, cerebrasApiKey, groqApiKey, openRouterApiKey } = config;
 
 const updateConfig = (key, value) => {
     config[key] = value;
@@ -1940,6 +1941,28 @@ async function requestAI(sock, provider, daftar_percakapan, systemInstructionDat
             });
         }
 
+        // ================= OPENROUTER =================
+        else if (provider === "openrouter") {
+            req_options = {
+                hostname: 'openrouter.ai',
+                path: '/api/v1/chat/completions',
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${openRouterApiKey}`,
+                    'Content-Type': 'application/json'
+                }
+            };
+
+            postData = JSON.stringify({
+                model: "nvidia/nemotron-3-super-120b-a12b:free",
+                reasoning: {"enabled": false},
+                messages: [
+                    { role: "system", content: systemInstructionData + "\n" + senderPrompt },
+                    ...konversiKeOpenAI(daftar_percakapan)
+                ]
+            });
+        }
+
         const req = https.request(req_options, res => {
             let data = "";
 
@@ -1984,6 +2007,13 @@ async function requestAI(sock, provider, daftar_percakapan, systemInstructionDat
                     if (provider === "groq") {
                         if (res.statusCode === 429) {
                             setRetry("groq", 60);
+                            return reject("rate_limit");
+                        }
+                    }
+
+                    if (provider === "openrouter") {
+                        if (res.statusCode === 502) {
+                            setRetry("openrouter", 60);
                             return reject("rate_limit");
                         }
                     }

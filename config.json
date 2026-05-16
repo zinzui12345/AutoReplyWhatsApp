@@ -1,10 +1,16 @@
 {
     "autoLikeStatus": true,
-    "autoReplyGroup": false,
+    "autoReplyGroup": true,
     "downloadMediaStatus": false,
     "sensorNomor": false,
     "antiTelpon": false,
-    "blackList": [],
+    "blackList": [
+        "628987654321",
+        "628123456789",
+        "6285255447223",
+        "6285299847248",
+        "6285256001978"
+    ],
     "whiteList": [],
     "emojis": [
         "💚",
@@ -17,5 +23,6 @@
     "geminiApiKey": "",
     "geminiLiteApiKey": "",
     "cerebrasApiKey": "",
-    "groqApiKey": ""
+    "groqApiKey": "",
+    "openRouterApiKey": ""
 }
